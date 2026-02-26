@@ -19,7 +19,7 @@ def send_coach_message(
     user: UserContext = Depends(require_roles("candidate")),
 ) -> CoachResponse:
     session = store.sessions.get(session_id)
-    if session is None:
+    if session is None or session["tenant_id"] != user.tenant_id:
         raise HTTPException(status_code=404, detail="Session not found")
     if session["candidate_id"] != user.user_id:
         raise HTTPException(status_code=403, detail="Forbidden")

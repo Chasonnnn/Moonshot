@@ -17,7 +17,8 @@ def create_redteam_run(
     user: UserContext = Depends(require_roles("org_admin")),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> RedTeamRun:
-    cached = get_cached("redteam", idempotency_key)
+    cache_scope = f"{user.tenant_id}:redteam"
+    cached = get_cached(cache_scope, idempotency_key)
     if cached is not None:
         return RedTeamRun.model_validate(cached)
 
@@ -25,6 +26,6 @@ def create_redteam_run(
     store.redteam_runs[result.id] = result.model_dump(mode="json")
 
     response_payload = result.model_dump(mode="json")
-    set_cached("redteam", idempotency_key, response_payload)
+    set_cached(cache_scope, idempotency_key, response_payload)
     audit(user, "run", "redteam", str(result.id), {"target_type": payload.target_type, "target_id": str(payload.target_id)})
     return result

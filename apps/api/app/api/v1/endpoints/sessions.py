@@ -11,13 +11,30 @@ from app.services.store import store
 router = APIRouter(prefix="/v1/sessions", tags=["sessions"])
 
 
+def _tenant_for_task_family(task_family_id: UUID) -> str:
+    task_family = store.task_families.get(task_family_id)
+    if task_family is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task family not found")
+    case_id = UUID(task_family["case_id"])
+    case_payload = store.cases.get(case_id)
+    if case_payload is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found for task family")
+    return case_payload["tenant_id"]
+
+
+def _get_session_for_tenant(session_id: UUID, tenant_id: str) -> Session:
+    session_payload = store.sessions.get(session_id)
+    if session_payload is None or session_payload["tenant_id"] != tenant_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    return Session.model_validate(session_payload)
+
+
 @router.post("", response_model=Session, status_code=status.HTTP_201_CREATED)
 def create_session(
     payload: SessionCreate,
     user: UserContext = Depends(require_roles("org_admin", "reviewer")),
 ) -> Session:
-    task_family = store.task_families.get(payload.task_family_id)
-    if task_family is None:
+    if _tenant_for_task_family(payload.task_family_id) != user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task family not found")
 
     session = Session(
@@ -32,16 +49,37 @@ def create_session(
     return session
 
 
+@router.get("", response_model=dict[str, list[Session]])
+def list_sessions(
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> dict[str, list[Session]]:
+    items = [
+        Session.model_validate(row)
+        for row in store.sessions.values()
+        if row["tenant_id"] == user.tenant_id
+    ]
+    return {"items": items}
+
+
+@router.get("/{session_id}", response_model=Session)
+def get_session(
+    session_id: UUID,
+    user: UserContext = Depends(require_roles("org_admin", "reviewer", "candidate")),
+) -> Session:
+    session = _get_session_for_tenant(session_id, user.tenant_id)
+    if user.role == "candidate" and session.candidate_id != user.user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    return session
+
+
 @router.post("/{session_id}/events", response_model=EventIngestResponse, status_code=status.HTTP_202_ACCEPTED)
 def ingest_events(
     session_id: UUID,
     payload: EventsIngestRequest,
     user: UserContext = Depends(require_roles("candidate")),
 ) -> EventIngestResponse:
-    session = store.sessions.get(session_id)
-    if session is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
-    if session["candidate_id"] != user.user_id:
+    session = _get_session_for_tenant(session_id, user.tenant_id)
+    if session.candidate_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     for event in payload.events:
@@ -56,9 +94,7 @@ def submit_session(
     payload: SessionSubmitRequest,
     user: UserContext = Depends(require_roles("candidate")),
 ) -> Session:
-    existing = store.sessions.get(session_id)
-    if existing is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    existing = _get_session_for_tenant(session_id, user.tenant_id).model_dump(mode="json")
     if existing["candidate_id"] != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 

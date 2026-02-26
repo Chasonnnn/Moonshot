@@ -22,6 +22,9 @@ def export_run(
         raise HTTPException(status_code=404, detail="Export run not found")
 
     session_id = UUID(existing["session_id"])
+    session = store.sessions.get(session_id)
+    if session is None or session["tenant_id"] != user.tenant_id:
+        raise HTTPException(status_code=404, detail="Export run not found")
     report_payload = store.reports.get(session_id)
     if report_payload is None:
         raise HTTPException(status_code=404, detail="Report not found for export")

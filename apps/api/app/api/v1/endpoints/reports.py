@@ -19,5 +19,8 @@ def get_report(
     existing = store.reports.get(session_id)
     if existing is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    session = store.sessions.get(session_id)
+    if session is None or session["tenant_id"] != user.tenant_id:
+        raise HTTPException(status_code=404, detail="Report not found")
     audit(user, "read", "report", str(session_id))
     return Report.model_validate(existing)

@@ -22,6 +22,29 @@ def create_pack(
     return pack
 
 
+@router.get("", response_model=dict[str, list[BusinessContextPack]])
+def list_packs(
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> dict[str, list[BusinessContextPack]]:
+    items = [
+        BusinessContextPack.model_validate(row)
+        for row in store.business_context_packs.values()
+        if row["tenant_id"] == user.tenant_id
+    ]
+    return {"items": items}
+
+
+@router.get("/{pack_id}", response_model=BusinessContextPack)
+def get_pack(
+    pack_id: UUID,
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> BusinessContextPack:
+    existing = store.business_context_packs.get(pack_id)
+    if existing is None or existing["tenant_id"] != user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pack not found")
+    return BusinessContextPack.model_validate(existing)
+
+
 @router.patch("/{pack_id}", response_model=BusinessContextPack)
 def update_pack(
     pack_id: UUID,
@@ -29,7 +52,7 @@ def update_pack(
     user: UserContext = Depends(require_roles("org_admin")),
 ) -> BusinessContextPack:
     existing = store.business_context_packs.get(pack_id)
-    if existing is None:
+    if existing is None or existing["tenant_id"] != user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pack not found")
     merged = {**existing, **payload.model_dump(exclude_none=True)}
     pack = BusinessContextPack.model_validate(merged)

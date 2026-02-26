@@ -19,12 +19,13 @@ def score(
     user: UserContext = Depends(require_roles("reviewer", "org_admin")),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> ScoreResult:
-    cached = get_cached("score", idempotency_key)
+    cache_scope = f"{user.tenant_id}:score"
+    cached = get_cached(cache_scope, idempotency_key)
     if cached is not None:
         return ScoreResult.model_validate(cached)
 
     session = store.sessions.get(session_id)
-    if session is None:
+    if session is None or session["tenant_id"] != user.tenant_id:
         raise HTTPException(status_code=404, detail="Session not found")
     if session["status"] != "submitted":
         raise HTTPException(status_code=400, detail="Session must be submitted before scoring")
@@ -42,6 +43,6 @@ def score(
     store.sessions[session_id] = session
 
     payload = score_result.model_dump(mode="json")
-    set_cached("score", idempotency_key, payload)
+    set_cached(cache_scope, idempotency_key, payload)
     audit(user, "score", "session", str(session_id), {"export_run_id": str(export_run_id)})
     return score_result

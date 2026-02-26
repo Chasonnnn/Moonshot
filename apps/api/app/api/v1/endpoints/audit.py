@@ -16,6 +16,8 @@ def list_audit_logs(
 ) -> dict[str, list[AuditLog]]:
     items = []
     for row in store.audit_logs:
+        if row.get("tenant_id") != user.tenant_id:
+            continue
         if resource_type and row.get("resource_type") != resource_type:
             continue
         if action and row.get("action") != action:
