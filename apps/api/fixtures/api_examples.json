@@ -13,6 +13,19 @@
       "status": "draft"
     }
   },
+  "list_business_context_packs": {
+    "response": {
+      "items": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "tenant_id": "tenant_a",
+          "name": "JDA Growth Analytics",
+          "role_focus": "junior_data_analyst",
+          "status": "draft"
+        }
+      ]
+    }
+  },
   "create_case": {
     "request": {
       "title": "Weekly Funnel Drop",
@@ -29,6 +42,19 @@
       "allowed_tools": ["sql_workspace", "dashboard_workspace", "copilot"]
     }
   },
+  "list_cases": {
+    "response": {
+      "items": [
+        {
+          "id": "00000000-0000-0000-0000-000000000010",
+          "tenant_id": "tenant_a",
+          "title": "Weekly Funnel Drop",
+          "status": "draft",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
   "generate_case": {
     "response": {
       "task_family": {"status": "generated", "version": "0.1.0"},
@@ -42,8 +68,28 @@
       "scorer_version": "0.1.0"
     }
   },
+  "list_sessions": {
+    "response": {
+      "items": [
+        {
+          "id": "00000000-0000-0000-0000-000000000100",
+          "tenant_id": "tenant_a",
+          "task_family_id": "00000000-0000-0000-0000-000000000050",
+          "candidate_id": "candidate_1",
+          "status": "active",
+          "policy": {
+            "raw_content_opt_in": false,
+            "retention_ttl_days": 30
+          }
+        }
+      ]
+    }
+  },
   "error_forbidden": {
     "detail": "Forbidden"
+  },
+  "error_tenant_not_found": {
+    "detail": "Case not found"
   },
   "error_not_found": {
     "detail": "Case not found"

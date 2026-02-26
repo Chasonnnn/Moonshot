@@ -36,6 +36,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/MetaVersion'
   /v1/business-context/packs:
+    get:
+      summary: List business context packs for current tenant
+      operationId: listBusinessContextPacks
+      responses:
+        '200':
+          description: Tenant-scoped list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPackListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Create a business context pack
       operationId: createBusinessContextPack
@@ -49,6 +61,22 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
   /v1/business-context/packs/{pack_id}:
+    get:
+      summary: Get a business context pack
+      operationId: getBusinessContextPack
+      parameters:
+        - $ref: '#/components/parameters/PackId'
+      responses:
+        '200':
+          description: Pack
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPack'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     patch:
       summary: Update a business context pack
       operationId: updateBusinessContextPack
@@ -66,6 +94,18 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
   /v1/cases:
+    get:
+      summary: List case specs for current tenant
+      operationId: listCases
+      responses:
+        '200':
+          description: Tenant-scoped list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Create a case spec
       operationId: createCase
@@ -79,6 +119,22 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
   /v1/cases/{case_id}:
+    get:
+      summary: Get a case spec
+      operationId: getCase
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+      responses:
+        '200':
+          description: Case
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSpec'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     patch:
       summary: Update a case spec
       operationId: updateCase
@@ -113,6 +169,36 @@ paths:
           $ref: '#/components/responses/NotFound'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /v1/task-families:
+    get:
+      summary: List task families for current tenant
+      operationId: listTaskFamilies
+      responses:
+        '200':
+          description: Tenant-scoped list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskFamilyListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/task-families/{task_family_id}:
+    get:
+      summary: Get a task family
+      operationId: getTaskFamily
+      parameters:
+        - $ref: '#/components/parameters/TaskFamilyId'
+      responses:
+        '200':
+          description: Task family
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskFamily'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /v1/task-families/{task_family_id}/publish:
     post:
       summary: Publish a generated task family
@@ -131,6 +217,18 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
   /v1/sessions:
+    get:
+      summary: List sessions for current tenant
+      operationId: listSessions
+      responses:
+        '200':
+          description: Tenant-scoped list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Create an assessment session
       operationId: createSession
@@ -141,6 +239,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Session'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}:
+    get:
+      summary: Get a session
+      operationId: getSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '403':
           $ref: '#/components/responses/Forbidden'
   /v1/sessions/{session_id}/events:
@@ -394,6 +509,14 @@ components:
         status:
           type: string
       required: [id, tenant_id, name, role_focus, job_description, examples, constraints, status]
+    BusinessContextPackListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessContextPack'
+      required: [items]
     MetricSpec:
       type: object
       properties:
@@ -441,6 +564,14 @@ components:
         version:
           type: string
       required: [id, tenant_id, title, scenario, artifacts, metrics, allowed_tools, status, version]
+    CaseListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSpec'
+      required: [items]
     RubricDimension:
       type: object
       properties:
@@ -496,6 +627,14 @@ components:
         version:
           type: string
       required: [id, case_id, variants, rubric_id, status, version]
+    TaskFamilyListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskFamily'
+      required: [items]
     GenerationResult:
       type: object
       properties:
@@ -523,6 +662,14 @@ components:
           type: object
           additionalProperties: true
       required: [id, tenant_id, task_family_id, candidate_id, status, policy]
+    SessionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+      required: [items]
     EventPayload:
       type: object
       properties:
