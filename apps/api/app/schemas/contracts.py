@@ -1,0 +1,223 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any
+from uuid import UUID, uuid4
+
+from pydantic import BaseModel, Field
+
+
+class MetricSpec(BaseModel):
+    key: str
+    description: str
+    formula: str
+    source_events: list[str] = Field(default_factory=list)
+
+
+class BusinessContextPackCreate(BaseModel):
+    name: str
+    role_focus: str
+    job_description: str
+    examples: list[str] = Field(default_factory=list)
+    constraints: dict[str, Any] = Field(default_factory=dict)
+
+
+class BusinessContextPackUpdate(BaseModel):
+    name: str | None = None
+    role_focus: str | None = None
+    job_description: str | None = None
+    examples: list[str] | None = None
+    constraints: dict[str, Any] | None = None
+    status: str | None = None
+
+
+class BusinessContextPack(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    tenant_id: str
+    name: str
+    role_focus: str
+    job_description: str
+    examples: list[str] = Field(default_factory=list)
+    constraints: dict[str, Any] = Field(default_factory=dict)
+    status: str = "draft"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class CaseCreate(BaseModel):
+    context_pack_id: UUID | None = None
+    title: str
+    scenario: str
+    artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    metrics: list[MetricSpec] = Field(default_factory=list)
+    allowed_tools: list[str] = Field(default_factory=list)
+
+
+class CaseUpdate(BaseModel):
+    title: str | None = None
+    scenario: str | None = None
+    artifacts: list[dict[str, Any]] | None = None
+    metrics: list[MetricSpec] | None = None
+    allowed_tools: list[str] | None = None
+    status: str | None = None
+
+
+class CaseSpec(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    tenant_id: str
+    context_pack_id: UUID | None = None
+    title: str
+    scenario: str
+    artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    metrics: list[MetricSpec] = Field(default_factory=list)
+    allowed_tools: list[str] = Field(default_factory=list)
+    status: str = "draft"
+    version: str = "0.1.0"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class TaskVariant(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    prompt: str
+
+
+class RubricDimension(BaseModel):
+    key: str
+    anchor: str
+
+
+class Rubric(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    dimensions: list[RubricDimension]
+    failure_modes: list[str] = Field(default_factory=list)
+    version: str = "0.1.0"
+
+
+class TaskFamily(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    case_id: UUID
+    variants: list[TaskVariant] = Field(default_factory=list)
+    rubric_id: UUID
+    status: str = "generated"
+    version: str = "0.1.0"
+
+
+class GenerationResult(BaseModel):
+    task_family: TaskFamily
+    rubric: Rubric
+
+
+class TaskFamilyPublishRequest(BaseModel):
+    approver_note: str | None = None
+
+
+class SessionCreate(BaseModel):
+    task_family_id: UUID
+    candidate_id: str
+    policy: dict[str, Any] = Field(default_factory=lambda: {"raw_content_opt_in": False, "retention_ttl_days": 30})
+
+
+class Session(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    tenant_id: str
+    task_family_id: UUID
+    candidate_id: str
+    status: str = "active"
+    policy: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class EventItem(BaseModel):
+    event_type: str
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class EventsIngestRequest(BaseModel):
+    events: list[EventItem] = Field(default_factory=list)
+
+
+class EventIngestResponse(BaseModel):
+    accepted: int
+
+
+class CoachMessageRequest(BaseModel):
+    message: str
+
+
+class CoachResponse(BaseModel):
+    allowed: bool
+    response: str
+    policy_reason: str
+
+
+class SessionSubmitRequest(BaseModel):
+    final_response: str | None = None
+
+
+class ScoreResult(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    session_id: UUID
+    objective_metrics: dict[str, Any]
+    dimension_scores: dict[str, float]
+    confidence: float
+    needs_human_review: bool
+    scorer_version: str = "0.1.0"
+    rubric_version: str = "0.1.0"
+    task_family_version: str = "0.1.0"
+    model_hash: str = "local-baseline"
+
+
+class Interpretation(BaseModel):
+    summary: str
+    suggestions: list[str] = Field(default_factory=list)
+    audience: str = "reviewer_admin_only"
+
+
+class Report(BaseModel):
+    session_id: UUID
+    score_result: ScoreResult
+    interpretation: Interpretation
+
+
+class ExportBundle(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    run_id: UUID
+    csv: str
+    json_payload: dict[str, Any] = Field(alias="json")
+    tableau_schema: dict[str, Any]
+
+
+class RedTeamRunCreate(BaseModel):
+    target_type: str
+    target_id: UUID
+
+
+class RedTeamRun(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    target_type: str
+    target_id: UUID
+    status: str
+    findings: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AuditLog(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    tenant_id: str
+    actor_role: str
+    action: str
+    resource_type: str
+    resource_id: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ErrorResponse(BaseModel):
+    detail: str
+
+
+class MetaVersion(BaseModel):
+    api_version: str
+    schema_version: str

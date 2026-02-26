@@ -1,0 +1,51 @@
+{
+  "create_business_context_pack": {
+    "request": {
+      "name": "JDA Growth Analytics",
+      "role_focus": "junior_data_analyst",
+      "job_description": "Analyze growth funnel and identify KPI anomalies.",
+      "examples": ["Investigate conversion drop by region."],
+      "constraints": {"timebox_minutes": 45}
+    },
+    "response": {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "tenant_id": "tenant_a",
+      "status": "draft"
+    }
+  },
+  "create_case": {
+    "request": {
+      "title": "Weekly Funnel Drop",
+      "scenario": "Activation conversion fell 15% WoW.",
+      "artifacts": [{"type": "csv", "name": "funnel.csv"}],
+      "metrics": [
+        {
+          "key": "query_error_rate",
+          "description": "Ratio of failed to attempted queries",
+          "formula": "sql_query_error / sql_query_run",
+          "source_events": ["sql_query_run", "sql_query_error"]
+        }
+      ],
+      "allowed_tools": ["sql_workspace", "dashboard_workspace", "copilot"]
+    }
+  },
+  "generate_case": {
+    "response": {
+      "task_family": {"status": "generated", "version": "0.1.0"},
+      "rubric": {"version": "0.1.0"}
+    }
+  },
+  "score_session": {
+    "response": {
+      "confidence": 0.78,
+      "needs_human_review": false,
+      "scorer_version": "0.1.0"
+    }
+  },
+  "error_forbidden": {
+    "detail": "Forbidden"
+  },
+  "error_not_found": {
+    "detail": "Case not found"
+  }
+}

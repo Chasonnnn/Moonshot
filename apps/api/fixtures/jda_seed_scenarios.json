@@ -1,0 +1,22 @@
+{
+  "scenarios": [
+    {
+      "id": "jda_s1",
+      "title": "KPI Discrepancy Investigation",
+      "prompt": "Find root cause of conversion decline and propose next actions.",
+      "artifacts": ["funnel_weekly.csv", "tracking_notes.md"]
+    },
+    {
+      "id": "jda_s2",
+      "title": "SQL Data Quality Triage",
+      "prompt": "Resolve conflicting row counts between source and dashboard.",
+      "artifacts": ["orders.csv", "customers.csv", "etl_log.txt"]
+    },
+    {
+      "id": "jda_s3",
+      "title": "Stakeholder Ambiguity Handling",
+      "prompt": "Respond to vague stakeholder request with assumptions and escalation plan.",
+      "artifacts": ["request_thread.txt", "metric_dictionary.csv"]
+    }
+  ]
+}

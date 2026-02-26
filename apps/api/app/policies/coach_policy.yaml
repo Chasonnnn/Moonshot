@@ -1,0 +1,12 @@
+version: 0.1.0
+mode: context_only
+blocked_patterns:
+  - exact answer
+  - give me the answer
+  - write the sql
+  - solve this for me
+  - what should i submit
+allowed_behaviors:
+  - clarify business context
+  - restate constraints
+  - explain policy boundaries
