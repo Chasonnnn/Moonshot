@@ -1,0 +1,28 @@
+[project]
+name = "moonshot"
+version = "0.1.0"
+description = "Moonshot backend-first MVP"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "pydantic-settings",
+  "sqlalchemy",
+  "alembic"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "httpx"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["apps/api"]
+testpaths = ["apps/api/tests"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
