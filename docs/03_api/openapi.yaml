@@ -1,0 +1,663 @@
+openapi: 3.1.0
+info:
+  title: Moonshot Backend API
+  version: 0.1.0
+  description: API-first contract for Moonshot MVP backend.
+servers:
+  - url: https://api.moonshot.local
+    description: Example production endpoint
+  - url: http://localhost:8000
+    description: Local development
+security:
+  - RoleHeaderAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /v1/meta/version:
+    get:
+      summary: API metadata
+      operationId: getMetaVersion
+      security: []
+      responses:
+        '200':
+          description: API metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaVersion'
+  /v1/business-context/packs:
+    post:
+      summary: Create a business context pack
+      operationId: createBusinessContextPack
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPack'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/business-context/packs/{pack_id}:
+    patch:
+      summary: Update a business context pack
+      operationId: updateBusinessContextPack
+      parameters:
+        - $ref: '#/components/parameters/PackId'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPack'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/cases:
+    post:
+      summary: Create a case spec
+      operationId: createCase
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSpec'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/cases/{case_id}:
+    patch:
+      summary: Update a case spec
+      operationId: updateCase
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSpec'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/cases/{case_id}/generate:
+    post:
+      summary: Generate task family and rubric from case
+      operationId: generateTaskFamily
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Generation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/task-families/{task_family_id}/publish:
+    post:
+      summary: Publish a generated task family
+      operationId: publishTaskFamily
+      parameters:
+        - $ref: '#/components/parameters/TaskFamilyId'
+      responses:
+        '200':
+          description: Published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskFamily'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions:
+    post:
+      summary: Create an assessment session
+      operationId: createSession
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}/events:
+    post:
+      summary: Ingest telemetry events for a session
+      operationId: ingestSessionEvents
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventIngestResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}/coach/message:
+    post:
+      summary: Send message to context-only coach
+      operationId: coachMessage
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Coach response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}/submit:
+    post:
+      summary: Submit candidate session
+      operationId: submitSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}/score:
+    post:
+      summary: Score a submitted session
+      operationId: scoreSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Score result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/reports/{session_id}:
+    get:
+      summary: Get report for a scored session
+      operationId: getReport
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Report payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/exports/{run_id}:
+    get:
+      summary: Export report bundle
+      operationId: exportRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Export payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportBundle'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/redteam/runs:
+    post:
+      summary: Launch red-team run
+      operationId: createRedTeamRun
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedTeamRun'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/audit-logs:
+    get:
+      summary: Query audit logs
+      operationId: listAuditLogs
+      parameters:
+        - in: query
+          name: resource_type
+          schema:
+            type: string
+        - in: query
+          name: action
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    RoleHeaderAuth:
+      type: apiKey
+      in: header
+      name: X-Role
+  parameters:
+    PackId:
+      in: path
+      name: pack_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CaseId:
+      in: path
+      name: case_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TaskFamilyId:
+      in: path
+      name: task_family_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SessionId:
+      in: path
+      name: session_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RunId:
+      in: path
+      name: run_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema:
+        type: string
+  responses:
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    MetaVersion:
+      type: object
+      properties:
+        api_version:
+          type: string
+        schema_version:
+          type: string
+      required: [api_version, schema_version]
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required: [detail]
+    BusinessContextPack:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        name:
+          type: string
+        role_focus:
+          type: string
+        job_description:
+          type: string
+        examples:
+          type: array
+          items:
+            type: string
+        constraints:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+      required: [id, tenant_id, name, role_focus, job_description, examples, constraints, status]
+    MetricSpec:
+      type: object
+      properties:
+        key:
+          type: string
+        description:
+          type: string
+        formula:
+          type: string
+        source_events:
+          type: array
+          items:
+            type: string
+      required: [key, description, formula, source_events]
+    CaseSpec:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        context_pack_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        scenario:
+          type: string
+        artifacts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricSpec'
+        allowed_tools:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        version:
+          type: string
+      required: [id, tenant_id, title, scenario, artifacts, metrics, allowed_tools, status, version]
+    RubricDimension:
+      type: object
+      properties:
+        key:
+          type: string
+        anchor:
+          type: string
+      required: [key, anchor]
+    Rubric:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RubricDimension'
+        failure_modes:
+          type: array
+          items:
+            type: string
+        version:
+          type: string
+      required: [id, dimensions, failure_modes, version]
+    TaskVariant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        prompt:
+          type: string
+      required: [id, prompt]
+    TaskFamily:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        case_id:
+          type: string
+          format: uuid
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskVariant'
+        rubric_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        version:
+          type: string
+      required: [id, case_id, variants, rubric_id, status, version]
+    GenerationResult:
+      type: object
+      properties:
+        task_family:
+          $ref: '#/components/schemas/TaskFamily'
+        rubric:
+          $ref: '#/components/schemas/Rubric'
+      required: [task_family, rubric]
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        task_family_id:
+          type: string
+          format: uuid
+        candidate_id:
+          type: string
+        status:
+          type: string
+        policy:
+          type: object
+          additionalProperties: true
+      required: [id, tenant_id, task_family_id, candidate_id, status, policy]
+    EventPayload:
+      type: object
+      properties:
+        event_type:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+      required: [event_type, payload]
+    EventIngestResponse:
+      type: object
+      properties:
+        accepted:
+          type: integer
+      required: [accepted]
+    CoachResponse:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        response:
+          type: string
+        policy_reason:
+          type: string
+      required: [allowed, response, policy_reason]
+    ScoreResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        objective_metrics:
+          type: object
+          additionalProperties: true
+        dimension_scores:
+          type: object
+          additionalProperties: true
+        confidence:
+          type: number
+        needs_human_review:
+          type: boolean
+        scorer_version:
+          type: string
+        rubric_version:
+          type: string
+        task_family_version:
+          type: string
+        model_hash:
+          type: string
+      required:
+        - id
+        - session_id
+        - objective_metrics
+        - dimension_scores
+        - confidence
+        - needs_human_review
+        - scorer_version
+        - rubric_version
+        - task_family_version
+        - model_hash
+    Report:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        score_result:
+          $ref: '#/components/schemas/ScoreResult'
+        interpretation:
+          type: object
+          properties:
+            summary:
+              type: string
+            suggestions:
+              type: array
+              items:
+                type: string
+            audience:
+              type: string
+          required: [summary, suggestions, audience]
+      required: [session_id, score_result, interpretation]
+    ExportBundle:
+      type: object
+      properties:
+        run_id:
+          type: string
+          format: uuid
+        csv:
+          type: string
+        json:
+          type: object
+          additionalProperties: true
+        tableau_schema:
+          type: object
+          additionalProperties: true
+      required: [run_id, csv, json, tableau_schema]
+    RedTeamRun:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        target_type:
+          type: string
+        target_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required: [id, target_type, target_id, status, findings]
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        actor_role:
+          type: string
+        action:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [id, tenant_id, actor_role, action, resource_type, resource_id, metadata]
