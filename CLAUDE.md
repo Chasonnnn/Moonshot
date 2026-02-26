@@ -1,0 +1,38 @@
+# Moonshot Agent Rules
+
+These rules are mandatory for all implementation work in this repository.
+
+## 0) Package Manager Standard
+- Use `uv` for all Python dependency and environment management.
+- Do not use `pip install ...` workflows in project docs or CI unless required to bootstrap `uv`.
+- Preferred commands: `uv sync`, `uv add`, `uv remove`, `uv run ...`.
+
+## 1) Latest Dependencies Only
+- Always use current stable package versions when adding or upgrading dependencies.
+- Do not intentionally pin to older package versions for compatibility.
+- When touching dependency manifests, upgrade related packages rather than preserving legacy ranges.
+
+## 2) No Backward Compatibility Requirement (Pre-Release)
+- This project is under active development and does not require backward compatibility.
+- Breaking API/schema changes are allowed when they simplify architecture or speed delivery.
+- Prefer removing transitional compatibility layers instead of maintaining legacy behavior.
+
+## 3) TDD Is Required
+- Follow test-driven development for backend work:
+  1. Write/adjust failing tests first.
+  2. Implement minimal code to pass tests.
+  3. Refactor while keeping tests green.
+- No feature is complete without automated tests that cover expected behavior and key failure modes.
+
+## 4) Frontend Package Manager
+- Use `npm` for the `apps/app` frontend (not uv, not bun).
+- Run frontend commands from `apps/app/`: `npm run dev`, `npm run build`.
+
+## 5) Frontend Component Rules
+- Use shadcn components from `apps/app/components/ui/` as primitives.
+- Apply Apple design language: system font stack, `#F5F5F7` bg, `#0071E3` blue, `#1D1D1F` text.
+- Mark all uncertain product decisions inline with a `?` indicator.
+- All async operations (generate, score, export) must show a job-running state.
+
+## 6) No Dark Mode (MVP)
+- Dark mode is out of scope for MVP. Do not implement `.dark` theme variants.
