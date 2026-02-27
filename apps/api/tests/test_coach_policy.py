@@ -54,7 +54,20 @@ def test_coach_blocks_direct_answers(client, admin_headers, candidate_headers):
     assert payload["allowed"] is False
     assert payload["policy_reason"] == "direct_answer_disallowed"
     assert payload["policy_version"] == "0.3.0"
+    assert isinstance(payload["policy_hash"], str) and len(payload["policy_hash"]) == 64
     assert payload["blocked_rule_id"] == "direct_exact_answer"
+
+    traces = client.get(f"/v1/context/injection-traces/{session_id}", headers=admin_headers)
+    assert traces.status_code == 200
+    trace_payload = traces.json()["items"][-1]
+    assert trace_payload["agent_type"] == "coach"
+    assert trace_payload["policy_hash"] == payload["policy_hash"]
+
+    audit_logs = client.get("/v1/audit-logs?action=coach_message", headers=admin_headers)
+    assert audit_logs.status_code == 200
+    coach_entries = [item for item in audit_logs.json()["items"] if item["resource_id"] == session_id]
+    assert coach_entries
+    assert coach_entries[-1]["metadata"]["policy_hash"] == payload["policy_hash"]
 
 
 def test_coach_allows_context_clarification(client, admin_headers, candidate_headers):
@@ -69,3 +82,4 @@ def test_coach_allows_context_clarification(client, admin_headers, candidate_hea
     assert payload["allowed"] is True
     assert payload["policy_reason"] == "context_only_allowed"
     assert payload["policy_version"] == "0.3.0"
+    assert isinstance(payload["policy_hash"], str) and len(payload["policy_hash"]) == 64

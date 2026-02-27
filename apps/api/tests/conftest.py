@@ -39,6 +39,7 @@ def client() -> TestClient:
     store.interpretation_views.clear()
     store.context_injection_traces.clear()
     store.fairness_smoke_runs.clear()
+    store.worker_heartbeats.clear()
     return TestClient(app)
 
 

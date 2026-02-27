@@ -128,7 +128,7 @@ class TaskFamilyReviewRequest(BaseModel):
 class SessionCreate(BaseModel):
     task_family_id: UUID
     candidate_id: str
-    policy: dict[str, Any] = Field(default_factory=lambda: {"raw_content_opt_in": False, "retention_ttl_days": 30})
+    policy: dict[str, Any] = Field(default_factory=lambda: {"raw_content_opt_in": False, "retention_ttl_days": 90})
 
 
 class Session(BaseModel):
@@ -190,6 +190,7 @@ class CoachResponse(BaseModel):
     response: str
     policy_reason: str
     policy_version: str | None = None
+    policy_hash: str | None = None
     blocked_rule_id: str | None = None
 
 
@@ -305,6 +306,7 @@ class ContextInjectionTrace(BaseModel):
         ]
     )
     policy_version: str | None = None
+    policy_hash: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -372,7 +374,7 @@ class ReviewQueueResolveRequest(BaseModel):
 class AdminPolicy(BaseModel):
     tenant_id: str
     raw_content_default_opt_in: bool = False
-    default_retention_ttl_days: int = 30
+    default_retention_ttl_days: int = 90
     max_retention_ttl_days: int = 90
 
 
@@ -425,6 +427,9 @@ class AuditChainVerificationResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str
+    error_code: str | None = None
+    error_detail: str | None = None
+    request_id: str | None = None
 
 
 class MetaVersion(BaseModel):
@@ -467,6 +472,9 @@ class JobStatus(BaseModel):
     next_attempt_at: datetime | None = None
     lease_owner: str | None = None
     lease_expires_at: datetime | None = None
+    attempt_count: int = 0
+    max_attempts: int = 0
+    last_error_code: str | None = None
 
 
 class JobStatusListResponse(BaseModel):
@@ -482,6 +490,21 @@ class SLOProbeResult(BaseModel):
 class SLOProbeResponse(BaseModel):
     overall_status: str
     probes: dict[str, SLOProbeResult] = Field(default_factory=dict)
+
+
+class WorkerStatus(BaseModel):
+    worker_id: str
+    last_seen_at: datetime
+    seconds_since_last_seen: int
+    status: str
+    last_job_id: str | None = None
+
+
+class WorkerHealthResponse(BaseModel):
+    overall_status: str
+    workers: list[WorkerStatus] = Field(default_factory=list)
+    stale_leases: int = 0
+    checked_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class JobResultResponse(BaseModel):

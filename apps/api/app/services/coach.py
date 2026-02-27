@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -14,7 +15,8 @@ POLICY_PATH = Path("/Users/chason/Moonshot/apps/api/app/policies/coach_policy.ya
 
 @lru_cache(maxsize=1)
 def _load_policy() -> dict:
-    raw = yaml.safe_load(POLICY_PATH.read_text(encoding="utf-8"))
+    raw_text = POLICY_PATH.read_text(encoding="utf-8")
+    raw = yaml.safe_load(raw_text)
     blocked = raw.get("blocked_patterns") or []
     normalized: list[dict[str, str]] = []
     for idx, pattern in enumerate(blocked, start=1):
@@ -28,6 +30,7 @@ def _load_policy() -> dict:
 
     return {
         "version": str(raw.get("version", "0.1.0")),
+        "hash": hashlib.sha256(raw_text.encode("utf-8")).hexdigest(),
         "mode": str(raw.get("mode", "context_only")),
         "blocked_rules": normalized,
     }
@@ -48,6 +51,7 @@ def coach_reply(message: str, session_context: str, *, mode: str = "assessment")
                     ),
                     policy_reason="direct_answer_disallowed",
                     policy_version=policy["version"],
+                    policy_hash=policy["hash"],
                     blocked_rule_id=rule["id"],
                 )
 
@@ -75,5 +79,6 @@ def coach_reply(message: str, session_context: str, *, mode: str = "assessment")
         response=output.content,
         policy_reason="practice_guidance_allowed" if mode == "practice" else "context_only_allowed",
         policy_version=policy["version"],
+        policy_hash=policy["hash"],
         blocked_rule_id=None,
     )

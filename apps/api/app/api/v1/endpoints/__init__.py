@@ -18,6 +18,7 @@ from app.api.v1.endpoints import (
     simulator_runtime,
     sessions,
     task_families,
+    workers,
 )
 
 __all__ = [
@@ -40,4 +41,5 @@ __all__ = [
     "simulator_runtime",
     "sessions",
     "task_families",
+    "workers",
 ]

@@ -40,6 +40,8 @@ def test_generate_is_async_submit_and_result(client, admin_headers):
     status_pending = client.get(f"/v1/jobs/{job_id}", headers=admin_headers)
     assert status_pending.status_code == 200
     assert status_pending.json()["status"] in {"pending", "running"}
+    assert status_pending.json()["attempt_count"] == 0
+    assert status_pending.json()["max_attempts"] >= 1
 
     assert _drain_jobs() >= 1
 
@@ -204,7 +206,8 @@ def test_job_result_pending_returns_explicit_status(client, admin_headers):
     assert pending_result.status_code == 200
     payload = pending_result.json()
     assert payload["status"] in {"pending", "running", "retrying"}
-    assert payload["result"] == {}
+    assert payload["result"]["error_code"] == "job_not_ready"
+    assert payload["result"]["error_detail"] == "Job result not available yet"
 
 
 def test_job_retry_backoff_and_dead_letter(client, admin_headers, monkeypatch):
@@ -242,6 +245,9 @@ def test_job_retry_backoff_and_dead_letter(client, admin_headers, monkeypatch):
     retry_payload = retry_status.json()
     assert retry_payload["status"] == "retrying"
     assert retry_payload["next_attempt_at"] is not None
+    assert retry_payload["attempt_count"] == 1
+    assert retry_payload["max_attempts"] == 2
+    assert retry_payload["last_error_code"] == "internal_error"
 
     # Backoff should prevent immediate re-run.
     assert process_jobs_once() is False
@@ -257,6 +263,9 @@ def test_job_retry_backoff_and_dead_letter(client, admin_headers, monkeypatch):
     failed_status = client.get(f"/v1/jobs/{job_id}", headers=admin_headers)
     assert failed_status.status_code == 200
     assert failed_status.json()["status"] == "failed_permanent"
+    assert failed_status.json()["attempt_count"] == 2
+    assert failed_status.json()["max_attempts"] == 2
+    assert failed_status.json()["last_error_code"] == "internal_error"
 
     failed_result = client.get(f"/v1/jobs/{job_id}/result", headers=admin_headers)
     assert failed_result.status_code == 200

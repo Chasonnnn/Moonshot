@@ -20,6 +20,7 @@ from app.api.v1.endpoints import (
     simulator_runtime,
     sessions,
     task_families,
+    workers,
 )
 
 api_router = APIRouter()
@@ -42,3 +43,4 @@ api_router.include_router(slo.router)
 api_router.include_router(audit.router)
 api_router.include_router(context_traces.router)
 api_router.include_router(fairness.router)
+api_router.include_router(workers.router)

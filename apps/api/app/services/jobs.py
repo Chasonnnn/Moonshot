@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID, uuid4
@@ -7,6 +9,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import and_, or_, select, update
 
 from app.core.config import get_settings
+from app.core.request_context import get_request_id
 from app.core.security import UserContext
 from app.db.session import SessionLocal
 from app.models.entities import JobAttemptModel, JobRunModel
@@ -38,9 +41,38 @@ from app.services.scoring import score_session
 from app.services.store import store
 from app.services.task_quality import evaluate_task_quality
 
+logger = logging.getLogger("moonshot.jobs")
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _log_job_event(
+    *,
+    event: str,
+    job_id: str,
+    tenant_id: str,
+    job_type: str,
+    status: str,
+    attempt_count: int | None = None,
+    max_attempts: int | None = None,
+    error_code: str | None = None,
+    latency_ms: int | None = None,
+) -> None:
+    payload = {
+        "event": event,
+        "request_id": get_request_id(),
+        "job_id": job_id,
+        "tenant_id": tenant_id,
+        "job_type": job_type,
+        "status": status,
+        "attempt_count": attempt_count,
+        "max_attempts": max_attempts,
+        "error_code": error_code,
+        "latency_ms": latency_ms,
+    }
+    logger.info(json.dumps(payload))
 
 
 def _status_progress(status: str) -> int:
@@ -53,6 +85,28 @@ def _status_progress(status: str) -> int:
     if status == "retrying":
         return 25
     return 0
+
+
+def _job_status_from_row(row: JobRunModel) -> JobStatus:
+    return JobStatus(
+        job_id=UUID(row.id),
+        status=row.status,
+        job_type=row.job_type,
+        target_type=row.target_type,
+        target_id=row.target_id,
+        progress=_status_progress(row.status),
+        error_code=row.error_code,
+        error_detail=row.error_detail,
+        submitted_at=row.created_at,
+        started_at=row.started_at,
+        completed_at=row.completed_at,
+        next_attempt_at=row.next_attempt_at,
+        lease_owner=row.lease_owner,
+        lease_expires_at=row.lease_expires_at,
+        attempt_count=row.attempt_count,
+        max_attempts=row.max_attempts,
+        last_error_code=row.error_code,
+    )
 
 
 def _ready_job_clause(now: datetime):
@@ -136,6 +190,15 @@ def submit_job(
 
     accepted = JobAccepted(job_id=job_id, status="pending", submitted_at=now)
     set_cached(cache_scope, idempotency_key, accepted.model_dump(mode="json"))
+    _log_job_event(
+        event="job_submitted",
+        job_id=str(job_id),
+        tenant_id=user.tenant_id,
+        job_type=job_type,
+        status="pending",
+        attempt_count=0,
+        max_attempts=max_attempts,
+    )
     return accepted
 
 
@@ -144,22 +207,7 @@ def get_job_status(job_id: UUID, tenant_id: str) -> JobStatus | None:
         row = db.get(JobRunModel, str(job_id))
         if row is None or row.tenant_id != tenant_id:
             return None
-        return JobStatus(
-            job_id=UUID(row.id),
-            status=row.status,
-            job_type=row.job_type,
-            target_type=row.target_type,
-            target_id=row.target_id,
-            progress=_status_progress(row.status),
-            error_code=row.error_code,
-            error_detail=row.error_detail,
-            submitted_at=row.created_at,
-            started_at=row.started_at,
-            completed_at=row.completed_at,
-            next_attempt_at=row.next_attempt_at,
-            lease_owner=row.lease_owner,
-            lease_expires_at=row.lease_expires_at,
-        )
+        return _job_status_from_row(row)
 
 
 def get_jobs_for_tenant(
@@ -177,25 +225,46 @@ def get_jobs_for_tenant(
             query = query.where(JobRunModel.job_type == job_type)
         rows = db.execute(query.order_by(JobRunModel.created_at.desc()).limit(limit)).scalars().all()
 
-    return [
-        JobStatus(
-            job_id=UUID(row.id),
-            status=row.status,
-            job_type=row.job_type,
-            target_type=row.target_type,
-            target_id=row.target_id,
-            progress=_status_progress(row.status),
-            error_code=row.error_code,
-            error_detail=row.error_detail,
-            submitted_at=row.created_at,
-            started_at=row.started_at,
-            completed_at=row.completed_at,
-            next_attempt_at=row.next_attempt_at,
-            lease_owner=row.lease_owner,
-            lease_expires_at=row.lease_expires_at,
+    return [_job_status_from_row(row) for row in rows]
+
+
+def get_stale_leases_for_tenant(tenant_id: str, *, limit: int = 100) -> list[JobStatus]:
+    now = _now()
+    with SessionLocal() as db:
+        rows = (
+            db.execute(
+                select(JobRunModel)
+                .where(JobRunModel.tenant_id == tenant_id)
+                .where(JobRunModel.status == "running")
+                .where(JobRunModel.lease_expires_at.is_not(None))
+                .where(JobRunModel.lease_expires_at < now)
+                .order_by(JobRunModel.lease_expires_at.asc())
+                .limit(limit)
+            )
+            .scalars()
+            .all()
         )
-        for row in rows
-    ]
+    return [_job_status_from_row(row) for row in rows]
+
+
+def get_queue_runtime_metrics(tenant_id: str) -> dict[str, int]:
+    now = _now()
+    with SessionLocal() as db:
+        rows = db.execute(select(JobRunModel).where(JobRunModel.tenant_id == tenant_id)).scalars().all()
+
+    pending_like = [row for row in rows if row.status in {"pending", "retrying"}]
+    oldest_pending_age_seconds = 0
+    if pending_like:
+        oldest_created = min(row.created_at for row in pending_like)
+        oldest_pending_age_seconds = max(0, int((now - oldest_created).total_seconds()))
+
+    return {
+        "queue_backlog_count": len(pending_like),
+        "queue_oldest_pending_age_seconds": oldest_pending_age_seconds,
+        "queue_retrying_count": len([row for row in rows if row.status == "retrying"]),
+        "queue_failed_permanent_count": len([row for row in rows if row.status == "failed_permanent"]),
+        "queue_inflight_leased_count": len([row for row in rows if row.status == "running" and row.lease_owner is not None]),
+    }
 
 
 def get_job_result(job_id: UUID, tenant_id: str) -> JobResultResponse | None:
@@ -204,12 +273,21 @@ def get_job_result(job_id: UUID, tenant_id: str) -> JobResultResponse | None:
         if row is None or row.tenant_id != tenant_id:
             return None
         if row.result_payload is None:
-            result_payload = {}
-            if row.error_code or row.error_detail:
+            result_payload: dict[str, Any]
+            if row.status in {"pending", "running", "retrying"}:
+                result_payload = {
+                    "error_code": "job_not_ready",
+                    "error_detail": "Job result not available yet",
+                    "last_error_code": row.error_code,
+                    "last_error_detail": row.error_detail,
+                }
+            elif row.error_code or row.error_detail:
                 result_payload = {
                     "error_code": row.error_code,
                     "error_detail": row.error_detail,
                 }
+            else:
+                result_payload = {}
             return JobResultResponse(job_id=UUID(row.id), status=row.status, result=result_payload)
         return JobResultResponse(job_id=UUID(row.id), status=row.status, result=row.result_payload)
 
@@ -277,7 +355,13 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
     updated_session = Session.model_validate({**session.model_dump(mode="json"), "status": "scored"})
     session_repository.save_session(updated_session)
 
-    _audit_system(job.tenant_id, "score", "session", str(session_id))
+    _audit_system(
+        job.tenant_id,
+        "score",
+        "session",
+        str(session_id),
+        {"model_hash": score_result.model_hash, "scorer_version": score_result.scorer_version},
+    )
     return score_result.model_dump(mode="json")
 
 
@@ -385,7 +469,13 @@ def _claim_next_job(*, worker_id: str, now: datetime) -> tuple[str, str] | None:
         with SessionLocal() as db:
             candidate = (
                 db.execute(
-                    select(JobRunModel.id, JobRunModel.status, JobRunModel.attempt_count)
+                    select(
+                        JobRunModel.id,
+                        JobRunModel.tenant_id,
+                        JobRunModel.job_type,
+                        JobRunModel.status,
+                        JobRunModel.attempt_count,
+                    )
                     .where(_ready_job_clause(now))
                     .where(
                         or_(
@@ -443,6 +533,14 @@ def _claim_next_job(*, worker_id: str, now: datetime) -> tuple[str, str] | None:
                 )
             )
             db.commit()
+            _log_job_event(
+                event="job_claimed",
+                job_id=str(candidate.id),
+                tenant_id=str(candidate.tenant_id),
+                job_type=str(candidate.job_type),
+                status="running",
+                attempt_count=next_attempt_no,
+            )
             return str(candidate.id), attempt_id
     return None
 
@@ -462,6 +560,7 @@ def process_jobs_once(*, worker_id: str = "worker-main") -> bool:
         try:
             result = _execute_job(job)
             completed = _now()
+            latency_ms = max(1, int((completed - now).total_seconds() * 1000))
             job.status = "completed"
             job.result_payload = result
             job.error_code = None
@@ -474,9 +573,20 @@ def process_jobs_once(*, worker_id: str = "worker-main") -> bool:
             attempt.status = "completed"
             attempt.completed_at = completed
             db.commit()
+            _log_job_event(
+                event="job_completed",
+                job_id=job.id,
+                tenant_id=job.tenant_id,
+                job_type=job.job_type,
+                status=job.status,
+                attempt_count=job.attempt_count,
+                max_attempts=job.max_attempts,
+                latency_ms=latency_ms,
+            )
             return True
         except Exception as exc:
             completed = _now()
+            latency_ms = max(1, int((completed - now).total_seconds() * 1000))
             error_code = _classify_error(exc)
             error_detail = str(exc)
 
@@ -502,6 +612,17 @@ def process_jobs_once(*, worker_id: str = "worker-main") -> bool:
             attempt.completed_at = completed
 
             db.commit()
+            _log_job_event(
+                event="job_failed_permanent" if job.status == "failed_permanent" else "job_retry_scheduled",
+                job_id=job.id,
+                tenant_id=job.tenant_id,
+                job_type=job.job_type,
+                status=job.status,
+                attempt_count=job.attempt_count,
+                max_attempts=job.max_attempts,
+                error_code=error_code,
+                latency_ms=latency_ms,
+            )
             return True
 
 

@@ -50,7 +50,7 @@ def test_admin_policy_defaults_and_patch(client, admin_headers, reviewer_headers
     default_policy = client.get("/v1/admin/policies", headers=admin_headers)
     assert default_policy.status_code == 200
     assert default_policy.json()["raw_content_default_opt_in"] is False
-    assert default_policy.json()["default_retention_ttl_days"] == 30
+    assert default_policy.json()["default_retention_ttl_days"] == 90
 
     forbidden = client.patch(
         "/v1/admin/policies",

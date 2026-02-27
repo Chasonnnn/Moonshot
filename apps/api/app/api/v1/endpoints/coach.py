@@ -43,6 +43,7 @@ def send_coach_message(
                     "allowed": response.allowed,
                     "policy_reason": response.policy_reason,
                     "policy_version": response.policy_version,
+                    "policy_hash": response.policy_hash,
                     "blocked_rule_id": response.blocked_rule_id,
                 },
             }
@@ -56,6 +57,7 @@ def send_coach_message(
         mode=coach_mode,
         context_keys=["case_scenario", "policy_constraints", "coach_policy"],
         policy_version=response.policy_version,
+        policy_hash=response.policy_hash,
     )
     audit(
         user,
@@ -65,6 +67,7 @@ def send_coach_message(
         {
             "allowed": response.allowed,
             "policy_version": response.policy_version,
+            "policy_hash": response.policy_hash,
             "blocked_rule_id": response.blocked_rule_id,
         },
     )

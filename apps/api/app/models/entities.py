@@ -149,7 +149,7 @@ class AdminPolicyModel(Base):
 
     tenant_id: Mapped[str] = mapped_column(String(100), primary_key=True)
     raw_content_default_opt_in: Mapped[bool] = mapped_column(Boolean, default=False)
-    default_retention_ttl_days: Mapped[int] = mapped_column(Integer, default=30)
+    default_retention_ttl_days: Mapped[int] = mapped_column(Integer, default=90)
     max_retention_ttl_days: Mapped[int] = mapped_column(Integer, default=90)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 
@@ -288,6 +288,7 @@ class ContextInjectionTraceModel(Base):
     context_keys: Mapped[list] = mapped_column(JSON)
     precedence_order: Mapped[list] = mapped_column(JSON)
     policy_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    policy_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 
 
@@ -300,3 +301,11 @@ class FairnessSmokeRunModel(Base):
     status: Mapped[str] = mapped_column(String(32), index=True)
     summary: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class WorkerHeartbeatModel(Base):
+    __tablename__ = "worker_heartbeats"
+
+    worker_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    last_job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)

@@ -8,6 +8,7 @@ from sqlalchemy import text
 from app.db.session import SessionLocal
 from app.schemas import SLOProbeResponse, SLOProbeResult
 from app.services.audit_integrity import verify_audit_chain
+from app.services.jobs import get_queue_runtime_metrics
 from app.services.score_drift import run_benchmark_fixture
 from app.services.store import store
 
@@ -56,11 +57,20 @@ def _probe_score_drift() -> SLOProbeResult:
     )
 
 
+def _probe_queue_runtime(tenant_id: str) -> SLOProbeResult:
+    started = perf_counter()
+    metrics = get_queue_runtime_metrics(tenant_id)
+    latency_ms = max(1, int((perf_counter() - started) * 1000))
+    status = "ok" if metrics["queue_failed_permanent_count"] == 0 else "degraded"
+    return SLOProbeResult(status=status, latency_ms=latency_ms, detail=metrics)
+
+
 def run_slo_probes(tenant_id: str) -> SLOProbeResponse:
     probes = {
         "database": _probe_database(),
         "audit_chain": _probe_audit_chain(tenant_id),
         "score_drift": _probe_score_drift(),
+        "queue_runtime": _probe_queue_runtime(tenant_id),
     }
     overall_status = "ok" if all(item.status == "ok" for item in probes.values()) else "degraded"
     return SLOProbeResponse(overall_status=overall_status, probes=probes)

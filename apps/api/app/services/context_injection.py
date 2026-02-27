@@ -15,6 +15,7 @@ def append_context_trace(
     mode: str,
     context_keys: list[str],
     policy_version: str | None = None,
+    policy_hash: str | None = None,
 ) -> ContextInjectionTrace:
     trace = ContextInjectionTrace(
         session_id=session_id,
@@ -24,6 +25,7 @@ def append_context_trace(
         mode=mode,
         context_keys=context_keys,
         policy_version=policy_version,
+        policy_hash=policy_hash,
     )
     store.context_injection_traces[trace.id] = trace.model_dump(mode="json")
     return trace

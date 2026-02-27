@@ -60,6 +60,8 @@ from app.schemas.contracts import (
     TaskFamily,
     TaskFamilyReviewRequest,
     TaskFamilyPublishRequest,
+    WorkerHealthResponse,
+    WorkerStatus,
 )
 
 __all__ = [
@@ -124,4 +126,6 @@ __all__ = [
     "TaskFamily",
     "TaskFamilyReviewRequest",
     "TaskFamilyPublishRequest",
+    "WorkerHealthResponse",
+    "WorkerStatus",
 ]

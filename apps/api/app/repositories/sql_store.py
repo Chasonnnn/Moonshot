@@ -39,6 +39,7 @@ from app.models.entities import (
     SessionSQLHistoryModel,
     TaskQualitySignalModel,
     TaskFamilyModel,
+    WorkerHeartbeatModel,
 )
 
 
@@ -673,6 +674,12 @@ class SQLStore:
             model_cls=FairnessSmokeRunModel,
             key_attr="id",
             uuid_keys=True,
+        )
+        self.worker_heartbeats = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=WorkerHeartbeatModel,
+            key_attr="worker_id",
+            uuid_keys=False,
         )
 
     def ensure_schema(self) -> None:

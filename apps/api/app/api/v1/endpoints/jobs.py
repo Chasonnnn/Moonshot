@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.api.deps import require_roles
 from app.core.security import UserContext
 from app.schemas import JobResultResponse, JobStatus, JobStatusListResponse
-from app.services.jobs import get_job_result, get_job_status, get_jobs_for_tenant
+from app.services.jobs import get_job_result, get_job_status, get_jobs_for_tenant, get_stale_leases_for_tenant
 
 router = APIRouter(prefix="/v1/jobs", tags=["jobs"])
 
@@ -20,6 +20,15 @@ def list_jobs(
     user: UserContext = Depends(require_roles("org_admin", "reviewer")),
 ) -> JobStatusListResponse:
     items = get_jobs_for_tenant(user.tenant_id, status=status, job_type=job_type, limit=limit)
+    return JobStatusListResponse(items=items)
+
+
+@router.get("/stale-leases", response_model=JobStatusListResponse)
+def list_stale_leases(
+    limit: int = Query(default=100, ge=1, le=500),
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> JobStatusListResponse:
+    items = get_stale_leases_for_tenant(user.tenant_id, limit=limit)
     return JobStatusListResponse(items=items)
 
 

@@ -76,6 +76,13 @@ def test_report_and_export_flow(client, admin_headers, reviewer_headers, candida
     report_payload = report.json()
     assert "score_result" in report_payload
     assert "objective_metrics" in report_payload["score_result"]
+    assert report_payload["score_result"]["model_hash"]
+
+    score_audit = client.get("/v1/audit-logs?action=score", headers=admin_headers)
+    assert score_audit.status_code == 200
+    score_entries = [item for item in score_audit.json()["items"] if item["resource_id"] == session_id]
+    assert score_entries
+    assert score_entries[-1]["metadata"]["model_hash"] == report_payload["score_result"]["model_hash"]
 
     export_submit = client.post(
         "/v1/exports",

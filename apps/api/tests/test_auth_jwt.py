@@ -32,6 +32,24 @@ def test_bootstrap_token_endpoint_issues_valid_token(client):
     assert authorized.status_code == 200
 
 
+def test_bootstrap_token_endpoint_rejects_invalid_bootstrap_secret(client):
+    response = client.post(
+        "/v1/auth/token",
+        headers={"X-Bootstrap-Token": "wrong-bootstrap-token"},
+        json={"role": "reviewer", "user_id": "reviewer_1", "tenant_id": "tenant_a", "expires_in_seconds": 3600},
+    )
+    assert response.status_code == 401
+
+
+def test_bootstrap_token_endpoint_rejects_unknown_role(client):
+    response = client.post(
+        "/v1/auth/token",
+        headers={"X-Bootstrap-Token": "moonshot-bootstrap-dev"},
+        json={"role": "manager", "user_id": "manager_1", "tenant_id": "tenant_a", "expires_in_seconds": 3600},
+    )
+    assert response.status_code == 400
+
+
 def test_invalid_bearer_token_is_rejected(client):
     response = client.get("/v1/cases", headers={"Authorization": "Bearer not-a-valid-token"})
     assert response.status_code == 401
