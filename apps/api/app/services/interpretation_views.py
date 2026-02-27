@@ -7,7 +7,7 @@ from app.services.repositories import scoring_repository
 from app.services.store import store
 
 
-def create_interpretation_view(session_id: UUID, request: InterpretationRequest) -> InterpretationView:
+def create_interpretation_view(session_id: UUID, request: InterpretationRequest, *, tenant_id: str) -> InterpretationView:
     report = scoring_repository.get_report(session_id)
     if report is None:
         raise RuntimeError("report_not_found")
@@ -48,7 +48,12 @@ def create_interpretation_view(session_id: UUID, request: InterpretationRequest)
         ],
         scoring_version_lock=scoring_lock,
     )
-    store.interpretation_views[view.view_id] = view.model_dump(mode="json")
+    store.interpretation_views[view.view_id] = {
+        "session_id": str(view.session_id),
+        "tenant_id": tenant_id,
+        "payload": view.model_dump(mode="json"),
+        "created_at": view.created_at.isoformat(),
+    }
     return view
 
 
@@ -56,7 +61,10 @@ def get_interpretation_view(session_id: UUID, view_id: UUID) -> InterpretationVi
     payload = store.interpretation_views.get(view_id)
     if payload is None:
         return None
-    view = InterpretationView.model_validate(payload)
+    view_payload = payload.get("payload")
+    if not isinstance(view_payload, dict):
+        return None
+    view = InterpretationView.model_validate(view_payload)
     if view.session_id != session_id:
         return None
     return view

@@ -25,10 +25,11 @@ def append_context_trace(
         context_keys=context_keys,
         policy_version=policy_version,
     )
-    store.context_injection_traces.setdefault(session_id, []).append(trace.model_dump(mode="json"))
+    store.context_injection_traces[trace.id] = trace.model_dump(mode="json")
     return trace
 
 
 def list_context_traces(session_id: UUID) -> list[ContextInjectionTrace]:
-    payloads = store.context_injection_traces.get(session_id, [])
-    return [ContextInjectionTrace.model_validate(item) for item in payloads]
+    payloads = [item for item in store.context_injection_traces.values() if item.get("session_id") == str(session_id)]
+    traces = [ContextInjectionTrace.model_validate(item) for item in payloads]
+    return sorted(traces, key=lambda item: item.created_at)

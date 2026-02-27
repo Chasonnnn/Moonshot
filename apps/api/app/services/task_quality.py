@@ -103,7 +103,9 @@ def evaluate_task_quality(task_family_id: UUID, *, evaluated_by_role: str) -> Ta
         quality_score=quality_score,
         evaluated_by_role=evaluated_by_role,
     )
-    store.task_quality_signals[task_family_id] = signal.model_dump(mode="json")
+    payload = signal.model_dump(mode="json")
+    payload["tenant_id"] = case_payload.tenant_id
+    store.task_quality_signals[task_family_id] = payload
     return signal
 
 

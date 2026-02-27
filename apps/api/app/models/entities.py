@@ -233,3 +233,70 @@ class AuditLogModel(Base):
     prev_hash: Mapped[str] = mapped_column(String(64))
     entry_hash: Mapped[str] = mapped_column(String(64), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TaskQualitySignalModel(Base):
+    __tablename__ = "task_quality_signals"
+
+    task_family_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    variant_count: Mapped[int] = mapped_column(Integer)
+    diversity_score: Mapped[float] = mapped_column(Float)
+    clarity_score: Mapped[float] = mapped_column(Float)
+    realism_score: Mapped[float] = mapped_column(Float)
+    variant_stability_score: Mapped[float] = mapped_column(Float)
+    admin_acceptance_rate: Mapped[float] = mapped_column(Float)
+    mean_edit_distance: Mapped[float] = mapped_column(Float)
+    rubric_leakage_detected: Mapped[bool] = mapped_column(Boolean)
+    quality_score: Mapped[float] = mapped_column(Float)
+    evaluated_by_role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class CoachFeedbackModel(Base):
+    __tablename__ = "coach_feedback"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(36), index=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    candidate_id: Mapped[str] = mapped_column(String(100), index=True)
+    helpful: Mapped[bool] = mapped_column(Boolean)
+    confusion_tags: Mapped[list] = mapped_column(JSON)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class InterpretationViewModel(Base):
+    __tablename__ = "interpretation_views"
+
+    view_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(36), index=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class ContextInjectionTraceModel(Base):
+    __tablename__ = "context_injection_traces"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(36), index=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    agent_type: Mapped[str] = mapped_column(String(64))
+    actor_role: Mapped[str] = mapped_column(String(64))
+    mode: Mapped[str] = mapped_column(String(32))
+    context_keys: Mapped[list] = mapped_column(JSON)
+    precedence_order: Mapped[list] = mapped_column(JSON)
+    policy_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class FairnessSmokeRunModel(Base):
+    __tablename__ = "fairness_smoke_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    scope: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(32), index=True)
+    summary: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)

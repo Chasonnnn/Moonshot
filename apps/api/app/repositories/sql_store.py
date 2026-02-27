@@ -20,10 +20,14 @@ from app.models.entities import (
     AuditLogModel,
     BusinessContextPackModel,
     CaseSpecModel,
+    CoachFeedbackModel,
+    ContextInjectionTraceModel,
     DashboardStateModel,
     EventLogModel,
     ExportRunModel,
+    FairnessSmokeRunModel,
     IdempotencyCacheModel,
+    InterpretationViewModel,
     JobAttemptModel,
     JobRunModel,
     RedTeamRunModel,
@@ -33,6 +37,7 @@ from app.models.entities import (
     ScoreResultModel,
     SessionModel,
     SessionSQLHistoryModel,
+    TaskQualitySignalModel,
     TaskFamilyModel,
 )
 
@@ -639,11 +644,36 @@ class SQLStore:
             key_attr="id",
             uuid_keys=True,
         )
-        self.task_quality_signals: dict[UUID, dict[str, Any]] = {}
-        self.coach_feedback: dict[UUID, list[dict[str, Any]]] = {}
-        self.interpretation_views: dict[UUID, dict[str, Any]] = {}
-        self.context_injection_traces: dict[UUID, list[dict[str, Any]]] = {}
-        self.fairness_smoke_runs: dict[UUID, dict[str, Any]] = {}
+        self.task_quality_signals = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=TaskQualitySignalModel,
+            key_attr="task_family_id",
+            uuid_keys=True,
+        )
+        self.coach_feedback = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=CoachFeedbackModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
+        self.interpretation_views = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=InterpretationViewModel,
+            key_attr="view_id",
+            uuid_keys=True,
+        )
+        self.context_injection_traces = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=ContextInjectionTraceModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
+        self.fairness_smoke_runs = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=FairnessSmokeRunModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
 
     def ensure_schema(self) -> None:
         Base.metadata.create_all(bind=engine)

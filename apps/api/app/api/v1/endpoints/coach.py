@@ -90,7 +90,7 @@ def submit_coach_feedback(
         confusion_tags=payload.confusion_tags,
         notes=payload.notes,
     )
-    store.coach_feedback.setdefault(session_id, []).append(feedback.model_dump(mode="json"))
+    store.coach_feedback[feedback.id] = {**feedback.model_dump(mode="json"), "tenant_id": user.tenant_id}
     session_repository.append_events(
         session_id,
         [
