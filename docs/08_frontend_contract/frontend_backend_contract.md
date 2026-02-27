@@ -24,6 +24,7 @@
   - `POST /v1/redteam/runs`
 - Required header for async submit endpoints: `Idempotency-Key`.
 - Polling endpoints:
+  - `GET /v1/jobs`
   - `GET /v1/jobs/{job_id}` -> `JobStatus`
   - `GET /v1/jobs/{job_id}/result` -> `JobResultResponse` (returns in-progress status explicitly)
 - Job states:
@@ -32,6 +33,12 @@
   - `retrying`
   - `completed`
   - `failed_permanent`
+- Standardized job error codes:
+  - `validation_error`
+  - `dependency_unavailable`
+  - `provider_timeout`
+  - `policy_violation`
+  - `internal_error`
 
 ## Required Mocking Assets
 - OpenAPI spec: `docs/03_api/openapi.yaml`
@@ -74,3 +81,4 @@
   - `PATCH /v1/admin/policies`
   - `POST /v1/admin/policies/purge-expired`
   - `GET /v1/audit-logs`
+  - `GET /v1/audit-logs/verify`

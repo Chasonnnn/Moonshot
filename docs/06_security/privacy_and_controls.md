@@ -15,6 +15,8 @@
 - Scoring config changes tracked in audit logs.
 - Versioned policy artifacts for coach/evaluator behavior.
 - Red-team findings linked to mitigation status.
+- Audit logs are chained with `prev_hash` and `entry_hash` for tamper-evidence verification.
+- Admin verification endpoint is available for chain validation: `GET /v1/audit-logs/verify`.
 
 ## SOC2-Ready Practices in MVP
 - Access control mapping by role.

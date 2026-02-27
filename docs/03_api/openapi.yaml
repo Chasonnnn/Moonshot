@@ -62,6 +62,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/jobs:
+    get:
+      tags:
+      - jobs
+      summary: List Jobs
+      operationId: list_jobs_v1_jobs_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: job_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Job Type
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/jobs/{job_id}:
     get:
       tags:
@@ -1178,6 +1225,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/audit-logs/verify:
+    get:
+      tags:
+      - audit
+      summary: Verify Audit Logs
+      operationId: verify_audit_logs_v1_audit_logs_verify_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditChainVerificationResponse'
+      security:
+      - HTTPBearer: []
 components:
   schemas:
     AdminPolicy:
@@ -1220,6 +1282,34 @@ components:
           title: Max Retention Ttl Days
       type: object
       title: AdminPolicyUpdateRequest
+    AuditChainVerificationResponse:
+      properties:
+        valid:
+          type: boolean
+          title: Valid
+        checked_entries:
+          type: integer
+          title: Checked Entries
+        error_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Code
+        error_detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Detail
+        failed_index:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Failed Index
+      type: object
+      required:
+      - valid
+      - checked_entries
+      title: AuditChainVerificationResponse
     AuditLog:
       properties:
         id:
@@ -1245,6 +1335,14 @@ components:
           additionalProperties: true
           type: object
           title: Metadata
+        prev_hash:
+          type: string
+          title: Prev Hash
+          default: GENESIS
+        entry_hash:
+          type: string
+          title: Entry Hash
+          default: UNSET
         created_at:
           type: string
           format: date-time
@@ -1749,6 +1847,21 @@ components:
         status:
           type: string
           title: Status
+        job_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Job Type
+        target_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target Type
+        target_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target Id
         progress:
           type: integer
           title: Progress
@@ -1785,12 +1898,32 @@ components:
             format: date-time
           - type: 'null'
           title: Next Attempt At
+        lease_owner:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lease Owner
+        lease_expires_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Lease Expires At
       type: object
       required:
       - job_id
       - status
       - submitted_at
       title: JobStatus
+    JobStatusListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/JobStatus'
+          type: array
+          title: Items
+      type: object
+      title: JobStatusListResponse
     MetaVersion:
       properties:
         api_version:

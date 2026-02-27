@@ -29,6 +29,8 @@
 - `job_retry_scheduled`
 - `job_completed`
 - `job_failed_permanent`
+- `job_lease_claimed`
+- `job_lease_reclaimed`
 
 ## Canonical Payload Keys
 - `time_to_first_action_ms`
@@ -46,6 +48,8 @@
 - `job_type`
 - `job_status`
 - `next_attempt_at`
+- `lease_owner`
+- `lease_expires_at`
 
 ## Anti-Cheating Rules (MVP)
 Flag session if any:

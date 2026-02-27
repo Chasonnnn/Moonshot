@@ -80,13 +80,35 @@
     "response": {
       "job_id": "00000000-0000-0000-0000-000000000501",
       "status": "retrying",
+      "job_type": "generate",
+      "target_type": "case",
+      "target_id": "00000000-0000-0000-0000-000000000010",
       "progress": 25,
-      "error_code": "runtimeerror",
+      "error_code": "internal_error",
       "error_detail": "forced_generation_failure",
       "submitted_at": "2026-02-27T12:00:00Z",
       "started_at": "2026-02-27T12:00:01Z",
       "completed_at": null,
-      "next_attempt_at": "2026-02-27T12:00:03Z"
+      "next_attempt_at": "2026-02-27T12:00:03Z",
+      "lease_owner": "worker-a",
+      "lease_expires_at": "2026-02-27T12:00:30Z"
+    }
+  },
+  "job_list_failed_permanent": {
+    "response": {
+      "items": [
+        {
+          "job_id": "00000000-0000-0000-0000-000000000999",
+          "status": "failed_permanent",
+          "job_type": "generate",
+          "target_type": "case",
+          "target_id": "00000000-0000-0000-0000-000000000010",
+          "progress": 100,
+          "error_code": "internal_error",
+          "error_detail": "forced_generation_failure",
+          "submitted_at": "2026-02-27T12:00:00Z"
+        }
+      ]
     }
   },
   "job_result_generate_completed": {
@@ -237,5 +259,11 @@
   },
   "error_not_found": {
     "detail": "Case not found"
+  },
+  "audit_verify_ok": {
+    "response": {
+      "valid": true,
+      "checked_entries": 5
+    }
   }
 }

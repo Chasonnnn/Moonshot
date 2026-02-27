@@ -4,6 +4,7 @@
 - Added JWT bootstrap token API:
   - `POST /v1/auth/token`
 - Added async job lifecycle APIs:
+  - `GET /v1/jobs`
   - `GET /v1/jobs/{job_id}`
   - `GET /v1/jobs/{job_id}/result`
 - Converted heavy operations to async submit with `JobAccepted` response (`202`):
@@ -14,10 +15,16 @@
 - Enforced idempotency headers for async submit endpoints.
 - Replaced header-spoof auth runtime behavior with JWT bearer-token claims (`sub`, `role`, `tenant_id`, `exp`, `kid`).
 - Added job retry/dead-letter states and backoff metadata (`next_attempt_at`) in job status.
+- Added worker lease metadata (`lease_owner`, `lease_expires_at`) and lease-based reclaim behavior.
 - Added policy metadata to coach responses (`policy_version`, `blocked_rule_id`).
 - Added score diagnostics (`trigger_codes`) and maintained provenance fields for reports.
 - Added model-provider abstraction layer with explicit no-fallback behavior for unsupported providers.
 - Wired Gemini provider to the live Gemini SDK (`google-genai`) with explicit API-key requirement (`MOONSHOT_GEMINI_API_KEY`).
+- Added audit integrity chain fields (`prev_hash`, `entry_hash`) and verification endpoint:
+  - `GET /v1/audit-logs/verify`
+- Added CI governance checks:
+  - OpenAPI/changelog version gate
+  - scoring drift benchmark gate
 
 ## 0.1.4 - 2026-02-26
 - Added simulator runtime endpoints:
