@@ -1,7 +1,7 @@
-# Frontend/Backend Contract v0.4.0
+# Frontend/Backend Contract v0.4.2
 
 ## Integration Principles
-- Frontend builds against OpenAPI `0.4.0` and fixture payloads.
+- Frontend builds against OpenAPI `0.4.2` and fixture payloads.
 - Breaking changes allowed during development but must be versioned.
 - Tenant-scoped APIs; explicit `404`/`403` isolation behavior.
 - No fallback routes; explicit backend errors only.
@@ -78,6 +78,11 @@ Export schema lock:
 - Show coaching mode state clearly to candidate.
 - Interpretation views must be labeled non-mutating.
 - Expose request IDs for support/debug flows.
+- Show report summary diagnostics:
+  - `trigger_count`
+  - `last_scored_at`
+- Handle coach decision diagnostics:
+  - `policy_decision_code`
 
 ## Implementation Playbook
 - JDA integration sequence, polling cadence, and local env config:

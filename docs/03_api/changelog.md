@@ -1,5 +1,25 @@
 # API Changelog
 
+## 0.4.2 - 2026-02-27
+- Added generation diagnostics persistence on task families:
+  - `TaskFamily.generation_diagnostics`
+  - publish now blocked when diagnostics indicate diversity/leakage failures.
+- Expanded task-quality signal diagnostics:
+  - `diversity_fail_reason`
+  - `leakage_rule_hits`
+  - `grounding_coverage_score`
+- Added coach decision diagnostics:
+  - `CoachResponse.policy_decision_code`
+- Expanded scoring diagnostics payload:
+  - `ScoreResult.trigger_impacts`
+  - `ScoreResult.scored_at`
+- Expanded report summary payload:
+  - `trigger_count`
+  - `last_scored_at`
+- Expanded score drift benchmark checks for trigger impact mismatch.
+- Added Postgres migration `20260301_0008_generation_diagnostics_and_scoring_detail.py`.
+- Updated frontend contract/runbook docs and API examples for new diagnostics fields.
+
 ## 0.4.0 - 2026-02-27
 - Added report summary endpoint for frontend polling cards:
   - `GET /v1/reports/{session_id}/summary`

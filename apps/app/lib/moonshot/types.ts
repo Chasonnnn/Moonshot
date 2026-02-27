@@ -44,6 +44,8 @@ export interface ReportSummary {
   confidence: number | null
   needs_human_review: boolean | null
   trigger_codes: string[]
+  trigger_count: number
+  last_scored_at: string | null
   scoring_version_lock: {
     scorer_version: string
     rubric_version: string

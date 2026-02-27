@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moonshot Backend
-  version: 0.4.0
+  version: 0.4.2
 paths:
   /health:
     get:
@@ -2117,6 +2117,11 @@ components:
         policy_reason:
           type: string
           title: Policy Reason
+        policy_decision_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Policy Decision Code
         policy_version:
           anyOf:
           - type: string
@@ -2684,6 +2689,16 @@ components:
             type: string
           type: array
           title: Trigger Codes
+        trigger_count:
+          type: integer
+          title: Trigger Count
+          default: 0
+        last_scored_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Scored At
         scoring_version_lock:
           anyOf:
           - $ref: '#/components/schemas/ScoringVersionLock'
@@ -2907,6 +2922,19 @@ components:
             type: string
           type: array
           title: Trigger Codes
+        trigger_impacts:
+          items:
+            additionalProperties:
+              anyOf:
+              - type: number
+              - type: string
+            type: object
+          type: array
+          title: Trigger Impacts
+        scored_at:
+          type: string
+          format: date-time
+          title: Scored At
       type: object
       required:
       - session_id
@@ -3042,6 +3070,10 @@ components:
           type: string
           title: Version
           default: 0.1.0
+        generation_diagnostics:
+          additionalProperties: true
+          type: object
+          title: Generation Diagnostics
       type: object
       required:
       - case_id
@@ -3100,6 +3132,20 @@ components:
         rubric_leakage_detected:
           type: boolean
           title: Rubric Leakage Detected
+        diversity_fail_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Diversity Fail Reason
+        leakage_rule_hits:
+          items:
+            type: string
+          type: array
+          title: Leakage Rule Hits
+        grounding_coverage_score:
+          type: number
+          title: Grounding Coverage Score
+          default: 0.0
         quality_score:
           type: number
           title: Quality Score

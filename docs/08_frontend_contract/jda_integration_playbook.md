@@ -1,7 +1,7 @@
-# JDA Frontend Integration Playbook (v0.4.0)
+# JDA Frontend Integration Playbook (v0.4.2)
 
 ## Purpose
-This playbook is the implementation contract for frontend teams integrating the JDA MVP path with backend `v0.4.0`.
+This playbook is the implementation contract for frontend teams integrating the JDA MVP path with backend `v0.4.2`.
 
 ## Required Runtime Headers
 1. `Authorization: Bearer <jwt>`

@@ -1,4 +1,4 @@
-# Backend Runbook and SLOs (v0.3)
+# Backend Runbook and SLOs (v0.4.2)
 
 ## Service Components
 - API service (FastAPI)
@@ -35,16 +35,20 @@
 ## Operational Validation Checklist
 1. Contract governance check (`check_contract_governance.py`).
 2. OpenAPI sync check (`check_openapi_sync.py`).
-3. Async job lifecycle checks (`/v1/jobs*`).
-4. Score drift benchmark check (`check_score_drift.py`).
-5. SLO probe endpoint check (`/v1/slo/probes`).
-6. Worker health endpoint check (`/v1/workers/health`).
-7. Stale lease endpoint check (`/v1/jobs/stale-leases`).
-8. Task quality endpoints smoke (`/v1/task-families/{id}/quality*`).
-9. Interpretation view flow check (`/v1/reports/{session_id}/interpret*`).
-10. Context trace endpoint check (`/v1/context/injection-traces/{session_id}`).
-11. Fairness smoke run check (`/v1/fairness/smoke-runs*`).
-12. CI strict release-gate job must pass:
+3. Frontend contract sync check (`check_frontend_contract_sync.py`).
+4. API examples contract check (`check_api_examples.py`).
+5. Export schema lock check (`check_export_schema.py`).
+6. Async job lifecycle checks (`/v1/jobs*`).
+7. Score drift benchmark check (`check_score_drift.py`).
+8. SLO probe endpoint check (`/v1/slo/probes`).
+9. Worker health endpoint check (`/v1/workers/health`).
+10. Stale lease endpoint check (`/v1/jobs/stale-leases`).
+11. Task quality endpoints smoke (`/v1/task-families/{id}/quality*`).
+12. Report summary contract check (`/v1/reports/{session_id}/summary`).
+13. Interpretation view flow check (`/v1/reports/{session_id}/interpret*`).
+14. Context trace endpoint check (`/v1/context/injection-traces/{session_id}`).
+15. Fairness smoke run check (`/v1/fairness/smoke-runs*`).
+16. CI strict release-gate job must pass:
   - Postgres migration gate
   - staging smoke gate
   - load gate
