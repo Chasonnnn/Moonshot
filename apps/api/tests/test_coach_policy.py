@@ -53,7 +53,7 @@ def test_coach_blocks_direct_answers(client, admin_headers, candidate_headers):
     payload = response.json()
     assert payload["allowed"] is False
     assert payload["policy_reason"] == "direct_answer_disallowed"
-    assert payload["policy_version"] == "0.2.0"
+    assert payload["policy_version"] == "0.3.0"
     assert payload["blocked_rule_id"] == "direct_exact_answer"
 
 
@@ -68,4 +68,4 @@ def test_coach_allows_context_clarification(client, admin_headers, candidate_hea
     payload = response.json()
     assert payload["allowed"] is True
     assert payload["policy_reason"] == "context_only_allowed"
-    assert payload["policy_version"] == "0.2.0"
+    assert payload["policy_version"] == "0.3.0"

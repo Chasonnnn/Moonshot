@@ -1,4 +1,4 @@
-version: 0.2.0
+version: 0.3.0
 mode: context_only
 blocked_patterns:
   - id: direct_exact_answer
