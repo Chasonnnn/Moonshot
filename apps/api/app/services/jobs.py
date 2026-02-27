@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, or_, select, update
 
 from app.core.config import get_settings
 from app.core.security import UserContext
@@ -24,8 +24,6 @@ from app.services.repositories import (
 from app.services.scoring import score_session
 from app.services.store import store
 
-PENDING_STATUSES = {"pending", "retrying"}
-
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -41,6 +39,38 @@ def _status_progress(status: str) -> int:
     if status == "retrying":
         return 25
     return 0
+
+
+def _ready_job_clause(now: datetime):
+    return or_(
+        JobRunModel.status == "pending",
+        and_(
+            JobRunModel.status == "retrying",
+            JobRunModel.next_attempt_at.is_not(None),
+            JobRunModel.next_attempt_at <= now,
+        ),
+        and_(
+            JobRunModel.status == "running",
+            JobRunModel.lease_expires_at.is_not(None),
+            JobRunModel.lease_expires_at <= now,
+        ),
+    )
+
+
+def _classify_error(exc: Exception) -> str:
+    if isinstance(exc, TimeoutError):
+        return "provider_timeout"
+    if isinstance(exc, PermissionError):
+        return "policy_violation"
+    if isinstance(exc, ValueError):
+        return "validation_error"
+
+    message = str(exc).lower()
+    if "not_found" in message or "not_submitted" in message or "unsupported_job_type" in message:
+        return "validation_error"
+    if "service unavailable" in message or "connection" in message or "dependency" in message:
+        return "dependency_unavailable"
+    return "internal_error"
 
 
 def submit_job(
@@ -84,6 +114,8 @@ def submit_job(
                 started_at=None,
                 completed_at=None,
                 next_attempt_at=now,
+                lease_owner=None,
+                lease_expires_at=None,
             )
         )
         db.commit()
@@ -101,6 +133,9 @@ def get_job_status(job_id: UUID, tenant_id: str) -> JobStatus | None:
         return JobStatus(
             job_id=UUID(row.id),
             status=row.status,
+            job_type=row.job_type,
+            target_type=row.target_type,
+            target_id=row.target_id,
             progress=_status_progress(row.status),
             error_code=row.error_code,
             error_detail=row.error_detail,
@@ -108,7 +143,45 @@ def get_job_status(job_id: UUID, tenant_id: str) -> JobStatus | None:
             started_at=row.started_at,
             completed_at=row.completed_at,
             next_attempt_at=row.next_attempt_at,
+            lease_owner=row.lease_owner,
+            lease_expires_at=row.lease_expires_at,
         )
+
+
+def get_jobs_for_tenant(
+    tenant_id: str,
+    *,
+    status: str | None = None,
+    job_type: str | None = None,
+    limit: int = 100,
+) -> list[JobStatus]:
+    with SessionLocal() as db:
+        query = select(JobRunModel).where(JobRunModel.tenant_id == tenant_id)
+        if status is not None:
+            query = query.where(JobRunModel.status == status)
+        if job_type is not None:
+            query = query.where(JobRunModel.job_type == job_type)
+        rows = db.execute(query.order_by(JobRunModel.created_at.desc()).limit(limit)).scalars().all()
+
+    return [
+        JobStatus(
+            job_id=UUID(row.id),
+            status=row.status,
+            job_type=row.job_type,
+            target_type=row.target_type,
+            target_id=row.target_id,
+            progress=_status_progress(row.status),
+            error_code=row.error_code,
+            error_detail=row.error_detail,
+            submitted_at=row.created_at,
+            started_at=row.started_at,
+            completed_at=row.completed_at,
+            next_attempt_at=row.next_attempt_at,
+            lease_owner=row.lease_owner,
+            lease_expires_at=row.lease_expires_at,
+        )
+        for row in rows
+    ]
 
 
 def get_job_result(job_id: UUID, tenant_id: str) -> JobResultResponse | None:
@@ -225,53 +298,82 @@ def _execute_job(job: JobRunModel) -> dict[str, Any]:
     raise RuntimeError("unsupported_job_type")
 
 
-def process_jobs_once() -> bool:
-    now = _now()
+def _claim_next_job(*, worker_id: str, now: datetime) -> tuple[str, str] | None:
+    lease_seconds = float(get_settings().worker_lease_seconds)
+    lease_expires_at = now + timedelta(seconds=lease_seconds)
 
-    with SessionLocal() as db:
-        job = (
-            db.execute(
-                select(JobRunModel)
+    for _ in range(8):
+        with SessionLocal() as db:
+            candidate = (
+                db.execute(
+                    select(JobRunModel.id, JobRunModel.status, JobRunModel.attempt_count)
+                    .where(_ready_job_clause(now))
+                    .where(
+                        or_(
+                            JobRunModel.lease_owner.is_(None),
+                            JobRunModel.lease_expires_at.is_(None),
+                            JobRunModel.lease_expires_at <= now,
+                        )
+                    )
+                    .order_by(JobRunModel.created_at.asc())
+                    .limit(1)
+                )
+                .first()
+            )
+            if candidate is None:
+                return None
+
+            next_attempt_no = int(candidate.attempt_count) + 1
+            updated = db.execute(
+                update(JobRunModel)
+                .where(JobRunModel.id == candidate.id)
+                .where(JobRunModel.status == candidate.status)
+                .where(JobRunModel.attempt_count == candidate.attempt_count)
                 .where(
                     or_(
-                        JobRunModel.status == "pending",
-                        and_(
-                            JobRunModel.status == "retrying",
-                            JobRunModel.next_attempt_at.is_not(None),
-                            JobRunModel.next_attempt_at <= now,
-                        ),
+                        JobRunModel.lease_owner.is_(None),
+                        JobRunModel.lease_expires_at.is_(None),
+                        JobRunModel.lease_expires_at <= now,
                     )
                 )
-                .order_by(JobRunModel.created_at.asc())
+                .values(
+                    attempt_count=next_attempt_no,
+                    status="running",
+                    started_at=now,
+                    updated_at=now,
+                    next_attempt_at=None,
+                    lease_owner=worker_id,
+                    lease_expires_at=lease_expires_at,
+                )
             )
-            .scalars()
-            .first()
-        )
-        if job is None:
-            return False
+            if updated.rowcount != 1:
+                db.rollback()
+                continue
 
-        job.attempt_count = int(job.attempt_count) + 1
-        job.status = "running"
-        job.started_at = now
-        job.updated_at = now
-        job.next_attempt_at = None
+            attempt_id = str(uuid4())
+            db.add(
+                JobAttemptModel(
+                    id=attempt_id,
+                    job_id=str(candidate.id),
+                    attempt_no=next_attempt_no,
+                    status="running",
+                    error_code=None,
+                    error_detail=None,
+                    started_at=now,
+                    completed_at=None,
+                )
+            )
+            db.commit()
+            return str(candidate.id), attempt_id
+    return None
 
-        attempt = JobAttemptModel(
-            id=str(uuid4()),
-            job_id=job.id,
-            attempt_no=job.attempt_count,
-            status="running",
-            error_code=None,
-            error_detail=None,
-            started_at=now,
-            completed_at=None,
-        )
-        db.add(attempt)
-        db.commit()
-        db.refresh(job)
 
-        job_id = job.id
-        attempt_id = attempt.id
+def process_jobs_once(*, worker_id: str = "worker-main") -> bool:
+    now = _now()
+    claim = _claim_next_job(worker_id=worker_id, now=now)
+    if claim is None:
+        return False
+    job_id, attempt_id = claim
 
     with SessionLocal() as db:
         job = db.get(JobRunModel, job_id)
@@ -287,6 +389,8 @@ def process_jobs_once() -> bool:
             job.error_detail = None
             job.completed_at = completed
             job.updated_at = completed
+            job.lease_owner = None
+            job.lease_expires_at = None
 
             attempt.status = "completed"
             attempt.completed_at = completed
@@ -294,7 +398,7 @@ def process_jobs_once() -> bool:
             return True
         except Exception as exc:
             completed = _now()
-            error_code = type(exc).__name__.lower()
+            error_code = _classify_error(exc)
             error_detail = str(exc)
 
             if int(job.attempt_count) >= int(job.max_attempts):
@@ -310,6 +414,8 @@ def process_jobs_once() -> bool:
             job.error_code = error_code
             job.error_detail = error_detail
             job.updated_at = completed
+            job.lease_owner = None
+            job.lease_expires_at = None
 
             attempt.status = "failed"
             attempt.error_code = error_code
@@ -320,10 +426,10 @@ def process_jobs_once() -> bool:
             return True
 
 
-def process_jobs_until_empty(limit: int = 100) -> int:
+def process_jobs_until_empty(limit: int = 100, *, worker_id: str = "worker-main") -> int:
     processed = 0
     for _ in range(limit):
-        if not process_jobs_once():
+        if not process_jobs_once(worker_id=worker_id):
             break
         processed += 1
     return processed

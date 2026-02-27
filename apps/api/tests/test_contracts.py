@@ -1,9 +1,11 @@
 from pathlib import Path
+import yaml
 
 EXPECTED_PATHS = {
     "/health",
     "/v1/meta/version",
     "/v1/auth/token",
+    "/v1/jobs",
     "/v1/jobs/{job_id}",
     "/v1/jobs/{job_id}/result",
     "/v1/admin/policies",
@@ -32,6 +34,7 @@ EXPECTED_PATHS = {
     "/v1/exports/{run_id}",
     "/v1/redteam/runs",
     "/v1/audit-logs",
+    "/v1/audit-logs/verify",
     "/v1/review-queue",
     "/v1/review-queue/{session_id}",
     "/v1/review-queue/{session_id}/resolve",
@@ -48,3 +51,13 @@ def test_docs_openapi_file_tracks_required_paths():
     text = spec_path.read_text(encoding="utf-8")
     for path in EXPECTED_PATHS:
         assert path in text
+
+
+def test_changelog_contains_openapi_version():
+    spec_path = Path("/Users/chason/Moonshot/docs/03_api/openapi.yaml")
+    changelog_path = Path("/Users/chason/Moonshot/docs/03_api/changelog.md")
+
+    payload = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    version = payload["info"]["version"]
+    changelog = changelog_path.read_text(encoding="utf-8")
+    assert f"## {version} - " in changelog

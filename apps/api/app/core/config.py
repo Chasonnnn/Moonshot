@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     worker_poll_interval_seconds: float = 0.2
     worker_max_attempts_default: int = 3
     worker_retry_base_seconds: float = 2.0
+    worker_lease_seconds: float = 30.0
 
     model_provider: str = "gemini"
     gemini_api_key: str | None = None

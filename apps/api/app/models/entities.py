@@ -203,6 +203,8 @@ class JobRunModel(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    lease_owner: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class JobAttemptModel(Base):
@@ -228,4 +230,6 @@ class AuditLogModel(Base):
     resource_type: Mapped[str] = mapped_column(String(64), index=True)
     resource_id: Mapped[str] = mapped_column(String(64), index=True)
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON)
+    prev_hash: Mapped[str] = mapped_column(String(64))
+    entry_hash: Mapped[str] = mapped_column(String(64), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

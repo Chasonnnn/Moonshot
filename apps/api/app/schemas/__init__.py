@@ -1,5 +1,6 @@
 from app.schemas.contracts import (
     AuditLog,
+    AuditChainVerificationResponse,
     AdminPolicy,
     AdminPolicyUpdateRequest,
     BusinessContextPack,
@@ -23,6 +24,7 @@ from app.schemas.contracts import (
     JobAccepted,
     JobResultResponse,
     JobStatus,
+    JobStatusListResponse,
     ModelInvocationTrace,
     MetaVersion,
     MetricSpec,
@@ -48,6 +50,7 @@ from app.schemas.contracts import (
 
 __all__ = [
     "AuditLog",
+    "AuditChainVerificationResponse",
     "AdminPolicy",
     "AdminPolicyUpdateRequest",
     "BusinessContextPack",
@@ -71,6 +74,7 @@ __all__ = [
     "JobAccepted",
     "JobResultResponse",
     "JobStatus",
+    "JobStatusListResponse",
     "ModelInvocationTrace",
     "MetaVersion",
     "MetricSpec",

@@ -307,7 +307,17 @@ class AuditLog(BaseModel):
     resource_type: str
     resource_id: str
     metadata: dict[str, Any] = Field(default_factory=dict)
+    prev_hash: str = "GENESIS"
+    entry_hash: str = "UNSET"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class AuditChainVerificationResponse(BaseModel):
+    valid: bool
+    checked_entries: int
+    error_code: str | None = None
+    error_detail: str | None = None
+    failed_index: int | None = None
 
 
 class ErrorResponse(BaseModel):
@@ -342,6 +352,9 @@ class JobAccepted(BaseModel):
 class JobStatus(BaseModel):
     job_id: UUID
     status: str
+    job_type: str | None = None
+    target_type: str | None = None
+    target_id: str | None = None
     progress: int = 0
     error_code: str | None = None
     error_detail: str | None = None
@@ -349,6 +362,12 @@ class JobStatus(BaseModel):
     started_at: datetime | None = None
     completed_at: datetime | None = None
     next_attempt_at: datetime | None = None
+    lease_owner: str | None = None
+    lease_expires_at: datetime | None = None
+
+
+class JobStatusListResponse(BaseModel):
+    items: list[JobStatus] = Field(default_factory=list)
 
 
 class JobResultResponse(BaseModel):

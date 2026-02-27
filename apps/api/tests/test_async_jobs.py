@@ -262,7 +262,12 @@ def test_job_retry_backoff_and_dead_letter(client, admin_headers, monkeypatch):
     assert failed_result.status_code == 200
     failed_payload = failed_result.json()
     assert failed_payload["status"] == "failed_permanent"
-    assert failed_payload["result"]["error_code"] == "runtimeerror"
+    assert failed_payload["result"]["error_code"] == "internal_error"
+
+    dead_letter = client.get("/v1/jobs?status=failed_permanent", headers=admin_headers)
+    assert dead_letter.status_code == 200
+    job_ids = {item["job_id"] for item in dead_letter.json()["items"]}
+    assert job_id in job_ids
 
 
 def test_export_submit_idempotency_returns_same_job(client, admin_headers, reviewer_headers, candidate_headers):
@@ -321,3 +326,66 @@ def test_export_submit_idempotency_returns_same_job(client, admin_headers, revie
     assert first.status_code == 202
     assert second.status_code == 202
     assert first.json()["job_id"] == second.json()["job_id"]
+
+
+def test_running_job_with_unexpired_lease_is_not_reclaimed(client, admin_headers):
+    case = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Lease Guard",
+            "scenario": "Scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": [],
+        },
+    )
+    case_id = case.json()["id"]
+    submit = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "lease-guard-1"},
+    )
+    job_id = submit.json()["job_id"]
+
+    with SessionLocal() as db:
+        row = db.get(JobRunModel, job_id)
+        assert row is not None
+        row.status = "running"
+        row.lease_owner = "worker-a"
+        row.lease_expires_at = datetime.now(timezone.utc) + timedelta(seconds=120)
+        db.commit()
+
+    assert process_jobs_once(worker_id="worker-b") is False
+
+
+def test_running_job_with_expired_lease_is_reclaimed(client, admin_headers):
+    case = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Lease Reclaim",
+            "scenario": "Scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["sql_workspace"],
+        },
+    )
+    case_id = case.json()["id"]
+    submit = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "lease-reclaim-1"},
+    )
+    job_id = submit.json()["job_id"]
+
+    with SessionLocal() as db:
+        row = db.get(JobRunModel, job_id)
+        assert row is not None
+        row.status = "running"
+        row.lease_owner = "worker-a"
+        row.lease_expires_at = datetime.now(timezone.utc) - timedelta(seconds=5)
+        db.commit()
+
+    assert process_jobs_once(worker_id="worker-b") is True
+    status = client.get(f"/v1/jobs/{job_id}", headers=admin_headers)
+    assert status.status_code == 200
+    assert status.json()["status"] == "completed"

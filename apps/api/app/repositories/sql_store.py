@@ -14,6 +14,7 @@ from sqlalchemy.sql.sqltypes import DateTime as SADateTime
 
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
+from app.core.audit_hash import compute_audit_entry_hash
 from app.models.entities import (
     AdminPolicyModel,
     AuditLogModel,
@@ -468,15 +469,36 @@ class SQLAuditLogList:
             created_at = _now()
 
         with self._session_factory() as db:
+            previous = (
+                db.execute(select(AuditLogModel).order_by(AuditLogModel.created_at.desc(), AuditLogModel.id.desc()))
+                .scalars()
+                .first()
+            )
+            prev_hash = previous.entry_hash if previous is not None else "GENESIS"
+            entry_id = str(payload.get("id") or uuid4())
+            metadata = deepcopy(payload.get("metadata", {}))
+            entry_hash = compute_audit_entry_hash(
+                prev_hash=prev_hash,
+                entry_id=entry_id,
+                tenant_id=payload["tenant_id"],
+                actor_role=payload["actor_role"],
+                action=payload["action"],
+                resource_type=payload["resource_type"],
+                resource_id=payload["resource_id"],
+                metadata=metadata,
+                created_at=created_at,
+            )
             db.add(
                 AuditLogModel(
-                    id=str(payload.get("id") or uuid4()),
+                    id=entry_id,
                     tenant_id=payload["tenant_id"],
                     actor_role=payload["actor_role"],
                     action=payload["action"],
                     resource_type=payload["resource_type"],
                     resource_id=payload["resource_id"],
-                    metadata_json=deepcopy(payload.get("metadata", {})),
+                    metadata_json=metadata,
+                    prev_hash=prev_hash,
+                    entry_hash=entry_hash,
                     created_at=created_at,
                 )
             )
@@ -498,6 +520,8 @@ class SQLAuditLogList:
                     "resource_type": row.resource_type,
                     "resource_id": row.resource_id,
                     "metadata": deepcopy(row.metadata_json),
+                    "prev_hash": row.prev_hash,
+                    "entry_hash": row.entry_hash,
                     "created_at": row.created_at.isoformat(),
                 }
 
