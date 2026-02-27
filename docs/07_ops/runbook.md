@@ -22,6 +22,8 @@
 3. Start worker: `cd apps/api && uv run python -m app.workers.main`.
 4. Verify health/version endpoints: `/health`, `/v1/meta/version`.
 5. Run staging smoke check (local/staging URL): `uv run python apps/api/scripts/staging_smoke.py --base-url http://localhost:8000`.
+6. Verify OpenAPI docs/runtime sync: `uv run python apps/api/scripts/check_openapi_sync.py`.
+7. Run pilot-envelope latency gate: `uv run python apps/api/scripts/load_pilot.py --base-url http://localhost:8000 --samples 240 --concurrency 8 --max-p95-ms 500`.
 
 ## Operational Procedures
 1. Apply schema migration (`alembic upgrade head`) before serving traffic.
@@ -31,6 +33,7 @@
 5. Verify audit log APIs including chain verification (`/v1/audit-logs`, `/v1/audit-logs/verify`).
 6. Run score drift benchmark check (`uv run python apps/api/scripts/check_score_drift.py`).
 7. Verify SLO probe endpoint (`/v1/slo/probes`) with org admin token.
+8. Run load pilot gate and track p95 per monitored endpoint.
 
 ## Incident Response (MVP)
 - Severity definitions: SEV1/SEV2/SEV3.

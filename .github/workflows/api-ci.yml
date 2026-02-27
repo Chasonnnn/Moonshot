@@ -22,5 +22,7 @@ jobs:
         run: uv run --extra dev pytest
       - name: Contract governance check
         run: uv run python apps/api/scripts/check_contract_governance.py
+      - name: OpenAPI sync check
+        run: uv run python apps/api/scripts/check_openapi_sync.py
       - name: Score drift baseline check
         run: uv run python apps/api/scripts/check_score_drift.py
