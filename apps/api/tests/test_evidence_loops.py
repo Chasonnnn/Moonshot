@@ -1,4 +1,7 @@
+from uuid import UUID
+
 from app.services.jobs import process_jobs_until_empty
+from app.services.repositories import case_repository
 
 
 def _job_result(client, job_id, headers):
@@ -30,6 +33,8 @@ def _create_published_task_family(client, admin_headers, reviewer_headers):
     assert generate.status_code == 202
     generated = _job_result(client, generate.json()["job_id"], admin_headers)
     task_family_id = generated["task_family"]["id"]
+    assert "generation_diagnostics" in generated["task_family"]
+    assert "diversity_passed" in generated["task_family"]["generation_diagnostics"]
 
     review = client.post(
         f"/v1/task-families/{task_family_id}/review",
@@ -107,6 +112,9 @@ def test_task_family_quality_evaluate_and_get(client, admin_headers, reviewer_he
     assert payload["variant_count"] >= 3
     assert "quality_score" in payload
     assert payload["rubric_leakage_detected"] is False
+    assert "diversity_fail_reason" in payload
+    assert "leakage_rule_hits" in payload
+    assert "grounding_coverage_score" in payload
 
     fetched = client.get(f"/v1/task-families/{task_family_id}/quality", headers=reviewer_headers)
     assert fetched.status_code == 200
@@ -201,3 +209,31 @@ def test_fairness_smoke_runs_create_and_get(client, admin_headers, reviewer_head
     fetched = client.get(f"/v1/fairness/smoke-runs/{run_id}", headers=admin_headers)
     assert fetched.status_code == 200
     assert fetched.json()["id"] == run_id
+
+
+def test_publish_blocked_when_generation_diagnostics_fail(client, admin_headers, reviewer_headers):
+    task_family_id = _create_published_task_family(client, admin_headers, reviewer_headers)
+
+    task_family = case_repository.get_task_family(UUID(task_family_id))
+    assert task_family is not None
+    updated = task_family.model_copy(
+        update={
+            "status": "approved",
+            "generation_diagnostics": {
+                "diversity_passed": False,
+                "diversity_fail_reason": "variant_diversity_threshold_not_met",
+                "rubric_leakage_detected": False,
+                "leakage_rule_hits": [],
+                "grounding_coverage_score": 0.4,
+            },
+        }
+    )
+    case_repository.save_task_family(updated)
+
+    blocked = client.post(
+        f"/v1/task-families/{task_family_id}/publish",
+        headers=reviewer_headers,
+        json={"approver_note": "publish"},
+    )
+    assert blocked.status_code == 400
+    assert "generation diagnostics" in blocked.json()["detail"].lower()

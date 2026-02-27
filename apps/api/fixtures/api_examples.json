@@ -156,7 +156,14 @@
         "task_family": {
           "id": "00000000-0000-0000-0000-000000000050",
           "status": "generated",
-          "version": "0.1.0"
+          "version": "0.1.0",
+          "generation_diagnostics": {
+            "diversity_passed": true,
+            "diversity_fail_reason": null,
+            "rubric_leakage_detected": false,
+            "leakage_rule_hits": [],
+            "grounding_coverage_score": 0.67
+          }
         },
         "rubric": {
           "id": "00000000-0000-0000-0000-000000000060",
@@ -189,7 +196,9 @@
         "rubric_version": "0.1.0",
         "task_family_version": "0.1.0",
         "model_hash": "local-baseline",
-        "trigger_codes": []
+        "trigger_codes": [],
+        "trigger_impacts": [],
+        "scored_at": "2026-02-27T12:06:00Z"
       }
     }
   },
@@ -393,7 +402,10 @@
       "admin_acceptance_rate": 1.0,
       "mean_edit_distance": 0.0,
       "rubric_leakage_detected": false,
-      "quality_score": 0.74
+      "quality_score": 0.74,
+      "diversity_fail_reason": null,
+      "leakage_rule_hits": [],
+      "grounding_coverage_score": 0.67
     }
   },
   "quality_evaluate_submit": {
@@ -427,7 +439,8 @@
       "policy_reason": "direct_answer_disallowed",
       "policy_version": "0.3.0",
       "policy_hash": "9ff5aa9c84ab7f8f275f6f7e36c5d2231a52a9ed6cd9afc68c47f288724bc4a0",
-      "blocked_rule_id": "direct_exact_answer"
+      "blocked_rule_id": "direct_exact_answer",
+      "policy_decision_code": "blocked_direct_answer"
     }
   },
   "interpretation_view": {
@@ -520,7 +533,9 @@
         "rubric_version": "0.1.0",
         "task_family_version": "0.1.0",
         "model_hash": "local-baseline"
-      }
+      },
+      "trigger_count": 0,
+      "last_scored_at": "2026-02-27T12:06:00Z"
     }
   }
 }

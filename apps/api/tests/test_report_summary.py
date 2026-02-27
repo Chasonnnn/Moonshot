@@ -97,6 +97,8 @@ def test_report_summary_for_scored_session(client, admin_headers, reviewer_heade
     assert isinstance(payload["confidence"], float)
     assert isinstance(payload["needs_human_review"], bool)
     assert isinstance(payload["trigger_codes"], list)
+    assert payload["trigger_count"] == len(payload["trigger_codes"])
+    assert isinstance(payload["last_scored_at"], str)
     assert payload["scoring_version_lock"]["scorer_version"] == "0.1.0"
 
 
@@ -155,4 +157,5 @@ def test_report_summary_for_active_session_without_report(client, admin_headers,
     assert payload["confidence"] is None
     assert payload["needs_human_review"] is None
     assert payload["trigger_codes"] == []
-
+    assert payload["trigger_count"] == 0
+    assert payload["last_scored_at"] is None

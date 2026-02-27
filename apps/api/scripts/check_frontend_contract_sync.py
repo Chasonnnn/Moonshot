@@ -14,6 +14,8 @@ REQUIRED_FRONTEND_MARKERS = [
     "Idempotency-Key",
     "job_not_ready",
     "/v1/reports/{session_id}/summary",
+    "policy_decision_code",
+    "last_scored_at",
 ]
 
 

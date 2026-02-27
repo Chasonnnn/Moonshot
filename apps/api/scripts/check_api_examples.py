@@ -72,10 +72,30 @@ def main() -> int:
         "confidence",
         "needs_human_review",
         "trigger_codes",
+        "trigger_count",
+        "last_scored_at",
         "scoring_version_lock",
     ):
         if required not in summary_response:
             raise RuntimeError(f"api-examples: report summary missing `{required}`")
+
+    quality_signal = _expect(payload, "task_quality_signal")
+    quality_response = _expect(quality_signal, "response")
+    for required in ("diversity_fail_reason", "leakage_rule_hits", "grounding_coverage_score"):
+        if required not in quality_response:
+            raise RuntimeError(f"api-examples: task quality signal missing `{required}`")
+
+    coach_blocked = _expect(payload, "coach_message_blocked")
+    coach_response = _expect(coach_blocked, "response")
+    if "policy_decision_code" not in coach_response:
+        raise RuntimeError("api-examples: coach_message_blocked missing `policy_decision_code`")
+
+    score_completed = _expect(payload, "job_result_score_completed")
+    score_response = _expect(score_completed, "response")
+    score_result = _expect(score_response, "result")
+    for required in ("trigger_impacts", "scored_at"):
+        if required not in score_result:
+            raise RuntimeError(f"api-examples: score result missing `{required}`")
 
     print("api-examples: OK")
     return 0

@@ -77,6 +77,8 @@ def test_report_and_export_flow(client, admin_headers, reviewer_headers, candida
     assert "score_result" in report_payload
     assert "objective_metrics" in report_payload["score_result"]
     assert report_payload["score_result"]["model_hash"]
+    assert isinstance(report_payload["score_result"]["trigger_impacts"], list)
+    assert isinstance(report_payload["score_result"]["scored_at"], str)
 
     score_audit = client.get("/v1/audit-logs?action=score", headers=admin_headers)
     assert score_audit.status_code == 200

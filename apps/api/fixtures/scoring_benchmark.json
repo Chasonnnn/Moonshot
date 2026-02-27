@@ -12,7 +12,8 @@
         "evidence_reasoning": 0.83,
         "communication": 0.85
       },
-      "trigger_codes": []
+      "trigger_codes": [],
+      "trigger_impacts": []
     },
     "jda_case_b": {
       "confidence": 0.45,
@@ -22,7 +23,13 @@
         "evidence_reasoning": 0.43,
         "communication": 0.45
       },
-      "trigger_codes": ["low_confidence"]
+      "trigger_codes": ["low_confidence"],
+      "trigger_impacts": [
+        {
+          "code": "low_confidence",
+          "delta": -0.25
+        }
+      ]
     },
     "jda_case_c": {
       "confidence": 0.65,
@@ -32,7 +39,17 @@
         "evidence_reasoning": 0.63,
         "communication": 0.65
       },
-      "trigger_codes": ["low_confidence", "high_ai_low_verification"]
+      "trigger_codes": ["low_confidence", "high_ai_low_verification"],
+      "trigger_impacts": [
+        {
+          "code": "low_confidence",
+          "delta": -0.05
+        },
+        {
+          "code": "high_ai_low_verification",
+          "delta": -0.2
+        }
+      ]
     }
   },
   "cases": {
