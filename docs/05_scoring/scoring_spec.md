@@ -1,43 +1,56 @@
-# Scoring And Interpretation Spec v0.2
+# Scoring And Interpretation Spec v0.3
 
-## Scoring Architecture
-Hybrid scoring pipeline:
+## Architecture
+Two-layer evaluation model:
+1. **Scoring Engine (stable)**
+2. **Interpretation Engine (flexible)**
+
+## Scoring Engine (Stable + Auditable)
+Pipeline:
 1. Deterministic rules metrics from telemetry.
-2. Rubric dimension scoring by judge component.
+2. Rubric dimension scoring.
 3. Review trigger evaluation.
 
-## Rules Metrics (Examples)
-- `time_to_first_action`
+Rules:
+- Scoring definitions are immutable per scoring version.
+- Score outputs are not mutated by interpretation requests.
+- Any scoring-definition change requires explicit version bump.
+
+### Rules Metrics (Examples)
+- `time_to_first_action_ms`
 - `query_error_rate`
-- `verification_completeness`
+- `verification_steps`
 - `policy_violation_count`
 
-## Rubric Dimensions (JDA)
-- Problem framing
-- SQL correctness and iteration quality
-- Evidence-based reasoning
-- Communication and caveat handling
-
-## Confidence and Human Review
+### Review Triggers
 `needs_human_review = true` when any:
 - confidence < 0.70
 - conflicting dimension signals
-- high coach dependency and weak independent evidence
-- near-threshold decision boundary
+- policy violations
+- high AI reliance with weak verification
 
-`trigger_codes` must be emitted for machine-readable diagnostics (for example: `low_confidence`, `policy_violation`, `high_ai_low_verification`).
+`trigger_codes` are mandatory and machine-readable.
 
-## Interpretation Output
-Audience: reviewer/admin only.
-Required fields:
-- score summary
-- top strengths
-- top risks
-- structured follow-up suggestions
-- caveat/disclaimer text
+## Interpretation Engine (Flexible)
+Interpretation requests can provide:
+- targeted dimension breakdowns
+- evidence highlights
+- failure-mode matching
+- optional sensitivity analysis (`weight_overrides`)
 
-## Provenance
-Reports must include:
+Interpretation outputs must include:
+- caveats that interpretation is non-mutating
+- `scoring_version_lock`
+
+## Calibration and Reliability Loop
+Required checks:
+- benchmark replay stability
+- variant stability checks
+- inter-rater alignment samples
+- drift checks across model/prompt version changes
+
+## Provenance Requirements
+Every report/interpretation must include:
 - `task_family_version`
 - `rubric_version`
 - `scorer_version`

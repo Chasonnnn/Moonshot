@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moonshot Backend
-  version: 0.2.0
+  version: 0.3.0
 paths:
   /health:
     get:
@@ -609,6 +609,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/task-families/{task_family_id}/quality/evaluate:
+    post:
+      tags:
+      - task-families
+      summary: Evaluate Task Family Quality
+      operationId: evaluate_task_family_quality_v1_task_families__task_family_id__quality_evaluate_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: task_family_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Task Family Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskQualitySignal'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/task-families/{task_family_id}/quality:
+    get:
+      tags:
+      - task-families
+      summary: Get Task Family Quality
+      operationId: get_task_family_quality_v1_task_families__task_family_id__quality_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: task_family_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Task Family Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskQualitySignal'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions:
     get:
       tags:
@@ -741,6 +799,41 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SessionSubmitRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/mode:
+    post:
+      tags:
+      - sessions
+      summary: Set Session Coaching Mode
+      operationId: set_session_coaching_mode_v1_sessions__session_id__mode_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionModeRequest'
       responses:
         '200':
           description: Successful Response
@@ -917,6 +1010,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/coach/feedback:
+    post:
+      tags:
+      - coach
+      summary: Submit Coach Feedback
+      operationId: submit_coach_feedback_v1_sessions__session_id__coach_feedback_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoachFeedbackRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachFeedback'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/score:
     post:
       tags:
@@ -977,6 +1105,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Report'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/reports/{session_id}/interpret:
+    post:
+      tags:
+      - reports
+      summary: Create Interpretation
+      operationId: create_interpretation_v1_reports__session_id__interpret_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterpretationRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterpretationView'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/reports/{session_id}/interpretations/{view_id}:
+    get:
+      tags:
+      - reports
+      summary: Get Interpretation
+      operationId: get_interpretation_v1_reports__session_id__interpretations__view_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      - name: view_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: View Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterpretationView'
         '422':
           description: Validation Error
           content:
@@ -1255,6 +1454,91 @@ paths:
                 $ref: '#/components/schemas/AuditChainVerificationResponse'
       security:
       - HTTPBearer: []
+  /v1/context/injection-traces/{session_id}:
+    get:
+      tags:
+      - context-traces
+      summary: Get Context Injection Traces
+      operationId: get_context_injection_traces_v1_context_injection_traces__session_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextInjectionTraceListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/fairness/smoke-runs:
+    post:
+      tags:
+      - fairness
+      summary: Create Smoke Run
+      operationId: create_smoke_run_v1_fairness_smoke_runs_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FairnessSmokeRunCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FairnessSmokeRun'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /v1/fairness/smoke-runs/{run_id}:
+    get:
+      tags:
+      - fairness
+      summary: Get Smoke Run
+      operationId: get_smoke_run_v1_fairness_smoke_runs__run_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FairnessSmokeRun'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     AdminPolicy:
@@ -1658,6 +1942,61 @@ components:
           title: Status
       type: object
       title: CaseUpdate
+    CoachFeedback:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        candidate_id:
+          type: string
+          title: Candidate Id
+        helpful:
+          type: boolean
+          title: Helpful
+        confusion_tags:
+          items:
+            type: string
+          type: array
+          title: Confusion Tags
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - session_id
+      - candidate_id
+      - helpful
+      title: CoachFeedback
+    CoachFeedbackRequest:
+      properties:
+        helpful:
+          type: boolean
+          title: Helpful
+        confusion_tags:
+          items:
+            type: string
+          type: array
+          title: Confusion Tags
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+      type: object
+      required:
+      - helpful
+      title: CoachFeedbackRequest
     CoachMessageRequest:
       properties:
         message:
@@ -1694,6 +2033,64 @@ components:
       - response
       - policy_reason
       title: CoachResponse
+    ContextInjectionTrace:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        tenant_id:
+          type: string
+          title: Tenant Id
+        agent_type:
+          type: string
+          title: Agent Type
+        actor_role:
+          type: string
+          title: Actor Role
+        mode:
+          type: string
+          title: Mode
+        context_keys:
+          items:
+            type: string
+          type: array
+          title: Context Keys
+        precedence_order:
+          items:
+            type: string
+          type: array
+          title: Precedence Order
+        policy_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Policy Version
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - session_id
+      - tenant_id
+      - agent_type
+      - actor_role
+      - mode
+      title: ContextInjectionTrace
+    ContextInjectionTraceListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ContextInjectionTrace'
+          type: array
+          title: Items
+      type: object
+      title: ContextInjectionTraceListResponse
     DashboardActionRequest:
       properties:
         action_type:
@@ -1789,6 +2186,47 @@ components:
       required:
       - session_id
       title: ExportCreateRequest
+    FairnessSmokeRun:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        tenant_id:
+          type: string
+          title: Tenant Id
+        scope:
+          type: string
+          title: Scope
+        status:
+          type: string
+          title: Status
+          default: completed
+        summary:
+          additionalProperties: true
+          type: object
+          title: Summary
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - tenant_id
+      - scope
+      title: FairnessSmokeRun
+    FairnessSmokeRunCreate:
+      properties:
+        scope:
+          type: string
+          title: Scope
+          default: tenant_recent
+        include_language_proxy:
+          type: boolean
+          title: Include Language Proxy
+          default: true
+      type: object
+      title: FairnessSmokeRunCreate
     HTTPValidationError:
       properties:
         detail:
@@ -1816,6 +2254,68 @@ components:
       required:
       - summary
       title: Interpretation
+    InterpretationRequest:
+      properties:
+        focus_dimensions:
+          items:
+            type: string
+          type: array
+          title: Focus Dimensions
+        include_sensitivity:
+          type: boolean
+          title: Include Sensitivity
+          default: false
+        weight_overrides:
+          additionalProperties:
+            type: number
+          type: object
+          title: Weight Overrides
+      type: object
+      title: InterpretationRequest
+    InterpretationView:
+      properties:
+        view_id:
+          type: string
+          format: uuid
+          title: View Id
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        focus_dimensions:
+          items:
+            type: string
+          type: array
+          title: Focus Dimensions
+        include_sensitivity:
+          type: boolean
+          title: Include Sensitivity
+          default: false
+        weight_overrides:
+          additionalProperties:
+            type: number
+          type: object
+          title: Weight Overrides
+        breakdown:
+          additionalProperties: true
+          type: object
+          title: Breakdown
+        caveats:
+          items:
+            type: string
+          type: array
+          title: Caveats
+        scoring_version_lock:
+          $ref: '#/components/schemas/ScoringVersionLock'
+      type: object
+      required:
+      - session_id
+      - scoring_version_lock
+      title: InterpretationView
     JobAccepted:
       properties:
         job_id:
@@ -2246,6 +2746,27 @@ components:
       - confidence
       - needs_human_review
       title: ScoreResult
+    ScoringVersionLock:
+      properties:
+        scorer_version:
+          type: string
+          title: Scorer Version
+        rubric_version:
+          type: string
+          title: Rubric Version
+        task_family_version:
+          type: string
+          title: Task Family Version
+        model_hash:
+          type: string
+          title: Model Hash
+      type: object
+      required:
+      - scorer_version
+      - rubric_version
+      - task_family_version
+      - model_hash
+      title: ScoringVersionLock
     Session:
       properties:
         id:
@@ -2307,6 +2828,15 @@ components:
       - task_family_id
       - candidate_id
       title: SessionCreate
+    SessionModeRequest:
+      properties:
+        mode:
+          type: string
+          title: Mode
+      type: object
+      required:
+      - mode
+      title: SessionModeRequest
     SessionSubmitRequest:
       properties:
         final_response:
@@ -2371,6 +2901,61 @@ components:
       required:
       - decision
       title: TaskFamilyReviewRequest
+    TaskQualitySignal:
+      properties:
+        task_family_id:
+          type: string
+          format: uuid
+          title: Task Family Id
+        variant_count:
+          type: integer
+          title: Variant Count
+        diversity_score:
+          type: number
+          title: Diversity Score
+        clarity_score:
+          type: number
+          title: Clarity Score
+        realism_score:
+          type: number
+          title: Realism Score
+        variant_stability_score:
+          type: number
+          title: Variant Stability Score
+        admin_acceptance_rate:
+          type: number
+          title: Admin Acceptance Rate
+        mean_edit_distance:
+          type: number
+          title: Mean Edit Distance
+        rubric_leakage_detected:
+          type: boolean
+          title: Rubric Leakage Detected
+        quality_score:
+          type: number
+          title: Quality Score
+        evaluated_at:
+          type: string
+          format: date-time
+          title: Evaluated At
+        evaluated_by_role:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Evaluated By Role
+      type: object
+      required:
+      - task_family_id
+      - variant_count
+      - diversity_score
+      - clarity_score
+      - realism_score
+      - variant_stability_score
+      - admin_acceptance_rate
+      - mean_edit_distance
+      - rubric_leakage_detected
+      - quality_score
+      title: TaskQualitySignal
     TaskVariant:
       properties:
         id:

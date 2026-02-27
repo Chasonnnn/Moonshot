@@ -1,116 +1,98 @@
-# Domain Model v0.2
+# Domain Model v0.3
 
 ## Core Entities
 
 ### BusinessContextPack
-- `id` (uuid)
-- `tenant_id` (string)
-- `name` (string)
-- `role_focus` (enum: `junior_data_analyst`, `customer_support`)
-- `job_description` (text)
-- `examples` (array[string])
-- `constraints` (object)
-- `status` (enum: `draft`, `review`, `approved`)
+- `id`, `tenant_id`
+- `name`, `role_focus`, `job_description`
+- `examples`, `constraints`
+- `status` (`draft`, `review`, `approved`)
 - `created_at`, `updated_at`
 
 ### CaseSpec
 - `id`, `tenant_id`, `context_pack_id`
 - `title`, `scenario`
-- `artifacts` (array[object])
-- `metrics` (array[MetricSpec])
-- `allowed_tools` (array[string])
-- `status` (enum: `draft`, `review`, `approved`, `published`)
-- `version` (string)
-
-### MetricSpec
-- `key`
-- `description`
-- `formula`
-- `source_events` (array[string])
-- `thresholds` (object)
+- `artifacts`, `metrics`, `allowed_tools`
+- `status` (`draft`, `review`, `approved`, `published`)
+- `version`
 
 ### TaskFamily
-- `id`, `case_id`
+- `id`, `case_id`, `rubric_id`
 - `variants` (array[TaskVariant])
-- `rubric_id`
-- `status` (enum: `generated`, `review`, `published`)
+- `status` (`generated`, `review`, `approved`, `published`, `retired`)
 - `version`
 
 ### Rubric
-- `id`
-- `dimensions` (array[RubricDimension])
-- `failure_modes` (array[string])
-- `version`
+- `id`, `dimensions`, `failure_modes`, `version`
 
-### ScoringConfig
-- `id`
-- `rules_version`
-- `judge_prompt_version`
-- `review_threshold`
-- `dual_approval_required` (bool)
+### TaskQualitySignal
+- `task_family_id`
+- `variant_count`, `diversity_score`, `clarity_score`, `realism_score`
+- `variant_stability_score`
+- `admin_acceptance_rate`, `mean_edit_distance`
+- `rubric_leakage_detected`, `quality_score`
+- `evaluated_at`, `evaluated_by_role`
 
 ### Session
-- `id`, `tenant_id`
-- `task_family_id`
-- `candidate_id`
-- `policy` (object)
-- `status` (enum: `active`, `submitted`, `scored`)
+- `id`, `tenant_id`, `task_family_id`, `candidate_id`
+- `status` (`active`, `submitted`, `scored`)
+- `policy` (contains retention + `coach_mode`)
+- `final_response`
+- `created_at`, `updated_at`
+
+### CoachFeedback
+- `id`, `session_id`, `candidate_id`
+- `helpful`, `confusion_tags`, `notes`
+- `created_at`
 
 ### EventLog
-- `id`, `session_id`
-- `event_type`
-- `payload` (json)
-- `created_at`
+- `id`, `session_id`, `event_type`, `payload`, `created_at`
 
 ### ScoreResult
 - `id`, `session_id`
-- `dimension_scores` (json)
-- `objective_metrics` (json)
-- `confidence` (float)
-- `needs_human_review` (bool)
-- `trigger_codes` (array[string])
-
-### JobRun
-- `id`, `tenant_id`, `created_by`
-- `job_type`, `target_type`, `target_id`
-- `status` (enum: `pending`, `running`, `retrying`, `completed`, `failed_permanent`)
-- `request_payload`, `result_payload`
-- `error_code`, `error_detail`
-- `attempt_count`, `max_attempts`
-- `idempotency_scope`, `idempotency_key`
-- `created_at`, `started_at`, `completed_at`, `next_attempt_at`
-
-### JobAttempt
-- `id`, `job_id`, `attempt_no`
-- `status` (enum: `running`, `completed`, `failed`)
-- `error_code`, `error_detail`
-- `started_at`, `completed_at`
+- `dimension_scores`, `objective_metrics`
+- `confidence`, `needs_human_review`
+- `trigger_codes`
+- provenance: `scorer_version`, `rubric_version`, `task_family_version`, `model_hash`
 
 ### EvaluationInterpretation
-- `id`, `score_result_id`
+- base report interpretation remains reviewer/admin-only
+
+### InterpretationView
+- `view_id`, `session_id`
+- `focus_dimensions`, `include_sensitivity`, `weight_overrides`
+- `breakdown`, `caveats`
+- `scoring_version_lock`
+- `created_at`
+
+### ContextInjectionTrace
+- `id`, `session_id`, `tenant_id`
+- `agent_type`, `actor_role`, `mode`
+- `context_keys`, `precedence_order`
+- `policy_version`, `created_at`
+
+### FairnessSmokeRun
+- `id`, `tenant_id`, `scope`, `status`
 - `summary`
-- `suggestions` (array[string])
-- `audience` (enum: `reviewer_admin_only`)
+- `created_at`
+
+### JobRun / JobAttempt
+- unchanged lifecycle with retry, lease, and dead-letter support
 
 ### RedTeamRun
-- `id`, `target_type`, `target_id`
-- `status`
-- `findings` (array[object])
+- unchanged target + findings model
 
 ### AuditLog
-- `id`, `tenant_id`, `actor_role`
-- `action`, `resource_type`, `resource_id`
-- `metadata` (json)
-- `created_at`
+- unchanged hash-chain model (`prev_hash`, `entry_hash`)
 
 ## Status Transition Rules
 - `CaseSpec`: `draft -> review -> approved -> published`
-- `TaskFamily`: `generated -> review -> published`
+- `TaskFamily`: `generated -> review -> approved -> published -> retired`
 - `Session`: `active -> submitted -> scored`
 
 ## Versioning Rules
-Every report must include:
-- task family version
-- rubric version
-- scorer version
-- model hash (when model-backed scoring is used)
+Every report and interpretation must include scoring provenance:
+- `task_family_version`
+- `rubric_version`
+- `scorer_version`
+- `model_hash`

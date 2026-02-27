@@ -1,34 +1,40 @@
-# Moonshot MVP Scope (Backend-First)
+# Moonshot MVP Scope (Backend-First, v0.3)
 
 ## Objective
-Ship a backend-first MVP that allows frontend development to proceed in parallel while preserving enterprise-grade controls.
+Ship an evidence-loop MVP where task generation, coaching, and scoring are grounded in real business context and continuously improved with auditable feedback loops.
 
 ## Primary Outcome
-A pilot-ready JDA assessment system where an admin can define business context, generate task families and rubrics, run sessions, score results, and export reports with auditability.
+A pilot-ready JDA assessment platform where an admin can:
+1. Define business context and employer-grounded case inputs.
+2. Generate and review task families and rubrics.
+3. Evaluate task quality signals before publishing.
+4. Run sessions in explicit coaching modes (`practice` / `assessment`).
+5. Produce stable, versioned scores plus richer interpretation views.
+6. Run fairness smoke checks and trace context injection/audit lineage.
 
 ## In Scope
-- API-first contracts and documentation as system of record.
-- FastAPI backend skeleton with role-aware endpoints.
-- Co-design pipeline primitives for case/task/rubric generation.
-- Session runtime APIs with telemetry ingestion.
-- Context-only coach policy enforcement endpoint.
-- Hybrid scoring endpoint with review triggers.
-- Reporting, export, red-team, and audit-log endpoints.
-- Baseline Postgres schema and migrations.
+- API-first contracts and docs as system of record (`v0.3.0`).
+- Co-design content loop with quality evaluation (`TaskQualitySignal`).
+- Coaching mode separation and coaching feedback capture.
+- Stable scoring engine + interpretation view engine split.
+- Context injection traces for coach/evaluator paths.
+- Fairness smoke run APIs and governance telemetry.
+- Red-team, exports, audit chain verification, and SLO probes.
 
 ## Out of Scope
-- Frontend implementation and visual design.
-- Production ATS integration.
-- Fully managed model-provider integrations (stubbed policy-compatible interfaces only).
+- End-to-end RL policy optimization.
+- Production ATS/LMS integrations.
+- Frontend implementation details and visual design.
 
 ## Non-Functional Targets
 - Pilot envelope: up to 50 candidates/week.
-- Stable API versioning with explicit changelog and breaking-change visibility.
-- Tenant isolation model and audit history at API boundary.
-- Derived telemetry default; raw content retention opt-in.
+- Tenant isolation + auditable provenance by default.
+- Derived telemetry default; raw content opt-in + TTL purge.
+- No fallback routes; explicit failure responses only.
 
 ## Delivery Gates
-1. OpenAPI v0.2 frozen and published.
-2. Event schema v0.2 frozen.
-3. Core endpoint tests green (contract + RBAC + coach safety).
-4. Seed fixtures available for frontend integration.
+1. OpenAPI and event schema frozen at `v0.3.0`.
+2. Scoring-version lock present in interpretation views.
+3. Coaching mode policy tests and anti-leakage tests green.
+4. Task quality + fairness smoke APIs available and tested.
+5. Contract governance and OpenAPI sync checks green.

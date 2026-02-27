@@ -1,11 +1,11 @@
-# Event Schema v0.2
+# Event Schema v0.3
 
 ## Principles
 - Every event includes: `event_id`, `session_id`, `event_type`, `occurred_at`, `schema_version`.
-- `schema_version` is pinned to `0.2.0`.
+- `schema_version` is pinned to `0.3.0`.
 - Derived telemetry is default; raw content is opt-in and retention-policy bound.
-- No fallback ingestion paths: invalid event payloads return explicit validation errors.
-- API responses include `X-Request-Id` to correlate client activity, server logs, and event timelines.
+- No fallback ingestion paths: invalid payloads return explicit validation errors.
+- API responses include `X-Request-Id` for traceability.
 
 ## Required Session Event Types
 - `session_started`
@@ -22,7 +22,16 @@
 - `verification_step_completed`
 - `coach_message`
 - `coach_blocked`
+- `coach_feedback_rated`
 - `session_submitted`
+
+## Required Content/Governance Event Types
+- `task_quality_scored`
+- `task_candidate_ranked`
+- `content_publish_blocked`
+- `interpretation_requested`
+- `context_injection_traced`
+- `fairness_smoke_executed`
 
 ## Required Job Lifecycle Event Types
 - `job_submitted`
@@ -35,34 +44,31 @@
 
 ## Canonical Payload Keys
 - `time_to_first_action_ms`
-- `time_to_submit_ms`
 - `query_attempt_count`
 - `query_error_rate`
 - `ai_prompt_count`
 - `ai_accept_ratio`
-- `ai_edit_distance_ratio`
 - `verification_steps`
 - `policy_violation_flags`
 - `policy_version`
 - `blocked_rule_id`
-- `job_id`
-- `job_type`
-- `job_status`
-- `next_attempt_at`
-- `lease_owner`
-- `lease_expires_at`
+- `coach_mode`
+- `context_keys`
+- `precedence_order`
+- `job_id`, `job_type`, `job_status`
+- `next_attempt_at`, `lease_owner`, `lease_expires_at`
 
 ## Anti-Cheating Rules (MVP)
 Flag session if any:
-1. `copy_paste_detected` count exceeds policy threshold.
+1. `copy_paste_detected` bursts exceed threshold.
 2. `tab_blur_detected` bursts exceed threshold window.
-3. `copilot` usage without `verification_step_completed`.
-4. direct-answer request patterns are blocked by coach policy.
+3. Copilot usage without verification evidence.
+4. Assessment-mode direct-answer requests are blocked.
 
 ## Scoring Evidence Linkage
-- `ScoreResult.objective_metrics` is computed deterministically from session events.
+- `ScoreResult.objective_metrics` is deterministic from session events.
 - `ScoreResult.trigger_codes` must map to event-derived conditions.
-- Reports must retain scorer provenance:
+- Reports and interpretation views retain provenance:
   - `task_family_version`
   - `rubric_version`
   - `scorer_version`

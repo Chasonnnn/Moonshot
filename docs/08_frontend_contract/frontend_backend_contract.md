@@ -1,88 +1,49 @@
-# Frontend/Backend Contract v0.2
+# Frontend/Backend Contract v0.3
 
 ## Integration Principles
-- Frontend builds against OpenAPI `0.2.0` plus fixture payloads.
-- Breaking changes are allowed during development but must be versioned in changelog.
-- APIs are tenant-scoped; cross-tenant resources return `404` or `403` per endpoint policy.
-- No fallback routes: backend returns explicit error states for invalid payloads and policy violations.
+- Frontend builds against OpenAPI `0.3.0` and fixture payloads.
+- Breaking changes allowed during development but must be versioned.
+- Tenant-scoped APIs; explicit `404`/`403` isolation behavior.
+- No fallback routes; explicit backend errors only.
 
-## Auth And Role Model
-- Bootstrap token minting: `POST /v1/auth/token` with `X-Bootstrap-Token`.
-- Runtime auth: `Authorization: Bearer <jwt>`.
-- JWT claims used by backend:
-  - `sub`
-  - `role` (`org_admin`, `reviewer`, `candidate`)
-  - `tenant_id`
-  - `exp`
-  - `kid`
+## Auth and Roles
+- `POST /v1/auth/token` for local bootstrap.
+- Runtime bearer JWT claims: `sub`, `role`, `tenant_id`, `exp`, `kid`.
 
-## Async Job Lifecycle Contract
-- Async submit endpoints return `JobAccepted`:
-  - `POST /v1/cases/{case_id}/generate`
-  - `POST /v1/sessions/{session_id}/score`
-  - `POST /v1/exports`
-  - `POST /v1/redteam/runs`
-- Required header for async submit endpoints: `Idempotency-Key`.
-- Polling endpoints:
-  - `GET /v1/jobs`
-  - `GET /v1/jobs/{job_id}` -> `JobStatus`
-  - `GET /v1/jobs/{job_id}/result` -> `JobResultResponse` (returns in-progress status explicitly)
-- Job states:
-  - `pending`
-  - `running`
-  - `retrying`
-  - `completed`
-  - `failed_permanent`
-- Standardized job error codes:
-  - `validation_error`
-  - `dependency_unavailable`
-  - `provider_timeout`
-  - `policy_violation`
-  - `internal_error`
+## Async Job Lifecycle
+Submit endpoints return `JobAccepted`:
+- `POST /v1/cases/{case_id}/generate`
+- `POST /v1/sessions/{session_id}/score`
+- `POST /v1/exports`
+- `POST /v1/redteam/runs`
 
-## Required Mocking Assets
-- OpenAPI spec: `docs/03_api/openapi.yaml`
-- API examples: `apps/api/fixtures/api_examples.json`
-- Seeded scenario fixtures: `apps/api/fixtures/jda_seed_scenarios.json`
-- Event schema: `docs/04_events/event_schema.md`
+Polling:
+- `GET /v1/jobs`
+- `GET /v1/jobs/{job_id}`
+- `GET /v1/jobs/{job_id}/result`
 
-## Frontend First-Phase Flows
-- Case create/edit:
-  - `POST /v1/cases`
-  - `PATCH /v1/cases/{case_id}`
-- Generate submit/poll/result:
-  - `POST /v1/cases/{case_id}/generate`
-  - `GET /v1/jobs/{job_id}`
-  - `GET /v1/jobs/{job_id}/result`
-- Session runtime:
-  - `POST /v1/sessions`
-  - `POST /v1/sessions/{session_id}/events`
-  - `POST /v1/sessions/{session_id}/coach/message`
-  - `POST /v1/sessions/{session_id}/submit`
-- Score submit/poll/result:
-  - `POST /v1/sessions/{session_id}/score`
-  - `GET /v1/jobs/{job_id}`
-  - `GET /v1/jobs/{job_id}/result`
-- Report/export:
-  - `GET /v1/reports/{session_id}`
-  - `POST /v1/exports`
-  - `GET /v1/exports/{run_id}`
+## New Evidence-Loop Flows (v0.3)
+### Co-design quality loop
+- `POST /v1/task-families/{task_family_id}/quality/evaluate`
+- `GET /v1/task-families/{task_family_id}/quality`
 
-## Review And Governance Flows
-- Task family review/publish:
-  - `POST /v1/task-families/{task_family_id}/review`
-  - `POST /v1/task-families/{task_family_id}/publish`
-- Review queue:
-  - `GET /v1/review-queue`
-  - `GET /v1/review-queue/{session_id}`
-  - `POST /v1/review-queue/{session_id}/resolve`
-- Admin and audit:
-  - `GET /v1/admin/policies`
-  - `PATCH /v1/admin/policies`
-  - `POST /v1/admin/policies/purge-expired`
-  - `GET /v1/audit-logs`
-  - `GET /v1/audit-logs/verify`
-  - `GET /v1/slo/probes`
+### Coaching loop
+- `POST /v1/sessions/{session_id}/mode` (`practice` / `assessment`)
+- `POST /v1/sessions/{session_id}/coach/message`
+- `POST /v1/sessions/{session_id}/coach/feedback`
 
-## Response Metadata
-- Backend returns `X-Request-Id` on responses for traceability across frontend logs, backend logs, and incident debugging.
+### Evaluation interpretation loop
+- `GET /v1/reports/{session_id}`
+- `POST /v1/reports/{session_id}/interpret`
+- `GET /v1/reports/{session_id}/interpretations/{view_id}`
+
+### Governance/fairness loop
+- `GET /v1/context/injection-traces/{session_id}`
+- `POST /v1/fairness/smoke-runs`
+- `GET /v1/fairness/smoke-runs/{run_id}`
+
+## UI Contract Requirements
+- Always display scoring provenance in report views.
+- Show coaching mode state clearly to candidate.
+- Interpretation views must be labeled non-mutating.
+- Expose request IDs for support/debug flows.

@@ -1,5 +1,30 @@
 # API Changelog
 
+## 0.3.0 - 2026-02-27
+- Added co-design quality loop APIs:
+  - `POST /v1/task-families/{task_family_id}/quality/evaluate`
+  - `GET /v1/task-families/{task_family_id}/quality`
+- Added coaching loop APIs:
+  - `POST /v1/sessions/{session_id}/mode`
+  - `POST /v1/sessions/{session_id}/coach/feedback`
+- Added evaluation interpretation APIs:
+  - `POST /v1/reports/{session_id}/interpret`
+  - `GET /v1/reports/{session_id}/interpretations/{view_id}`
+- Added context trace API:
+  - `GET /v1/context/injection-traces/{session_id}`
+- Added fairness smoke run APIs:
+  - `POST /v1/fairness/smoke-runs`
+  - `GET /v1/fairness/smoke-runs/{run_id}`
+- Added new domain types:
+  - `TaskQualitySignal`
+  - `CoachFeedback`
+  - `InterpretationView`
+  - `ScoringVersionLock`
+  - `ContextInjectionTrace`
+  - `FairnessSmokeRun`
+- Added evaluator/coach context trace writes for auditability.
+- Updated documentation baseline to evidence-loop MVP model.
+
 ## 0.2.0 - 2026-02-27
 - Added JWT bootstrap token API:
   - `POST /v1/auth/token`
