@@ -214,6 +214,15 @@
       "status": "completed",
       "result": {
         "run_id": "00000000-0000-0000-0000-000000000801",
+        "schema_version": "1.0.0",
+        "csv_headers": [
+          "session_id",
+          "confidence",
+          "needs_human_review",
+          "query_error_rate",
+          "ai_prompt_count",
+          "policy_violation_count"
+        ],
         "csv": "session_id,confidence,needs_human_review,query_error_rate,ai_prompt_count,policy_violation_count\n00000000-0000-0000-0000-000000000100,0.78,false,0.1,2,0",
         "json": {
           "session_id": "00000000-0000-0000-0000-000000000100"
