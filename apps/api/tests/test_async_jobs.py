@@ -54,7 +54,7 @@ def test_generate_is_async_submit_and_result(client, admin_headers):
     assert len(payload["task_family"]["variants"]) >= 3
 
 
-def test_score_is_async_and_creates_export(client, admin_headers, reviewer_headers, candidate_headers):
+def test_score_is_async_and_creates_export_job(client, admin_headers, reviewer_headers, candidate_headers):
     case = client.post(
         "/v1/cases",
         headers=admin_headers,
@@ -117,16 +117,25 @@ def test_score_is_async_and_creates_export(client, admin_headers, reviewer_heade
     score_payload = score_result.json()["result"]
     assert score_payload["session_id"] == session_id
     assert "trigger_codes" in score_payload
+    assert "export_run_id" not in score_payload
 
-    audit = client.get("/v1/audit-logs", headers=admin_headers)
-    assert audit.status_code == 200
-    export_run_id = None
-    for item in audit.json()["items"]:
-        if item["action"] == "score":
-            export_run_id = item["metadata"].get("export_run_id")
-    assert export_run_id is not None
+    export_submit = client.post(
+        "/v1/exports",
+        headers={**reviewer_headers, "Idempotency-Key": "export-key-1"},
+        json={"session_id": session_id},
+    )
+    assert export_submit.status_code == 202
+    export_job_id = export_submit.json()["job_id"]
 
-    export = client.get(f"/v1/exports/{export_run_id}", headers=reviewer_headers)
+    _drain_jobs()
+
+    export_result = client.get(f"/v1/jobs/{export_job_id}/result", headers=reviewer_headers)
+    assert export_result.status_code == 200
+    export_payload = export_result.json()["result"]
+    assert export_payload["run_id"]
+    assert "session_id,confidence,needs_human_review" in export_payload["csv"]
+
+    export = client.get(f"/v1/exports/{export_payload['run_id']}", headers=reviewer_headers)
     assert export.status_code == 200
 
 
@@ -162,6 +171,13 @@ def test_async_endpoints_require_idempotency_key(client, admin_headers):
 
     no_key = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
     assert no_key.status_code == 400
+
+    missing_export_key = client.post(
+        "/v1/exports",
+        headers=admin_headers,
+        json={"session_id": "00000000-0000-0000-0000-000000000100"},
+    )
+    assert missing_export_key.status_code == 400
 
 
 def test_job_result_pending_returns_explicit_status(client, admin_headers):
@@ -247,3 +263,61 @@ def test_job_retry_backoff_and_dead_letter(client, admin_headers, monkeypatch):
     failed_payload = failed_result.json()
     assert failed_payload["status"] == "failed_permanent"
     assert failed_payload["result"]["error_code"] == "runtimeerror"
+
+
+def test_export_submit_idempotency_returns_same_job(client, admin_headers, reviewer_headers, candidate_headers):
+    case = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Export Idempotency",
+            "scenario": "Scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["sql_workspace"],
+        },
+    )
+    case_id = case.json()["id"]
+
+    gen_submit = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "gen-export-idem"},
+    )
+    _drain_jobs()
+    generated = client.get(f"/v1/jobs/{gen_submit.json()['job_id']}/result", headers=admin_headers).json()["result"]
+    task_family_id = generated["task_family"]["id"]
+
+    client.post(
+        f"/v1/task-families/{task_family_id}/review",
+        headers=reviewer_headers,
+        json={"decision": "approve", "review_note": "ready"},
+    )
+    client.post(f"/v1/task-families/{task_family_id}/publish", headers=reviewer_headers, json={})
+
+    session = client.post(
+        "/v1/sessions",
+        headers=reviewer_headers,
+        json={"task_family_id": task_family_id, "candidate_id": "candidate_1"},
+    )
+    session_id = session.json()["id"]
+    client.post(f"/v1/sessions/{session_id}/submit", headers=candidate_headers, json={"final_response": "done"})
+    score = client.post(
+        f"/v1/sessions/{session_id}/score",
+        headers={**reviewer_headers, "Idempotency-Key": "score-export-idem"},
+    )
+    _drain_jobs()
+    assert client.get(f"/v1/jobs/{score.json()['job_id']}/result", headers=reviewer_headers).status_code == 200
+
+    first = client.post(
+        "/v1/exports",
+        headers={**reviewer_headers, "Idempotency-Key": "export-idem-1"},
+        json={"session_id": session_id},
+    )
+    second = client.post(
+        "/v1/exports",
+        headers={**reviewer_headers, "Idempotency-Key": "export-idem-1"},
+        json={"session_id": session_id},
+    )
+    assert first.status_code == 202
+    assert second.status_code == 202
+    assert first.json()["job_id"] == second.json()["job_id"]

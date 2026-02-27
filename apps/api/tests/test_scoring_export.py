@@ -77,14 +77,15 @@ def test_report_and_export_flow(client, admin_headers, reviewer_headers, candida
     assert "score_result" in report_payload
     assert "objective_metrics" in report_payload["score_result"]
 
-    audit = client.get("/v1/audit-logs", headers=admin_headers)
-    assert audit.status_code == 200
-    export_run_id = None
-    for item in audit.json()["items"]:
-        if item["action"] == "score":
-            export_run_id = item["metadata"]["export_run_id"]
-            break
-    assert export_run_id is not None
+    export_submit = client.post(
+        "/v1/exports",
+        headers={**reviewer_headers, "Idempotency-Key": "score-export-job-1"},
+        json={"session_id": session_id},
+    )
+    assert export_submit.status_code == 202
+    export_job_id = export_submit.json()["job_id"]
+    export_result = _job_result(client, export_job_id, reviewer_headers)
+    export_run_id = export_result["run_id"]
 
     export_resp = client.get(f"/v1/exports/{export_run_id}", headers=reviewer_headers)
     assert export_resp.status_code == 200

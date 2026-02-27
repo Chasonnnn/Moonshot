@@ -223,6 +223,10 @@ class Report(BaseModel):
     interpretation: Interpretation
 
 
+class ExportCreateRequest(BaseModel):
+    session_id: UUID
+
+
 class ExportBundle(BaseModel):
     model_config = {"populate_by_name": True}
 

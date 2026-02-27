@@ -11,6 +11,7 @@ from app.core.security import UserContext
 from app.db.session import SessionLocal
 from app.models.entities import JobAttemptModel, JobRunModel
 from app.schemas import AuditLog, JobAccepted, JobResultResponse, JobStatus, Report, ReviewQueueItem, Session
+from app.services.exporting import build_export
 from app.services.generation import generate_from_case
 from app.services.idempotency import get_cached, set_cached
 from app.services.redteam import run_redteam
@@ -177,16 +178,30 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
         )
         scoring_repository.save_review_item(review_item)
 
-    export_run_id = uuid4()
-    scoring_repository.save_export_run(export_run_id, session_id)
-
     updated_session = Session.model_validate({**session.model_dump(mode="json"), "status": "scored"})
     session_repository.save_session(updated_session)
 
-    _audit_system(job.tenant_id, "score", "session", str(session_id), {"export_run_id": str(export_run_id)})
-    payload = score_result.model_dump(mode="json")
-    payload["export_run_id"] = str(export_run_id)
-    return payload
+    _audit_system(job.tenant_id, "score", "session", str(session_id))
+    return score_result.model_dump(mode="json")
+
+
+def _handle_export_session(job: JobRunModel) -> dict[str, Any]:
+    session_id = UUID(job.request_payload["session_id"])
+    session = session_repository.get_session(session_id)
+    if session is None:
+        raise RuntimeError("session_not_found")
+    if session.tenant_id != job.tenant_id:
+        raise RuntimeError("session_not_found")
+
+    report = scoring_repository.get_report(session_id)
+    if report is None:
+        raise RuntimeError("report_not_found")
+
+    run_id = uuid4()
+    scoring_repository.save_export_run(run_id, session_id)
+    bundle = build_export(run_id, report)
+    _audit_system(job.tenant_id, "export", "session", str(session_id), {"run_id": str(run_id)})
+    return bundle.model_dump(mode="json", by_alias=True)
 
 
 def _handle_redteam(job: JobRunModel) -> dict[str, Any]:
@@ -205,6 +220,8 @@ def _execute_job(job: JobRunModel) -> dict[str, Any]:
         return _handle_score_session(job)
     if job.job_type == "redteam":
         return _handle_redteam(job)
+    if job.job_type == "export":
+        return _handle_export_session(job)
     raise RuntimeError("unsupported_job_type")
 
 
