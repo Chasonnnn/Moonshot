@@ -103,9 +103,17 @@ class TaskFamily(BaseModel):
     version: str = "0.1.0"
 
 
+class ModelInvocationTrace(BaseModel):
+    provider: str
+    model: str
+    prompt_hash: str
+    latency_ms: int
+
+
 class GenerationResult(BaseModel):
     task_family: TaskFamily
     rubric: Rubric
+    model_trace: ModelInvocationTrace | None = None
 
 
 class TaskFamilyPublishRequest(BaseModel):
@@ -181,6 +189,8 @@ class CoachResponse(BaseModel):
     allowed: bool
     response: str
     policy_reason: str
+    policy_version: str | None = None
+    blocked_rule_id: str | None = None
 
 
 class SessionSubmitRequest(BaseModel):
@@ -198,6 +208,7 @@ class ScoreResult(BaseModel):
     rubric_version: str = "0.1.0"
     task_family_version: str = "0.1.0"
     model_hash: str = "local-baseline"
+    trigger_codes: list[str] = Field(default_factory=list)
 
 
 class Interpretation(BaseModel):
@@ -302,3 +313,41 @@ class ErrorResponse(BaseModel):
 class MetaVersion(BaseModel):
     api_version: str
     schema_version: str
+
+
+class AuthTokenRequest(BaseModel):
+    role: str
+    user_id: str
+    tenant_id: str
+    expires_in_seconds: int | None = None
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_at: datetime
+    kid: str
+
+
+class JobAccepted(BaseModel):
+    job_id: UUID
+    status: str
+    submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class JobStatus(BaseModel):
+    job_id: UUID
+    status: str
+    progress: int = 0
+    error_code: str | None = None
+    error_detail: str | None = None
+    submitted_at: datetime
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    next_attempt_at: datetime | None = None
+
+
+class JobResultResponse(BaseModel):
+    job_id: UUID
+    status: str
+    result: dict[str, Any]

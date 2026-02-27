@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Iterable, Protocol
 from uuid import UUID
 
-from app.schemas import CaseSpec, Report, ReviewQueueItem, ScoreResult, Session, TaskFamily
+from app.schemas import BusinessContextPack, CaseSpec, Report, ReviewQueueItem, ScoreResult, Session, TaskFamily
 from app.schemas.contracts import Rubric
 from app.schemas.contracts import EventItem
 
@@ -58,3 +58,23 @@ class ScoringRepository(Protocol):
     def save_export_run(self, run_id: UUID, session_id: UUID) -> dict[str, str]: ...
 
     def get_export_run(self, run_id: UUID) -> dict[str, str] | None: ...
+
+
+class BusinessContextRepository(Protocol):
+    def save_pack(self, pack: BusinessContextPack) -> BusinessContextPack: ...
+
+    def get_pack(self, pack_id: UUID) -> BusinessContextPack | None: ...
+
+    def list_packs(self, tenant_id: str) -> list[BusinessContextPack]: ...
+
+
+class ReviewQueueRepository(Protocol):
+    def save_item(self, item: ReviewQueueItem) -> ReviewQueueItem: ...
+
+    def get_item(self, session_id: UUID) -> ReviewQueueItem | None: ...
+
+    def list_items(self, tenant_id: str, include_resolved: bool = False) -> list[ReviewQueueItem]: ...
+
+
+class GovernanceRepository(Protocol):
+    def append_audit_log(self, payload: dict[str, Any]) -> None: ...

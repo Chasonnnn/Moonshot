@@ -1,3 +1,13 @@
+from app.services.jobs import process_jobs_until_empty
+
+
+def _job_result(client, job_id, headers):
+    process_jobs_until_empty()
+    response = client.get(f"/v1/jobs/{job_id}/result", headers=headers)
+    assert response.status_code == 200
+    return response.json()["result"]
+
+
 def _create_generated_task_family(client, admin_headers):
     case_response = client.post(
         "/v1/cases",
@@ -13,9 +23,12 @@ def _create_generated_task_family(client, admin_headers):
     assert case_response.status_code == 201
     case_id = case_response.json()["id"]
 
-    generated = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
-    assert generated.status_code == 200
-    return generated.json()["task_family"]["id"]
+    generated = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "review-workflow-gen-1"},
+    )
+    assert generated.status_code == 202
+    return _job_result(client, generated.json()["job_id"], admin_headers)["task_family"]["id"]
 
 
 def _create_scored_session(client, admin_headers, reviewer_headers, candidate_headers):
@@ -43,7 +56,6 @@ def _create_scored_session(client, admin_headers, reviewer_headers, candidate_he
     assert session.status_code == 201
     session_id = session.json()["id"]
 
-    # Trigger low-confidence score and human-review path.
     event_payload = {
         "events": [
             {"event_type": "copilot_invoked", "payload": {}},
@@ -56,9 +68,13 @@ def _create_scored_session(client, admin_headers, reviewer_headers, candidate_he
     submit = client.post(f"/v1/sessions/{session_id}/submit", headers=candidate_headers, json={"final_response": "answer"})
     assert submit.status_code == 200
 
-    score = client.post(f"/v1/sessions/{session_id}/score", headers=reviewer_headers)
-    assert score.status_code == 200
-    assert score.json()["needs_human_review"] is True
+    score = client.post(
+        f"/v1/sessions/{session_id}/score",
+        headers={**reviewer_headers, "Idempotency-Key": "review-workflow-score-1"},
+    )
+    assert score.status_code == 202
+    score_payload = _job_result(client, score.json()["job_id"], reviewer_headers)
+    assert score_payload["needs_human_review"] is True
     return session_id
 
 

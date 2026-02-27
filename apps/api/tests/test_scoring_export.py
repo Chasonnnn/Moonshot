@@ -1,3 +1,13 @@
+from app.services.jobs import process_jobs_until_empty
+
+
+def _job_result(client, job_id, headers):
+    process_jobs_until_empty()
+    response = client.get(f"/v1/jobs/{job_id}/result", headers=headers)
+    assert response.status_code == 200
+    return response.json()["result"]
+
+
 def _prepare_scored_session(client, admin_headers, reviewer_headers, candidate_headers):
     case_res = client.post(
         "/v1/cases",
@@ -11,8 +21,14 @@ def _prepare_scored_session(client, admin_headers, reviewer_headers, candidate_h
         },
     )
     case_id = case_res.json()["id"]
-    gen_res = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
-    task_family_id = gen_res.json()["task_family"]["id"]
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "score-export-gen-1"},
+    )
+    assert gen_res.status_code == 202
+    generated = _job_result(client, gen_res.json()["job_id"], admin_headers)
+    task_family_id = generated["task_family"]["id"]
+
     review = client.post(
         f"/v1/task-families/{task_family_id}/review",
         headers=reviewer_headers,
@@ -43,8 +59,12 @@ def _prepare_scored_session(client, admin_headers, reviewer_headers, candidate_h
     submit = client.post(f"/v1/sessions/{session_id}/submit", headers=candidate_headers, json={"final_response": "summary"})
     assert submit.status_code == 200
 
-    score = client.post(f"/v1/sessions/{session_id}/score", headers=reviewer_headers)
-    assert score.status_code == 200
+    score = client.post(
+        f"/v1/sessions/{session_id}/score",
+        headers={**reviewer_headers, "Idempotency-Key": "score-export-score-1"},
+    )
+    assert score.status_code == 202
+    _job_result(client, score.json()["job_id"], reviewer_headers)
     return session_id
 
 

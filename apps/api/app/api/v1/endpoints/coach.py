@@ -37,9 +37,21 @@ def send_coach_message(
                 "payload": {
                     "allowed": response.allowed,
                     "policy_reason": response.policy_reason,
+                    "policy_version": response.policy_version,
+                    "blocked_rule_id": response.blocked_rule_id,
                 },
             }
         ],
     )
-    audit(user, "coach_message", "session", str(session_id), {"allowed": response.allowed})
+    audit(
+        user,
+        "coach_message",
+        "session",
+        str(session_id),
+        {
+            "allowed": response.allowed,
+            "policy_version": response.policy_version,
+            "blocked_rule_id": response.blocked_rule_id,
+        },
+    )
     return response

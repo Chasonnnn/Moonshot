@@ -1,4 +1,12 @@
-from uuid import UUID
+from app.core.security import issue_access_token
+from app.services.jobs import process_jobs_until_empty
+
+
+def _job_result(client, job_id, headers):
+    process_jobs_until_empty()
+    response = client.get(f"/v1/jobs/{job_id}/result", headers=headers)
+    assert response.status_code == 200
+    return response.json()["result"]
 
 
 def _bootstrap_resources(client, admin_headers, reviewer_headers):
@@ -31,9 +39,12 @@ def _bootstrap_resources(client, admin_headers, reviewer_headers):
     assert case.status_code == 201
     case_id = case.json()["id"]
 
-    generated = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
-    assert generated.status_code == 200
-    task_family_id = generated.json()["task_family"]["id"]
+    generated = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "tenant-bootstrap-gen-1"},
+    )
+    assert generated.status_code == 202
+    task_family_id = _job_result(client, generated.json()["job_id"], admin_headers)["task_family"]["id"]
 
     review = client.post(
         f"/v1/task-families/{task_family_id}/review",
@@ -103,8 +114,12 @@ def test_get_and_list_endpoints_for_frontend_bootstrap(client, admin_headers, re
 
 def test_cross_tenant_reads_and_mutations_are_blocked(client, admin_headers, reviewer_headers):
     ids = _bootstrap_resources(client, admin_headers, reviewer_headers)
-    tenant_b_admin = {**admin_headers, "X-Tenant-Id": "tenant_b", "X-User-Id": "admin_b"}
-    tenant_b_reviewer = {**reviewer_headers, "X-Tenant-Id": "tenant_b", "X-User-Id": "reviewer_b"}
+    tenant_b_admin = {
+        "Authorization": f"Bearer {issue_access_token(role='org_admin', user_id='admin_b', tenant_id='tenant_b').access_token}"
+    }
+    tenant_b_reviewer = {
+        "Authorization": f"Bearer {issue_access_token(role='reviewer', user_id='reviewer_b', tenant_id='tenant_b').access_token}"
+    }
 
     case_patch = client.patch(
         f"/v1/cases/{ids['case_id']}",
@@ -122,7 +137,10 @@ def test_cross_tenant_reads_and_mutations_are_blocked(client, admin_headers, rev
     session_get = client.get(f"/v1/sessions/{ids['session_id']}", headers=tenant_b_reviewer)
     assert session_get.status_code == 404
 
-    score = client.post(f"/v1/sessions/{ids['session_id']}/score", headers=tenant_b_reviewer)
+    score = client.post(
+        f"/v1/sessions/{ids['session_id']}/score",
+        headers={**tenant_b_reviewer, "Idempotency-Key": "tenant-mismatch-score-1"},
+    )
     assert score.status_code == 404
 
 
@@ -132,8 +150,7 @@ def test_candidate_can_only_get_own_session(client, admin_headers, reviewer_head
     assert own.status_code == 200
 
     other_candidate_headers = {
-        **candidate_headers,
-        "X-User-Id": "candidate_other",
+        "Authorization": f"Bearer {issue_access_token(role='candidate', user_id='candidate_other', tenant_id='tenant_a').access_token}"
     }
     other = client.get(f"/v1/sessions/{ids['session_id']}", headers=other_candidate_headers)
     assert other.status_code == 404

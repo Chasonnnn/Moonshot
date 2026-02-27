@@ -1,3 +1,13 @@
+from app.services.jobs import process_jobs_until_empty
+
+
+def _job_result(client, job_id, headers):
+    process_jobs_until_empty()
+    response = client.get(f"/v1/jobs/{job_id}/result", headers=headers)
+    assert response.status_code == 200
+    return response.json()["result"]
+
+
 def _create_case(client, admin_headers):
     response = client.post(
         "/v1/cases",
@@ -16,9 +26,13 @@ def _create_case(client, admin_headers):
 
 def _create_task_family(client, admin_headers):
     case_id = _create_case(client, admin_headers)
-    generated = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
-    assert generated.status_code == 200
-    task_family_id = generated.json()["task_family"]["id"]
+    generated = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "roles-gen-1"},
+    )
+    assert generated.status_code == 202
+    task_family_id = _job_result(client, generated.json()["job_id"], admin_headers)["task_family"]["id"]
+
     review = client.post(
         f"/v1/task-families/{task_family_id}/review",
         headers=admin_headers,
@@ -77,5 +91,8 @@ def test_candidate_cannot_score(client, admin_headers, candidate_headers):
     )
     assert submit.status_code == 200
 
-    score = client.post(f"/v1/sessions/{session_id}/score", headers=candidate_headers)
+    score = client.post(
+        f"/v1/sessions/{session_id}/score",
+        headers={**candidate_headers, "Idempotency-Key": "roles-score-forbidden"},
+    )
     assert score.status_code == 403

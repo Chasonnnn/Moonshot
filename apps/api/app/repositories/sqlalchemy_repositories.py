@@ -3,9 +3,16 @@ from __future__ import annotations
 from typing import Any, Iterable
 from uuid import UUID
 
-from app.repositories.contracts import CaseRepository, ScoringRepository, SessionRepository
+from app.repositories.contracts import (
+    BusinessContextRepository,
+    CaseRepository,
+    GovernanceRepository,
+    ReviewQueueRepository,
+    ScoringRepository,
+    SessionRepository,
+)
 from app.repositories.sql_store import SQLStore
-from app.schemas import CaseSpec, Report, ReviewQueueItem, ScoreResult, Session, TaskFamily
+from app.schemas import BusinessContextPack, CaseSpec, Report, ReviewQueueItem, ScoreResult, Session, TaskFamily
 from app.schemas.contracts import EventItem, Rubric
 
 
@@ -154,3 +161,58 @@ class SQLAlchemyScoringRepository(ScoringRepository):
         if payload is None:
             return None
         return {"session_id": str(payload["session_id"])}
+
+
+class SQLAlchemyBusinessContextRepository(BusinessContextRepository):
+    def __init__(self, store: SQLStore) -> None:
+        self._store = store
+
+    def save_pack(self, pack: BusinessContextPack) -> BusinessContextPack:
+        self._store.business_context_packs[pack.id] = pack.model_dump(mode="json")
+        return pack
+
+    def get_pack(self, pack_id: UUID) -> BusinessContextPack | None:
+        payload = self._store.business_context_packs.get(pack_id)
+        if payload is None:
+            return None
+        return BusinessContextPack.model_validate(payload)
+
+    def list_packs(self, tenant_id: str) -> list[BusinessContextPack]:
+        return [
+            BusinessContextPack.model_validate(payload)
+            for payload in self._store.business_context_packs.values()
+            if payload["tenant_id"] == tenant_id
+        ]
+
+
+class SQLAlchemyReviewQueueRepository(ReviewQueueRepository):
+    def __init__(self, store: SQLStore) -> None:
+        self._store = store
+
+    def save_item(self, item: ReviewQueueItem) -> ReviewQueueItem:
+        self._store.review_queue[item.session_id] = item.model_dump(mode="json")
+        return item
+
+    def get_item(self, session_id: UUID) -> ReviewQueueItem | None:
+        payload = self._store.review_queue.get(session_id)
+        if payload is None:
+            return None
+        return ReviewQueueItem.model_validate(payload)
+
+    def list_items(self, tenant_id: str, include_resolved: bool = False) -> list[ReviewQueueItem]:
+        items: list[ReviewQueueItem] = []
+        for payload in self._store.review_queue.values():
+            if payload["tenant_id"] != tenant_id:
+                continue
+            if not include_resolved and payload["status"] != "open":
+                continue
+            items.append(ReviewQueueItem.model_validate(payload))
+        return items
+
+
+class SQLAlchemyGovernanceRepository(GovernanceRepository):
+    def __init__(self, store: SQLStore) -> None:
+        self._store = store
+
+    def append_audit_log(self, payload: dict[str, Any]) -> None:
+        self._store.audit_logs.append(payload)

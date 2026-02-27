@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import CaseCreate, CaseSpec, CaseUpdate, GenerationResult
+from app.schemas import CaseCreate, CaseSpec, CaseUpdate, JobAccepted
 from app.services.audit import audit
-from app.services.generation import generate_from_case
-from app.services.idempotency import get_cached, set_cached
+from app.services.jobs import submit_job
 from app.services.repositories import case_repository
 
 router = APIRouter(prefix="/v1/cases", tags=["cases"])
@@ -61,23 +60,23 @@ def update_case(
     return case
 
 
-@router.post("/{case_id}/generate", response_model=GenerationResult)
+@router.post("/{case_id}/generate", response_model=JobAccepted, status_code=status.HTTP_202_ACCEPTED)
 def generate_case(
     case_id: UUID,
     user: UserContext = Depends(require_roles("org_admin")),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
-) -> GenerationResult:
-    cache_scope = f"{user.tenant_id}:generate"
-    cached = get_cached(cache_scope, idempotency_key)
-    if cached is not None:
-        return GenerationResult.model_validate(cached)
+) -> JobAccepted:
+    if idempotency_key is None or not idempotency_key.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing Idempotency-Key header")
 
     case = _get_case_for_tenant(case_id, user.tenant_id)
-    generated = generate_from_case(case)
-    case_repository.save_task_family(generated.task_family)
-    case_repository.save_rubric(generated.rubric)
-
-    payload = generated.model_dump(mode="json")
-    set_cached(cache_scope, idempotency_key, payload)
-    audit(user, "generate", "case", str(case_id), {"task_family_id": str(generated.task_family.id)})
-    return generated
+    accepted = submit_job(
+        job_type="generate",
+        target_type="case",
+        target_id=case.id,
+        user=user,
+        request_payload={"case_id": str(case.id)},
+        idempotency_key=idempotency_key,
+    )
+    audit(user, "submit_job", "case_generate", str(case.id), {"job_id": str(accepted.job_id)})
+    return accepted

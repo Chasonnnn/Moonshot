@@ -3,6 +3,9 @@ from pathlib import Path
 EXPECTED_PATHS = {
     "/health",
     "/v1/meta/version",
+    "/v1/auth/token",
+    "/v1/jobs/{job_id}",
+    "/v1/jobs/{job_id}/result",
     "/v1/admin/policies",
     "/v1/admin/policies/purge-expired",
     "/v1/business-context/packs",

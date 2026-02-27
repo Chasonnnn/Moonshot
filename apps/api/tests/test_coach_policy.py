@@ -1,3 +1,13 @@
+from app.services.jobs import process_jobs_until_empty
+
+
+def _job_result(client, job_id, headers):
+    process_jobs_until_empty()
+    response = client.get(f"/v1/jobs/{job_id}/result", headers=headers)
+    assert response.status_code == 200
+    return response.json()["result"]
+
+
 def _bootstrap_session(client, admin_headers):
     case_res = client.post(
         "/v1/cases",
@@ -11,8 +21,11 @@ def _bootstrap_session(client, admin_headers):
         },
     )
     case_id = case_res.json()["id"]
-    gen_res = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
-    tf_id = gen_res.json()["task_family"]["id"]
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "coach-gen-1"},
+    )
+    tf_id = _job_result(client, gen_res.json()["job_id"], admin_headers)["task_family"]["id"]
     review = client.post(
         f"/v1/task-families/{tf_id}/review",
         headers=admin_headers,
@@ -40,6 +53,8 @@ def test_coach_blocks_direct_answers(client, admin_headers, candidate_headers):
     payload = response.json()
     assert payload["allowed"] is False
     assert payload["policy_reason"] == "direct_answer_disallowed"
+    assert payload["policy_version"] == "0.2.0"
+    assert payload["blocked_rule_id"] == "direct_exact_answer"
 
 
 def test_coach_allows_context_clarification(client, admin_headers, candidate_headers):
@@ -53,3 +68,4 @@ def test_coach_allows_context_clarification(client, admin_headers, candidate_hea
     payload = response.json()
     assert payload["allowed"] is True
     assert payload["policy_reason"] == "context_only_allowed"
+    assert payload["policy_version"] == "0.2.0"

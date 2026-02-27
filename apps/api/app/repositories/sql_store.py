@@ -23,6 +23,8 @@ from app.models.entities import (
     EventLogModel,
     ExportRunModel,
     IdempotencyCacheModel,
+    JobAttemptModel,
+    JobRunModel,
     RedTeamRunModel,
     ReportModel,
     ReviewQueueModel,
@@ -601,6 +603,18 @@ class SQLStore:
         )
         self.session_sql_history = SQLHistoryMap(session_factory=session_factory)
         self.dashboard_state = SQLDashboardStateMap(session_factory=session_factory)
+        self.job_runs = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=JobRunModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
+        self.job_attempts = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=JobAttemptModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
 
     def ensure_schema(self) -> None:
         Base.metadata.create_all(bind=engine)

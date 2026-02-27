@@ -3,10 +3,12 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     admin_policies,
     audit,
+    auth,
     business_context,
     cases,
     coach,
     exports,
+    jobs,
     meta,
     redteam,
     review_queue,
@@ -19,6 +21,8 @@ from app.api.v1.endpoints import (
 
 api_router = APIRouter()
 api_router.include_router(meta.router)
+api_router.include_router(auth.router)
+api_router.include_router(jobs.router)
 api_router.include_router(admin_policies.router)
 api_router.include_router(business_context.router)
 api_router.include_router(cases.router)

@@ -2,6 +2,14 @@ from sqlalchemy import func, select
 
 from app.db.session import SessionLocal
 from app.models.entities import CaseSpecModel, EventLogModel, ScoreResultModel
+from app.services.jobs import process_jobs_until_empty
+
+
+def _job_result(client, job_id, headers):
+    process_jobs_until_empty()
+    response = client.get(f"/v1/jobs/{job_id}/result", headers=headers)
+    assert response.status_code == 200
+    return response.json()["result"]
 
 
 def _bootstrap_submitted_session(client, admin_headers, reviewer_headers, candidate_headers):
@@ -19,9 +27,12 @@ def _bootstrap_submitted_session(client, admin_headers, reviewer_headers, candid
     assert case_res.status_code == 201
     case_id = case_res.json()["id"]
 
-    gen_res = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
-    assert gen_res.status_code == 200
-    task_family_id = gen_res.json()["task_family"]["id"]
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "db-persist-gen-1"},
+    )
+    assert gen_res.status_code == 202
+    task_family_id = _job_result(client, gen_res.json()["job_id"], admin_headers)["task_family"]["id"]
 
     review = client.post(
         f"/v1/task-families/{task_family_id}/review",
@@ -86,8 +97,12 @@ def test_events_and_scores_persist_to_database(client, admin_headers, reviewer_h
     )
     assert ingest.status_code == 202
 
-    score = client.post(f"/v1/sessions/{session_id}/score", headers=reviewer_headers)
-    assert score.status_code == 200
+    score = client.post(
+        f"/v1/sessions/{session_id}/score",
+        headers={**reviewer_headers, "Idempotency-Key": "db-persist-score-1"},
+    )
+    assert score.status_code == 202
+    _job_result(client, score.json()["job_id"], reviewer_headers)
 
     with SessionLocal() as db:
         event_count = db.scalar(

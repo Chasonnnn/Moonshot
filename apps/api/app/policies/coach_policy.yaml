@@ -1,11 +1,16 @@
-version: 0.1.0
+version: 0.2.0
 mode: context_only
 blocked_patterns:
-  - exact answer
-  - give me the answer
-  - write the sql
-  - solve this for me
-  - what should i submit
+  - id: direct_exact_answer
+    regex: "\\bexact answer\\b"
+  - id: direct_give_answer
+    regex: "\\bgive me the answer\\b"
+  - id: direct_write_sql
+    regex: "\\bwrite the sql\\b"
+  - id: direct_solve
+    regex: "\\bsolve this for me\\b"
+  - id: direct_submit
+    regex: "\\bwhat should i submit\\b"
 allowed_behaviors:
   - clarify business context
   - restate constraints

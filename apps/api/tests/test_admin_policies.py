@@ -1,5 +1,14 @@
 from datetime import datetime, timedelta, timezone
 
+from app.services.jobs import process_jobs_until_empty
+
+
+def _job_result(client, job_id, headers):
+    process_jobs_until_empty()
+    response = client.get(f"/v1/jobs/{job_id}/result", headers=headers)
+    assert response.status_code == 200
+    return response.json()["result"]
+
 
 def _bootstrap_published_task_family(client, admin_headers):
     case = client.post(
@@ -15,9 +24,13 @@ def _bootstrap_published_task_family(client, admin_headers):
     )
     assert case.status_code == 201
     case_id = case.json()["id"]
-    generated = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
-    assert generated.status_code == 200
-    task_family_id = generated.json()["task_family"]["id"]
+    generated = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "admin-policy-gen-1"},
+    )
+    assert generated.status_code == 202
+    task_family_id = _job_result(client, generated.json()["job_id"], admin_headers)["task_family"]["id"]
+
     reviewed = client.post(
         f"/v1/task-families/{task_family_id}/review",
         headers=admin_headers,
@@ -96,7 +109,6 @@ def test_admin_can_purge_expired_raw_content(client, admin_headers, candidate_he
     )
     assert submit.status_code == 200
 
-    # Backdate session to force expiry.
     from app.services.store import store
 
     created_at = datetime.now(timezone.utc) - timedelta(days=3)

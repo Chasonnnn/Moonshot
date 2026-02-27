@@ -1,8 +1,25 @@
 from uuid import uuid4
 
-from app.schemas import CaseSpec, Interpretation, Report, ReviewQueueItem, ScoreResult, Session, TaskFamily
+from app.schemas import (
+    BusinessContextPack,
+    CaseSpec,
+    Interpretation,
+    Report,
+    ReviewQueueItem,
+    ScoreResult,
+    Session,
+    TaskFamily,
+)
 from app.schemas.contracts import Rubric, TaskVariant
-from app.services.repositories import case_repository, scoring_repository, session_repository
+from app.services.repositories import (
+    business_context_repository,
+    case_repository,
+    governance_repository,
+    review_queue_repository,
+    scoring_repository,
+    session_repository,
+)
+from app.services.store import store
 
 
 def test_case_repository_roundtrip(client):
@@ -93,3 +110,50 @@ def test_scoring_repository_roundtrip(client):
     fetched_run = scoring_repository.get_export_run(export_run_id)
     assert fetched_run is not None
     assert fetched_run["session_id"] == str(session_id)
+
+
+def test_business_context_repository_roundtrip(client):
+    pack = BusinessContextPack(
+        tenant_id="tenant_a",
+        name="Growth Analytics",
+        role_focus="junior_data_analyst",
+        job_description="Analyze growth funnel health and anomalies.",
+        examples=["Investigate conversion drop by region."],
+        constraints={"timebox_minutes": 45},
+    )
+    business_context_repository.save_pack(pack)
+
+    fetched = business_context_repository.get_pack(pack.id)
+    assert fetched is not None
+    assert fetched.name == "Growth Analytics"
+
+    listed = business_context_repository.list_packs("tenant_a")
+    assert any(item.id == pack.id for item in listed)
+
+
+def test_review_queue_repository_and_governance_repo(client):
+    item = ReviewQueueItem(
+        session_id=uuid4(),
+        tenant_id="tenant_a",
+        reason="score_flagged_for_human_review",
+        created_by="reviewer_1",
+    )
+    review_queue_repository.save_item(item)
+
+    open_items = review_queue_repository.list_items("tenant_a")
+    assert len(open_items) == 1
+    assert open_items[0].status == "open"
+
+    governance_repository.append_audit_log(
+        {
+            "tenant_id": "tenant_a",
+            "actor_role": "org_admin",
+            "action": "unit_test",
+            "resource_type": "governance",
+            "resource_id": "test",
+            "metadata": {"source": "test"},
+        }
+    )
+    entries = list(store.audit_logs)
+    assert len(entries) == 1
+    assert entries[0]["action"] == "unit_test"

@@ -1,10 +1,13 @@
 import os
+from uuid import uuid4
 
-os.environ["MOONSHOT_DATABASE_URL"] = "sqlite+pysqlite:////tmp/moonshot_test.db"
+os.environ["MOONSHOT_DATABASE_URL"] = f"sqlite+pysqlite:////tmp/moonshot_test_{uuid4().hex}.db"
+os.environ.setdefault("MOONSHOT_AUTH_BOOTSTRAP_TOKEN", "moonshot-bootstrap-dev")
 
 from fastapi.testclient import TestClient
 import pytest
 
+from app.core.security import issue_access_token
 from app.main import app
 from app.services.store import store
 
@@ -28,19 +31,24 @@ def client() -> TestClient:
     store.admin_policies.clear()
     store.session_sql_history.clear()
     store.dashboard_state.clear()
+    store.job_attempts.clear()
+    store.job_runs.clear()
     return TestClient(app)
 
 
 @pytest.fixture()
 def admin_headers() -> dict[str, str]:
-    return {"X-Role": "org_admin", "X-User-Id": "admin_1", "X-Tenant-Id": "tenant_a"}
+    token = issue_access_token(role="org_admin", user_id="admin_1", tenant_id="tenant_a").access_token
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture()
 def reviewer_headers() -> dict[str, str]:
-    return {"X-Role": "reviewer", "X-User-Id": "reviewer_1", "X-Tenant-Id": "tenant_a"}
+    token = issue_access_token(role="reviewer", user_id="reviewer_1", tenant_id="tenant_a").access_token
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture()
 def candidate_headers() -> dict[str, str]:
-    return {"X-Role": "candidate", "X-User-Id": "candidate_1", "X-Tenant-Id": "tenant_a"}
+    token = issue_access_token(role="candidate", user_id="candidate_1", tenant_id="tenant_a").access_token
+    return {"Authorization": f"Bearer {token}"}

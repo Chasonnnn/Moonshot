@@ -1,3 +1,13 @@
+from app.services.jobs import process_jobs_until_empty
+
+
+def _job_result(client, job_id, headers):
+    process_jobs_until_empty()
+    response = client.get(f"/v1/jobs/{job_id}/result", headers=headers)
+    assert response.status_code == 200
+    return response.json()["result"]
+
+
 def _create_live_session(client, admin_headers, candidate_id="candidate_1"):
     case = client.post(
         "/v1/cases",
@@ -12,9 +22,12 @@ def _create_live_session(client, admin_headers, candidate_id="candidate_1"):
     )
     assert case.status_code == 201
     case_id = case.json()["id"]
-    gen = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
-    assert gen.status_code == 200
-    task_family_id = gen.json()["task_family"]["id"]
+    gen = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "sim-gen-1"},
+    )
+    assert gen.status_code == 202
+    task_family_id = _job_result(client, gen.json()["job_id"], admin_headers)["task_family"]["id"]
     review = client.post(
         f"/v1/task-families/{task_family_id}/review",
         headers=admin_headers,
