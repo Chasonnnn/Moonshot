@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moonshot Backend
-  version: 0.3.0
+  version: 0.3.1
 paths:
   /health:
     get:
@@ -2239,6 +2239,14 @@ components:
           type: string
           format: uuid
           title: Run Id
+        schema_version:
+          type: string
+          title: Schema Version
+        csv_headers:
+          items:
+            type: string
+          type: array
+          title: Csv Headers
         csv:
           type: string
           title: Csv
@@ -2253,6 +2261,7 @@ components:
       type: object
       required:
       - run_id
+      - schema_version
       - csv
       - json
       - tableau_schema

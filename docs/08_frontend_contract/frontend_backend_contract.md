@@ -1,7 +1,7 @@
-# Frontend/Backend Contract v0.3
+# Frontend/Backend Contract v0.3.1
 
 ## Integration Principles
-- Frontend builds against OpenAPI `0.3.0` and fixture payloads.
+- Frontend builds against OpenAPI `0.3.1` and fixture payloads.
 - Breaking changes allowed during development but must be versioned.
 - Tenant-scoped APIs; explicit `404`/`403` isolation behavior.
 - No fallback routes; explicit backend errors only.
@@ -47,6 +47,10 @@ Error envelope on non-2xx responses:
 Worker runtime health:
 - `GET /v1/workers/health`
 - Response includes `overall_status`, `workers[]`, and `stale_leases`.
+
+Export schema lock:
+- `GET /v1/exports/{run_id}` returns `schema_version` and `csv_headers`.
+- Current locked export schema version: `1.0.0`.
 
 ## New Evidence-Loop Flows (v0.3)
 ### Co-design quality loop

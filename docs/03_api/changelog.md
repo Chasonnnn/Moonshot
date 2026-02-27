@@ -1,5 +1,16 @@
 # API Changelog
 
+## 0.3.1 - 2026-02-27
+- Frozen frontend integration contract at OpenAPI `0.3.1`.
+- Added API examples replay guard:
+  - `apps/api/scripts/check_api_examples.py`
+  - CI now runs `check_api_examples.py` in `api-ci`.
+- Locked export response schema:
+  - `schema_version`
+  - `csv_headers`
+  - current export schema version `1.0.0`.
+- Updated MVP scope and frontend contract docs to `v0.3.1`.
+
 ## 0.3.0 - 2026-02-27
 - Added co-design quality loop APIs:
   - `POST /v1/task-families/{task_family_id}/quality/evaluate`
