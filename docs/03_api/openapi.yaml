@@ -1,279 +1,513 @@
 openapi: 3.1.0
 info:
-  title: Moonshot Backend API
-  version: 0.1.0
-  description: API-first contract for Moonshot MVP backend.
-servers:
-  - url: https://api.moonshot.local
-    description: Example production endpoint
-  - url: http://localhost:8000
-    description: Local development
-security:
-  - RoleHeaderAuth: []
+  title: Moonshot Backend
+  version: 0.2.0
 paths:
   /health:
     get:
-      summary: Health check
-      operationId: healthCheck
-      security: []
+      summary: Health
+      operationId: health_health_get
       responses:
         '200':
-          description: Healthy
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Health Health Get
   /v1/meta/version:
     get:
-      summary: API metadata
-      operationId: getMetaVersion
-      security: []
+      summary: Meta Version
+      operationId: meta_version_v1_meta_version_get
       responses:
         '200':
-          description: API metadata
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetaVersion'
-  /v1/admin/policies:
+  /v1/auth/token:
+    post:
+      tags:
+      - auth
+      summary: Issue Token
+      operationId: issue_token_v1_auth_token_post
+      parameters:
+      - name: X-Bootstrap-Token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Bootstrap-Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthTokenRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/jobs/{job_id}:
     get:
-      summary: Get admin policy for current tenant
-      operationId: getAdminPolicy
+      tags:
+      - jobs
+      summary: Get Job
+      operationId: get_job_v1_jobs__job_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Job Id
       responses:
         '200':
-          description: Admin policy
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/jobs/{job_id}/result:
+    get:
+      tags:
+      - jobs
+      summary: Get Job Result Payload
+      operationId: get_job_result_payload_v1_jobs__job_id__result_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResultResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/policies:
+    get:
+      tags:
+      - admin-policies
+      summary: Get Admin Policy
+      operationId: get_admin_policy_v1_admin_policies_get
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminPolicy'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+      security:
+      - HTTPBearer: []
     patch:
-      summary: Update admin policy for current tenant
-      operationId: patchAdminPolicy
+      tags:
+      - admin-policies
+      summary: Patch Admin Policy
+      operationId: patch_admin_policy_v1_admin_policies_patch
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AdminPolicyUpdateRequest'
+        required: true
       responses:
         '200':
-          description: Updated admin policy
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminPolicy'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
   /v1/admin/policies/purge-expired:
     post:
-      summary: Purge expired raw session content by tenant policy
-      operationId: purgeExpiredRawContent
+      tags:
+      - admin-policies
+      summary: Purge Expired Raw Content
+      operationId: purge_expired_raw_content_v1_admin_policies_purge_expired_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurgeExpiredRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurgeExpiredResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /v1/business-context/packs:
+    get:
+      tags:
+      - business-context
+      summary: List Packs
+      operationId: list_packs_v1_business_context_packs_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/BusinessContextPack'
+                  type: array
+                type: object
+                title: Response List Packs V1 Business Context Packs Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - business-context
+      summary: Create Pack
+      operationId: create_pack_v1_business_context_packs_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessContextPackCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPack'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /v1/business-context/packs/{pack_id}:
+    get:
+      tags:
+      - business-context
+      summary: Get Pack
+      operationId: get_pack_v1_business_context_packs__pack_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPack'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - business-context
+      summary: Update Pack
+      operationId: update_pack_v1_business_context_packs__pack_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PurgeExpiredRequest'
+              $ref: '#/components/schemas/BusinessContextPackUpdate'
       responses:
         '200':
-          description: Purge result
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PurgeExpiredResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /v1/business-context/packs:
-    get:
-      summary: List business context packs for current tenant
-      operationId: listBusinessContextPacks
-      responses:
-        '200':
-          description: Tenant-scoped list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BusinessContextPackListResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-    post:
-      summary: Create a business context pack
-      operationId: createBusinessContextPack
-      responses:
-        '201':
-          description: Created
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BusinessContextPack'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /v1/business-context/packs/{pack_id}:
-    get:
-      summary: Get a business context pack
-      operationId: getBusinessContextPack
-      parameters:
-        - $ref: '#/components/parameters/PackId'
-      responses:
-        '200':
-          description: Pack
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BusinessContextPack'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-    patch:
-      summary: Update a business context pack
-      operationId: updateBusinessContextPack
-      parameters:
-        - $ref: '#/components/parameters/PackId'
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BusinessContextPack'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/cases:
     get:
-      summary: List case specs for current tenant
-      operationId: listCases
+      tags:
+      - cases
+      summary: List Cases
+      operationId: list_cases_v1_cases_get
       responses:
         '200':
-          description: Tenant-scoped list
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CaseListResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/CaseSpec'
+                  type: array
+                type: object
+                title: Response List Cases V1 Cases Get
+      security:
+      - HTTPBearer: []
     post:
-      summary: Create a case spec
-      operationId: createCase
+      tags:
+      - cases
+      summary: Create Case
+      operationId: create_case_v1_cases_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseCreate'
+        required: true
       responses:
         '201':
-          description: Created
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CaseSpec'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
   /v1/cases/{case_id}:
     get:
-      summary: Get a case spec
-      operationId: getCase
+      tags:
+      - cases
+      summary: Get Case
+      operationId: get_case_v1_cases__case_id__get
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/CaseId'
+      - name: case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Case Id
       responses:
         '200':
-          description: Case
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CaseSpec'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     patch:
-      summary: Update a case spec
-      operationId: updateCase
+      tags:
+      - cases
+      summary: Update Case
+      operationId: update_case_v1_cases__case_id__patch
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/CaseId'
+      - name: case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Case Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseUpdate'
       responses:
         '200':
-          description: Updated
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CaseSpec'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/cases/{case_id}/generate:
     post:
-      summary: Generate task family and rubric from case
-      operationId: generateTaskFamily
+      tags:
+      - cases
+      summary: Generate Case
+      operationId: generate_case_v1_cases__case_id__generate_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/CaseId'
-        - $ref: '#/components/parameters/IdempotencyKey'
+      - name: case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Case Id
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
       responses:
-        '200':
-          description: Generation result
+        '202':
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenerationResult'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/JobAccepted'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/task-families:
     get:
-      summary: List task families for current tenant
-      operationId: listTaskFamilies
+      tags:
+      - task-families
+      summary: List Task Families
+      operationId: list_task_families_v1_task_families_get
       responses:
         '200':
-          description: Tenant-scoped list
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskFamilyListResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/TaskFamily'
+                  type: array
+                type: object
+                title: Response List Task Families V1 Task Families Get
+      security:
+      - HTTPBearer: []
   /v1/task-families/{task_family_id}:
     get:
-      summary: Get a task family
-      operationId: getTaskFamily
+      tags:
+      - task-families
+      summary: Get Task Family
+      operationId: get_task_family_v1_task_families__task_family_id__get
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/TaskFamilyId'
+      - name: task_family_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Task Family Id
       responses:
         '200':
-          description: Task family
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskFamily'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /v1/task-families/{task_family_id}/publish:
-    post:
-      summary: Publish a generated task family
-      operationId: publishTaskFamily
-      parameters:
-        - $ref: '#/components/parameters/TaskFamilyId'
-      responses:
-        '200':
-          description: Published
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskFamily'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/task-families/{task_family_id}/review:
     post:
-      summary: Review a generated task family
-      operationId: reviewTaskFamily
+      tags:
+      - task-families
+      summary: Review Task Family
+      operationId: review_task_family_v1_task_families__task_family_id__review_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/TaskFamilyId'
+      - name: task_family_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Task Family Id
       requestBody:
         required: true
         content:
@@ -282,82 +516,213 @@ paths:
               $ref: '#/components/schemas/TaskFamilyReviewRequest'
       responses:
         '200':
-          description: Reviewed task family
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskFamily'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/task-families/{task_family_id}/publish:
+    post:
+      tags:
+      - task-families
+      summary: Publish Task Family
+      operationId: publish_task_family_v1_task_families__task_family_id__publish_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: task_family_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Task Family Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskFamilyPublishRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskFamily'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions:
     get:
-      summary: List sessions for current tenant
-      operationId: listSessions
+      tags:
+      - sessions
+      summary: List Sessions
+      operationId: list_sessions_v1_sessions_get
       responses:
         '200':
-          description: Tenant-scoped list
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionListResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/Session'
+                  type: array
+                type: object
+                title: Response List Sessions V1 Sessions Get
+      security:
+      - HTTPBearer: []
     post:
-      summary: Create an assessment session
-      operationId: createSession
+      tags:
+      - sessions
+      summary: Create Session
+      operationId: create_session_v1_sessions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+        required: true
       responses:
         '201':
-          description: Created
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Session'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
   /v1/sessions/{session_id}:
     get:
-      summary: Get a session
-      operationId: getSession
+      tags:
+      - sessions
+      summary: Get Session
+      operationId: get_session_v1_sessions__session_id__get
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       responses:
         '200':
-          description: Session
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Session'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/events:
     post:
-      summary: Ingest telemetry events for a session
-      operationId: ingestSessionEvents
+      tags:
+      - sessions
+      summary: Ingest Events
+      operationId: ingest_events_v1_sessions__session_id__events_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventsIngestRequest'
       responses:
         '202':
-          description: Accepted
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventIngestResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/submit:
+    post:
+      tags:
+      - sessions
+      summary: Submit Session
+      operationId: submit_session_v1_sessions__session_id__submit_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionSubmitRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/sql/run:
     post:
-      summary: Run SQL query in guided simulator
-      operationId: runSqlQuery
+      tags:
+      - simulator-runtime
+      summary: Run Sql Query
+      operationId: run_sql_query_v1_sessions__session_id__sql_run_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       requestBody:
         required: true
         content:
@@ -366,57 +731,91 @@ paths:
               $ref: '#/components/schemas/SQLRunRequest'
       responses:
         '200':
-          description: SQL run result
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SQLRunResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/sql/history:
     get:
-      summary: List SQL run history for a session
-      operationId: listSqlHistory
+      tags:
+      - simulator-runtime
+      summary: List Sql History
+      operationId: list_sql_history_v1_sessions__session_id__sql_history_get
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       responses:
         '200':
-          description: SQL history
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SQLHistoryResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/dashboard/state:
     get:
-      summary: Get simulated dashboard state for a session
-      operationId: getDashboardState
+      tags:
+      - simulator-runtime
+      summary: Get Dashboard State
+      operationId: get_dashboard_state_v1_sessions__session_id__dashboard_state_get
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       responses:
         '200':
-          description: Dashboard state
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardState'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/dashboard/action:
     post:
-      summary: Apply action in simulated dashboard workspace
-      operationId: applyDashboardAction
+      tags:
+      - simulator-runtime
+      summary: Apply Dashboard Action
+      operationId: apply_dashboard_action_v1_sessions__session_id__dashboard_action_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       requestBody:
         required: true
         content:
@@ -425,186 +824,262 @@ paths:
               $ref: '#/components/schemas/DashboardActionRequest'
       responses:
         '200':
-          description: Updated dashboard state
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardState'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/coach/message:
     post:
-      summary: Send message to context-only coach
-      operationId: coachMessage
+      tags:
+      - coach
+      summary: Send Coach Message
+      operationId: send_coach_message_v1_sessions__session_id__coach_message_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoachMessageRequest'
       responses:
         '200':
-          description: Coach response
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CoachResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /v1/sessions/{session_id}/submit:
-    post:
-      summary: Submit candidate session
-      operationId: submitSession
-      parameters:
-        - $ref: '#/components/parameters/SessionId'
-      responses:
-        '200':
-          description: Submitted
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/score:
     post:
-      summary: Score a submitted session
-      operationId: scoreSession
+      tags:
+      - scoring
+      summary: Score
+      operationId: score_v1_sessions__session_id__score_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
-        - $ref: '#/components/parameters/IdempotencyKey'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
       responses:
-        '200':
-          description: Score result
+        '202':
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScoreResult'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/JobAccepted'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/reports/{session_id}:
     get:
-      summary: Get report for a scored session
-      operationId: getReport
+      tags:
+      - reports
+      summary: Get Report
+      operationId: get_report_v1_reports__session_id__get
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       responses:
         '200':
-          description: Report payload
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Report'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/exports/{run_id}:
     get:
-      summary: Export report bundle
-      operationId: exportRun
+      tags:
+      - exports
+      summary: Export Run
+      operationId: export_run_v1_exports__run_id__get
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/RunId'
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
       responses:
         '200':
-          description: Export payload
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExportBundle'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /v1/redteam/runs:
-    post:
-      summary: Launch red-team run
-      operationId: createRedTeamRun
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
-      responses:
-        '201':
-          description: Created
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RedTeamRun'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /v1/audit-logs:
-    get:
-      summary: Query audit logs
-      operationId: listAuditLogs
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/redteam/runs:
+    post:
+      tags:
+      - redteam
+      summary: Create Redteam Run
+      operationId: create_redteam_run_v1_redteam_runs_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - in: query
-          name: resource_type
-          schema:
-            type: string
-        - in: query
-          name: action
-          schema:
-            type: string
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedTeamRunCreate'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAccepted'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/review-queue:
+    get:
+      tags:
+      - review-queue
+      summary: List Review Queue
+      operationId: list_review_queue_v1_review_queue_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: include_resolved
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Include Resolved
       responses:
         '200':
-          description: Audit logs
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: object
-                properties:
+                additionalProperties:
+                  type: array
                   items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AuditLog'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /v1/review-queue:
-    get:
-      summary: List review queue items
-      operationId: listReviewQueue
-      parameters:
-        - in: query
-          name: include_resolved
-          schema:
-            type: boolean
-      responses:
-        '200':
-          description: Tenant-scoped review queue items
+                    $ref: '#/components/schemas/ReviewQueueItem'
+                title: Response List Review Queue V1 Review Queue Get
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReviewQueueListResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/review-queue/{session_id}:
     get:
-      summary: Get review queue item by session id
-      operationId: getReviewQueueItem
+      tags:
+      - review-queue
+      summary: Get Review Queue Item
+      operationId: get_review_queue_item_v1_review_queue__session_id__get
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       responses:
         '200':
-          description: Review queue item
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReviewQueueItem'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/review-queue/{session_id}/resolve:
     post:
-      summary: Resolve review queue item
-      operationId: resolveReviewQueueItem
+      tags:
+      - review-queue
+      summary: Resolve Review Queue Item
+      operationId: resolve_review_queue_item_v1_review_queue__session_id__resolve_post
+      security:
+      - HTTPBearer: []
       parameters:
-        - $ref: '#/components/parameters/SessionId'
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       requestBody:
         required: true
         content:
@@ -613,579 +1088,1104 @@ paths:
               $ref: '#/components/schemas/ReviewQueueResolveRequest'
       responses:
         '200':
-          description: Resolved review queue item
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReviewQueueItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/audit-logs:
+    get:
+      tags:
+      - audit
+      summary: List Audit Logs
+      operationId: list_audit_logs_v1_audit_logs_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: resource_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resource Type
+      - name: action
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Action
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AuditLog'
+                title: Response List Audit Logs V1 Audit Logs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
-  securitySchemes:
-    RoleHeaderAuth:
-      type: apiKey
-      in: header
-      name: X-Role
-  parameters:
-    PackId:
-      in: path
-      name: pack_id
-      required: true
-      schema:
-        type: string
-        format: uuid
-    CaseId:
-      in: path
-      name: case_id
-      required: true
-      schema:
-        type: string
-        format: uuid
-    TaskFamilyId:
-      in: path
-      name: task_family_id
-      required: true
-      schema:
-        type: string
-        format: uuid
-    SessionId:
-      in: path
-      name: session_id
-      required: true
-      schema:
-        type: string
-        format: uuid
-    RunId:
-      in: path
-      name: run_id
-      required: true
-      schema:
-        type: string
-        format: uuid
-    IdempotencyKey:
-      in: header
-      name: Idempotency-Key
-      required: false
-      schema:
-        type: string
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    NotFound:
-      description: Not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
   schemas:
-    HealthResponse:
-      type: object
+    AdminPolicy:
       properties:
-        status:
+        tenant_id:
           type: string
-      required: [status]
-    MetaVersion:
+          title: Tenant Id
+        raw_content_default_opt_in:
+          type: boolean
+          title: Raw Content Default Opt In
+          default: false
+        default_retention_ttl_days:
+          type: integer
+          title: Default Retention Ttl Days
+          default: 30
+        max_retention_ttl_days:
+          type: integer
+          title: Max Retention Ttl Days
+          default: 90
       type: object
+      required:
+      - tenant_id
+      title: AdminPolicy
+    AdminPolicyUpdateRequest:
       properties:
-        api_version:
-          type: string
-        schema_version:
-          type: string
-      required: [api_version, schema_version]
-    ErrorResponse:
+        raw_content_default_opt_in:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Raw Content Default Opt In
+        default_retention_ttl_days:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Default Retention Ttl Days
+        max_retention_ttl_days:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Max Retention Ttl Days
       type: object
-      properties:
-        detail:
-          type: string
-      required: [detail]
-    BusinessContextPack:
-      type: object
+      title: AdminPolicyUpdateRequest
+    AuditLog:
       properties:
         id:
           type: string
           format: uuid
+          title: Id
         tenant_id:
           type: string
+          title: Tenant Id
+        actor_role:
+          type: string
+          title: Actor Role
+        action:
+          type: string
+          title: Action
+        resource_type:
+          type: string
+          title: Resource Type
+        resource_id:
+          type: string
+          title: Resource Id
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - tenant_id
+      - actor_role
+      - action
+      - resource_type
+      - resource_id
+      title: AuditLog
+    AuthTokenRequest:
+      properties:
+        role:
+          type: string
+          title: Role
+        user_id:
+          type: string
+          title: User Id
+        tenant_id:
+          type: string
+          title: Tenant Id
+        expires_in_seconds:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Expires In Seconds
+      type: object
+      required:
+      - role
+      - user_id
+      - tenant_id
+      title: AuthTokenRequest
+    AuthTokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+        kid:
+          type: string
+          title: Kid
+      type: object
+      required:
+      - access_token
+      - expires_at
+      - kid
+      title: AuthTokenResponse
+    BusinessContextPack:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        tenant_id:
+          type: string
+          title: Tenant Id
         name:
           type: string
+          title: Name
         role_focus:
           type: string
+          title: Role Focus
         job_description:
           type: string
+          title: Job Description
         examples:
-          type: array
           items:
             type: string
+          type: array
+          title: Examples
         constraints:
-          type: object
           additionalProperties: true
+          type: object
+          title: Constraints
         status:
           type: string
-      required: [id, tenant_id, name, role_focus, job_description, examples, constraints, status]
-    BusinessContextPackListResponse:
+          title: Status
+          default: draft
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
       type: object
+      required:
+      - tenant_id
+      - name
+      - role_focus
+      - job_description
+      title: BusinessContextPack
+    BusinessContextPackCreate:
       properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/BusinessContextPack'
-      required: [items]
-    MetricSpec:
-      type: object
-      properties:
-        key:
+        name:
           type: string
-        description:
+          title: Name
+        role_focus:
           type: string
-        formula:
+          title: Role Focus
+        job_description:
           type: string
-        source_events:
-          type: array
+          title: Job Description
+        examples:
           items:
             type: string
-      required: [key, description, formula, source_events]
-    CaseSpec:
+          type: array
+          title: Examples
+        constraints:
+          additionalProperties: true
+          type: object
+          title: Constraints
       type: object
+      required:
+      - name
+      - role_focus
+      - job_description
+      title: BusinessContextPackCreate
+    BusinessContextPackUpdate:
       properties:
-        id:
-          type: string
-          format: uuid
-        tenant_id:
-          type: string
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        role_focus:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Role Focus
+        job_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Job Description
+        examples:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Examples
+        constraints:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Constraints
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      type: object
+      title: BusinessContextPackUpdate
+    CaseCreate:
+      properties:
         context_pack_id:
-          type: string
-          format: uuid
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Context Pack Id
         title:
           type: string
+          title: Title
         scenario:
           type: string
+          title: Scenario
         artifacts:
-          type: array
           items:
-            type: object
             additionalProperties: true
-        metrics:
+            type: object
           type: array
+          title: Artifacts
+        metrics:
           items:
             $ref: '#/components/schemas/MetricSpec'
+          type: array
+          title: Metrics
         allowed_tools:
-          type: array
           items:
             type: string
-        status:
-          type: string
-        version:
-          type: string
-      required: [id, tenant_id, title, scenario, artifacts, metrics, allowed_tools, status, version]
-    CaseListResponse:
-      type: object
-      properties:
-        items:
           type: array
-          items:
-            $ref: '#/components/schemas/CaseSpec'
-      required: [items]
-    RubricDimension:
+          title: Allowed Tools
       type: object
-      properties:
-        key:
-          type: string
-        anchor:
-          type: string
-      required: [key, anchor]
-    Rubric:
-      type: object
+      required:
+      - title
+      - scenario
+      title: CaseCreate
+    CaseSpec:
       properties:
         id:
           type: string
           format: uuid
-        dimensions:
-          type: array
-          items:
-            $ref: '#/components/schemas/RubricDimension'
-        failure_modes:
-          type: array
-          items:
-            type: string
-        version:
-          type: string
-      required: [id, dimensions, failure_modes, version]
-    TaskVariant:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        prompt:
-          type: string
-      required: [id, prompt]
-    TaskFamily:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        case_id:
-          type: string
-          format: uuid
-        variants:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaskVariant'
-        rubric_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-        version:
-          type: string
-      required: [id, case_id, variants, rubric_id, status, version]
-    TaskFamilyListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaskFamily'
-      required: [items]
-    GenerationResult:
-      type: object
-      properties:
-        task_family:
-          $ref: '#/components/schemas/TaskFamily'
-        rubric:
-          $ref: '#/components/schemas/Rubric'
-      required: [task_family, rubric]
-    TaskFamilyReviewRequest:
-      type: object
-      properties:
-        decision:
-          type: string
-        review_note:
-          type: string
-      required: [decision]
-    Session:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
+          title: Id
         tenant_id:
           type: string
-        task_family_id:
+          title: Tenant Id
+        context_pack_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Context Pack Id
+        title:
           type: string
-          format: uuid
-        candidate_id:
+          title: Title
+        scenario:
           type: string
+          title: Scenario
+        artifacts:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Artifacts
+        metrics:
+          items:
+            $ref: '#/components/schemas/MetricSpec'
+          type: array
+          title: Metrics
+        allowed_tools:
+          items:
+            type: string
+          type: array
+          title: Allowed Tools
         status:
           type: string
-        policy:
-          type: object
-          additionalProperties: true
-        final_response:
+          title: Status
+          default: draft
+        version:
           type: string
-      required: [id, tenant_id, task_family_id, candidate_id, status, policy]
-    SessionListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Session'
-      required: [items]
-    EventPayload:
-      type: object
-      properties:
-        event_type:
+          title: Version
+          default: 0.1.0
+        created_at:
           type: string
-        payload:
-          type: object
-          additionalProperties: true
-      required: [event_type, payload]
-    EventIngestResponse:
-      type: object
-      properties:
-        accepted:
-          type: integer
-      required: [accepted]
-    SQLRunRequest:
-      type: object
-      properties:
-        query:
+          format: date-time
+          title: Created At
+        updated_at:
           type: string
-      required: [query]
-    SQLHistoryItem:
+          format: date-time
+          title: Updated At
       type: object
+      required:
+      - tenant_id
+      - title
+      - scenario
+      title: CaseSpec
+    CaseUpdate:
       properties:
-        query:
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        scenario:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scenario
+        artifacts:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Artifacts
+        metrics:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/MetricSpec'
+            type: array
+          - type: 'null'
+          title: Metrics
+        allowed_tools:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Allowed Tools
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      type: object
+      title: CaseUpdate
+    CoachMessageRequest:
+      properties:
+        message:
           type: string
-        ok:
-          type: boolean
-        row_count:
-          type: integer
-        columns:
-          type: array
-          items:
-            type: string
-        error:
-          type: string
-      required: [query, ok, columns]
-    SQLRunResponse:
+          title: Message
       type: object
-      properties:
-        ok:
-          type: boolean
-        row_count:
-          type: integer
-        columns:
-          type: array
-          items:
-            type: string
-        rows:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        runtime_ms:
-          type: integer
-      required: [ok, row_count, columns, rows, runtime_ms]
-    SQLHistoryResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/SQLHistoryItem'
-      required: [items]
+      required:
+      - message
+      title: CoachMessageRequest
     CoachResponse:
-      type: object
       properties:
         allowed:
           type: boolean
+          title: Allowed
         response:
           type: string
+          title: Response
         policy_reason:
           type: string
-      required: [allowed, response, policy_reason]
-    ScoreResult:
+          title: Policy Reason
+        policy_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Policy Version
+        blocked_rule_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Blocked Rule Id
       type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        session_id:
-          type: string
-          format: uuid
-        objective_metrics:
-          type: object
-          additionalProperties: true
-        dimension_scores:
-          type: object
-          additionalProperties: true
-        confidence:
-          type: number
-        needs_human_review:
-          type: boolean
-        scorer_version:
-          type: string
-        rubric_version:
-          type: string
-        task_family_version:
-          type: string
-        model_hash:
-          type: string
       required:
-        - id
-        - session_id
-        - objective_metrics
-        - dimension_scores
-        - confidence
-        - needs_human_review
-        - scorer_version
-        - rubric_version
-        - task_family_version
-        - model_hash
-    Report:
-      type: object
+      - allowed
+      - response
+      - policy_reason
+      title: CoachResponse
+    DashboardActionRequest:
       properties:
-        session_id:
+        action_type:
           type: string
-          format: uuid
-        score_result:
-          $ref: '#/components/schemas/ScoreResult'
-        interpretation:
+          title: Action Type
+        payload:
+          additionalProperties: true
           type: object
-          properties:
-            summary:
-              type: string
-            suggestions:
-              type: array
-              items:
-                type: string
-            audience:
-              type: string
-          required: [summary, suggestions, audience]
-      required: [session_id, score_result, interpretation]
-    ExportBundle:
+          title: Payload
       type: object
+      required:
+      - action_type
+      title: DashboardActionRequest
+    DashboardState:
+      properties:
+        filters:
+          additionalProperties: true
+          type: object
+          title: Filters
+        view:
+          type: string
+          title: View
+          default: default
+        annotations:
+          items:
+            type: string
+          type: array
+          title: Annotations
+      type: object
+      title: DashboardState
+    EventIngestResponse:
+      properties:
+        accepted:
+          type: integer
+          title: Accepted
+      type: object
+      required:
+      - accepted
+      title: EventIngestResponse
+    EventItem:
+      properties:
+        event_type:
+          type: string
+          title: Event Type
+        payload:
+          additionalProperties: true
+          type: object
+          title: Payload
+      type: object
+      required:
+      - event_type
+      title: EventItem
+    EventsIngestRequest:
+      properties:
+        events:
+          items:
+            $ref: '#/components/schemas/EventItem'
+          type: array
+          title: Events
+      type: object
+      title: EventsIngestRequest
+    ExportBundle:
       properties:
         run_id:
           type: string
           format: uuid
+          title: Run Id
         csv:
           type: string
+          title: Csv
         json:
-          type: object
           additionalProperties: true
+          type: object
+          title: Json
         tableau_schema:
-          type: object
           additionalProperties: true
-      required: [run_id, csv, json, tableau_schema]
-    ReviewQueueItem:
+          type: object
+          title: Tableau Schema
       type: object
+      required:
+      - run_id
+      - csv
+      - json
+      - tableau_schema
+      title: ExportBundle
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Interpretation:
+      properties:
+        summary:
+          type: string
+          title: Summary
+        suggestions:
+          items:
+            type: string
+          type: array
+          title: Suggestions
+        audience:
+          type: string
+          title: Audience
+          default: reviewer_admin_only
+      type: object
+      required:
+      - summary
+      title: Interpretation
+    JobAccepted:
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          title: Job Id
+        status:
+          type: string
+          title: Status
+        submitted_at:
+          type: string
+          format: date-time
+          title: Submitted At
+      type: object
+      required:
+      - job_id
+      - status
+      title: JobAccepted
+    JobResultResponse:
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          title: Job Id
+        status:
+          type: string
+          title: Status
+        result:
+          additionalProperties: true
+          type: object
+          title: Result
+      type: object
+      required:
+      - job_id
+      - status
+      - result
+      title: JobResultResponse
+    JobStatus:
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          title: Job Id
+        status:
+          type: string
+          title: Status
+        progress:
+          type: integer
+          title: Progress
+          default: 0
+        error_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Code
+        error_detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Detail
+        submitted_at:
+          type: string
+          format: date-time
+          title: Submitted At
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        next_attempt_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Next Attempt At
+      type: object
+      required:
+      - job_id
+      - status
+      - submitted_at
+      title: JobStatus
+    MetaVersion:
+      properties:
+        api_version:
+          type: string
+          title: Api Version
+        schema_version:
+          type: string
+          title: Schema Version
+      type: object
+      required:
+      - api_version
+      - schema_version
+      title: MetaVersion
+    MetricSpec:
+      properties:
+        key:
+          type: string
+          title: Key
+        description:
+          type: string
+          title: Description
+        formula:
+          type: string
+          title: Formula
+        source_events:
+          items:
+            type: string
+          type: array
+          title: Source Events
+      type: object
+      required:
+      - key
+      - description
+      - formula
+      title: MetricSpec
+    PurgeExpiredRequest:
+      properties:
+        dry_run:
+          type: boolean
+          title: Dry Run
+          default: false
+      type: object
+      title: PurgeExpiredRequest
+    PurgeExpiredResponse:
+      properties:
+        purged_sessions:
+          type: integer
+          title: Purged Sessions
+        dry_run:
+          type: boolean
+          title: Dry Run
+      type: object
+      required:
+      - purged_sessions
+      - dry_run
+      title: PurgeExpiredResponse
+    RedTeamRunCreate:
+      properties:
+        target_type:
+          type: string
+          title: Target Type
+        target_id:
+          type: string
+          format: uuid
+          title: Target Id
+      type: object
+      required:
+      - target_type
+      - target_id
+      title: RedTeamRunCreate
+    Report:
       properties:
         session_id:
           type: string
           format: uuid
+          title: Session Id
+        score_result:
+          $ref: '#/components/schemas/ScoreResult'
+        interpretation:
+          $ref: '#/components/schemas/Interpretation'
+      type: object
+      required:
+      - session_id
+      - score_result
+      - interpretation
+      title: Report
+    ReviewQueueItem:
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
         tenant_id:
           type: string
+          title: Tenant Id
         status:
           type: string
+          title: Status
+          default: open
         reason:
           type: string
+          title: Reason
         created_by:
           type: string
+          title: Created By
         reviewer_note:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reviewer Note
         resolution:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolution
+        created_at:
           type: string
-      required: [session_id, tenant_id, status, reason, created_by]
-    ReviewQueueResolveRequest:
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
       type: object
+      required:
+      - session_id
+      - tenant_id
+      - reason
+      - created_by
+      title: ReviewQueueItem
+    ReviewQueueResolveRequest:
       properties:
         decision:
           type: string
+          title: Decision
         reviewer_note:
-          type: string
-      required: [decision]
-    AdminPolicy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reviewer Note
       type: object
-      properties:
-        tenant_id:
-          type: string
-        raw_content_default_opt_in:
-          type: boolean
-        default_retention_ttl_days:
-          type: integer
-        max_retention_ttl_days:
-          type: integer
       required:
-        - tenant_id
-        - raw_content_default_opt_in
-        - default_retention_ttl_days
-        - max_retention_ttl_days
-    AdminPolicyUpdateRequest:
-      type: object
+      - decision
+      title: ReviewQueueResolveRequest
+    SQLHistoryItem:
       properties:
-        raw_content_default_opt_in:
-          type: boolean
-        default_retention_ttl_days:
-          type: integer
-        max_retention_ttl_days:
-          type: integer
-    PurgeExpiredRequest:
-      type: object
-      properties:
-        dry_run:
-          type: boolean
-    PurgeExpiredResponse:
-      type: object
-      properties:
-        purged_sessions:
-          type: integer
-        dry_run:
-          type: boolean
-      required: [purged_sessions, dry_run]
-    DashboardState:
-      type: object
-      properties:
-        filters:
-          type: object
-          additionalProperties: true
-        view:
+        query:
           type: string
-        annotations:
-          type: array
+          title: Query
+        ok:
+          type: boolean
+          title: Ok
+        row_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Row Count
+        columns:
           items:
             type: string
-      required: [filters, view, annotations]
-    DashboardActionRequest:
-      type: object
-      properties:
-        action_type:
+          type: array
+          title: Columns
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        executed_at:
           type: string
-        payload:
-          type: object
-          additionalProperties: true
-      required: [action_type, payload]
-    ReviewQueueListResponse:
+          format: date-time
+          title: Executed At
       type: object
+      required:
+      - query
+      - ok
+      title: SQLHistoryItem
+    SQLHistoryResponse:
       properties:
         items:
-          type: array
           items:
-            $ref: '#/components/schemas/ReviewQueueItem'
-      required: [items]
-    RedTeamRun:
+            $ref: '#/components/schemas/SQLHistoryItem'
+          type: array
+          title: Items
       type: object
+      title: SQLHistoryResponse
+    SQLRunRequest:
       properties:
-        id:
+        query:
           type: string
-          format: uuid
-        target_type:
-          type: string
-        target_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-        findings:
-          type: array
+          title: Query
+      type: object
+      required:
+      - query
+      title: SQLRunRequest
+    SQLRunResponse:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+        row_count:
+          type: integer
+          title: Row Count
+        columns:
           items:
-            type: object
+            type: string
+          type: array
+          title: Columns
+        rows:
+          items:
             additionalProperties: true
-      required: [id, target_type, target_id, status, findings]
-    AuditLog:
+            type: object
+          type: array
+          title: Rows
+        runtime_ms:
+          type: integer
+          title: Runtime Ms
       type: object
+      required:
+      - ok
+      - row_count
+      - runtime_ms
+      title: SQLRunResponse
+    ScoreResult:
       properties:
         id:
           type: string
           format: uuid
+          title: Id
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        objective_metrics:
+          additionalProperties: true
+          type: object
+          title: Objective Metrics
+        dimension_scores:
+          additionalProperties:
+            type: number
+          type: object
+          title: Dimension Scores
+        confidence:
+          type: number
+          title: Confidence
+        needs_human_review:
+          type: boolean
+          title: Needs Human Review
+        scorer_version:
+          type: string
+          title: Scorer Version
+          default: 0.1.0
+        rubric_version:
+          type: string
+          title: Rubric Version
+          default: 0.1.0
+        task_family_version:
+          type: string
+          title: Task Family Version
+          default: 0.1.0
+        model_hash:
+          type: string
+          title: Model Hash
+          default: local-baseline
+        trigger_codes:
+          items:
+            type: string
+          type: array
+          title: Trigger Codes
+      type: object
+      required:
+      - session_id
+      - objective_metrics
+      - dimension_scores
+      - confidence
+      - needs_human_review
+      title: ScoreResult
+    Session:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
         tenant_id:
           type: string
-        actor_role:
+          title: Tenant Id
+        task_family_id:
           type: string
-        action:
+          format: uuid
+          title: Task Family Id
+        candidate_id:
           type: string
-        resource_type:
+          title: Candidate Id
+        status:
           type: string
-        resource_id:
-          type: string
-        metadata:
-          type: object
+          title: Status
+          default: active
+        policy:
           additionalProperties: true
-      required: [id, tenant_id, actor_role, action, resource_type, resource_id, metadata]
+          type: object
+          title: Policy
+        final_response:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Final Response
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - tenant_id
+      - task_family_id
+      - candidate_id
+      title: Session
+    SessionCreate:
+      properties:
+        task_family_id:
+          type: string
+          format: uuid
+          title: Task Family Id
+        candidate_id:
+          type: string
+          title: Candidate Id
+        policy:
+          additionalProperties: true
+          type: object
+          title: Policy
+      type: object
+      required:
+      - task_family_id
+      - candidate_id
+      title: SessionCreate
+    SessionSubmitRequest:
+      properties:
+        final_response:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Final Response
+      type: object
+      title: SessionSubmitRequest
+    TaskFamily:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        case_id:
+          type: string
+          format: uuid
+          title: Case Id
+        variants:
+          items:
+            $ref: '#/components/schemas/TaskVariant'
+          type: array
+          title: Variants
+        rubric_id:
+          type: string
+          format: uuid
+          title: Rubric Id
+        status:
+          type: string
+          title: Status
+          default: generated
+        version:
+          type: string
+          title: Version
+          default: 0.1.0
+      type: object
+      required:
+      - case_id
+      - rubric_id
+      title: TaskFamily
+    TaskFamilyPublishRequest:
+      properties:
+        approver_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Approver Note
+      type: object
+      title: TaskFamilyPublishRequest
+    TaskFamilyReviewRequest:
+      properties:
+        decision:
+          type: string
+          title: Decision
+        review_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Review Note
+      type: object
+      required:
+      - decision
+      title: TaskFamilyReviewRequest
+    TaskVariant:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        prompt:
+          type: string
+          title: Prompt
+      type: object
+      required:
+      - prompt
+      title: TaskVariant
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      scheme: bearer

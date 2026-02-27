@@ -1,4 +1,4 @@
-# Scoring And Interpretation Spec v0.1
+# Scoring And Interpretation Spec v0.2
 
 ## Scoring Architecture
 Hybrid scoring pipeline:
@@ -24,6 +24,8 @@ Hybrid scoring pipeline:
 - conflicting dimension signals
 - high coach dependency and weak independent evidence
 - near-threshold decision boundary
+
+`trigger_codes` must be emitted for machine-readable diagnostics (for example: `low_confidence`, `policy_violation`, `high_ai_low_verification`).
 
 ## Interpretation Output
 Audience: reviewer/admin only.

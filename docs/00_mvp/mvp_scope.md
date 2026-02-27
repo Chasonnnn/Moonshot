@@ -23,12 +23,12 @@ A pilot-ready JDA assessment system where an admin can define business context, 
 
 ## Non-Functional Targets
 - Pilot envelope: up to 50 candidates/week.
-- Stable API versioning and backward-compatible contract policy.
+- Stable API versioning with explicit changelog and breaking-change visibility.
 - Tenant isolation model and audit history at API boundary.
 - Derived telemetry default; raw content retention opt-in.
 
 ## Delivery Gates
-1. OpenAPI v0.1 frozen and published.
-2. Event schema v0.1 frozen.
+1. OpenAPI v0.2 frozen and published.
+2. Event schema v0.2 frozen.
 3. Core endpoint tests green (contract + RBAC + coach safety).
 4. Seed fixtures available for frontend integration.

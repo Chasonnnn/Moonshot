@@ -1,5 +1,22 @@
 # API Changelog
 
+## 0.2.0 - 2026-02-27
+- Added JWT bootstrap token API:
+  - `POST /v1/auth/token`
+- Added async job lifecycle APIs:
+  - `GET /v1/jobs/{job_id}`
+  - `GET /v1/jobs/{job_id}/result`
+- Converted heavy operations to async submit with `JobAccepted` response (`202`):
+  - `POST /v1/cases/{case_id}/generate`
+  - `POST /v1/sessions/{session_id}/score`
+  - `POST /v1/redteam/runs`
+- Enforced idempotency headers for async submit endpoints.
+- Replaced header-spoof auth runtime behavior with JWT bearer-token claims (`sub`, `role`, `tenant_id`, `exp`, `kid`).
+- Added job retry/dead-letter states and backoff metadata (`next_attempt_at`) in job status.
+- Added policy metadata to coach responses (`policy_version`, `blocked_rule_id`).
+- Added score diagnostics (`trigger_codes`) and maintained provenance fields for reports.
+- Added model-provider abstraction layer with explicit no-fallback behavior for unsupported providers.
+
 ## 0.1.4 - 2026-02-26
 - Added simulator runtime endpoints:
   - `POST /v1/sessions/{session_id}/sql/run`

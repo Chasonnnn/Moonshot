@@ -1,4 +1,4 @@
-# Domain Model v0.1
+# Domain Model v0.2
 
 ## Core Entities
 
@@ -68,6 +68,23 @@
 - `objective_metrics` (json)
 - `confidence` (float)
 - `needs_human_review` (bool)
+- `trigger_codes` (array[string])
+
+### JobRun
+- `id`, `tenant_id`, `created_by`
+- `job_type`, `target_type`, `target_id`
+- `status` (enum: `pending`, `running`, `retrying`, `completed`, `failed_permanent`)
+- `request_payload`, `result_payload`
+- `error_code`, `error_detail`
+- `attempt_count`, `max_attempts`
+- `idempotency_scope`, `idempotency_key`
+- `created_at`, `started_at`, `completed_at`, `next_attempt_at`
+
+### JobAttempt
+- `id`, `job_id`, `attempt_no`
+- `status` (enum: `running`, `completed`, `failed`)
+- `error_code`, `error_detail`
+- `started_at`, `completed_at`
 
 ### EvaluationInterpretation
 - `id`, `score_result_id`

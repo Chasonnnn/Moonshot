@@ -3,7 +3,7 @@
 ## Service Components
 - API service (FastAPI)
 - PostgreSQL 18
-- Async task queue (planned, stubbed for MVP baseline)
+- Postgres-backed async task queue worker (`app/workers/main.py`)
 
 ## Environment
 - Required: `MOONSHOT_DATABASE_URL`
@@ -17,13 +17,15 @@
 ## Startup Procedure
 1. Start database: `docker compose up -d postgres`.
 2. Start API with migration gate: `apps/api/scripts/start_api.sh`.
-3. Verify health/version endpoints: `/health`, `/v1/meta/version`.
+3. Start worker: `cd apps/api && uv run python -m app.workers.main`.
+4. Verify health/version endpoints: `/health`, `/v1/meta/version`.
 
 ## Operational Procedures
 1. Apply schema migration (`alembic upgrade head`) before serving traffic.
 2. Verify contract tests and smoke tests.
-3. Validate event ingestion, scoring, report, and export paths.
-4. Verify audit log and red-team APIs are reachable.
+3. Validate async job paths (`/v1/jobs/{job_id}`, `/v1/jobs/{job_id}/result`) for generate/score/red-team jobs.
+4. Validate event ingestion, scoring, report, and export paths.
+5. Verify audit log and red-team APIs are reachable.
 
 ## Incident Response (MVP)
 - Severity definitions: SEV1/SEV2/SEV3.

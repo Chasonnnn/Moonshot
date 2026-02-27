@@ -1,11 +1,34 @@
 {
+  "auth_token": {
+    "request": {
+      "headers": {
+        "X-Bootstrap-Token": "moonshot-bootstrap-dev"
+      },
+      "body": {
+        "role": "org_admin",
+        "user_id": "admin_1",
+        "tenant_id": "tenant_a",
+        "expires_in_seconds": 3600
+      }
+    },
+    "response": {
+      "access_token": "eyJhbGciOiJIUzI1NiIsImtpZCI6InYxIiwidHlwIjoiSldUIn0...",
+      "token_type": "bearer",
+      "expires_at": "2026-02-27T12:00:00Z",
+      "kid": "v1"
+    }
+  },
   "create_business_context_pack": {
     "request": {
       "name": "JDA Growth Analytics",
       "role_focus": "junior_data_analyst",
       "job_description": "Analyze growth funnel and identify KPI anomalies.",
-      "examples": ["Investigate conversion drop by region."],
-      "constraints": {"timebox_minutes": 45}
+      "examples": [
+        "Investigate conversion drop by region."
+      ],
+      "constraints": {
+        "timebox_minutes": 45
+      }
     },
     "response": {
       "id": "00000000-0000-0000-0000-000000000001",
@@ -13,69 +36,113 @@
       "status": "draft"
     }
   },
-  "list_business_context_packs": {
-    "response": {
-      "items": [
-        {
-          "id": "00000000-0000-0000-0000-000000000001",
-          "tenant_id": "tenant_a",
-          "name": "JDA Growth Analytics",
-          "role_focus": "junior_data_analyst",
-          "status": "draft"
-        }
-      ]
-    }
-  },
   "create_case": {
     "request": {
       "title": "Weekly Funnel Drop",
       "scenario": "Activation conversion fell 15% WoW.",
-      "artifacts": [{"type": "csv", "name": "funnel.csv"}],
+      "artifacts": [
+        {
+          "type": "csv",
+          "name": "funnel.csv"
+        }
+      ],
       "metrics": [
         {
           "key": "query_error_rate",
           "description": "Ratio of failed to attempted queries",
           "formula": "sql_query_error / sql_query_run",
-          "source_events": ["sql_query_run", "sql_query_error"]
+          "source_events": [
+            "sql_query_run",
+            "sql_query_error"
+          ]
         }
       ],
-      "allowed_tools": ["sql_workspace", "dashboard_workspace", "copilot"]
-    }
-  },
-  "list_cases": {
-    "response": {
-      "items": [
-        {
-          "id": "00000000-0000-0000-0000-000000000010",
-          "tenant_id": "tenant_a",
-          "title": "Weekly Funnel Drop",
-          "status": "draft",
-          "version": "0.1.0"
-        }
+      "allowed_tools": [
+        "sql_workspace",
+        "dashboard_workspace",
+        "copilot"
       ]
     }
   },
-  "generate_case": {
-    "response": {
-      "task_family": {"status": "generated", "version": "0.1.0"},
-      "rubric": {"version": "0.1.0"}
-    }
-  },
-  "review_task_family": {
+  "generate_case_submit": {
     "request": {
-      "decision": "approve",
-      "review_note": "ready for publish"
+      "headers": {
+        "Idempotency-Key": "gen-001"
+      }
     },
     "response": {
-      "id": "00000000-0000-0000-0000-000000000050",
-      "status": "approved"
+      "job_id": "00000000-0000-0000-0000-000000000501",
+      "status": "pending",
+      "submitted_at": "2026-02-27T12:00:00Z"
     }
   },
-  "score_session": {
+  "job_status_retrying": {
     "response": {
-      "confidence": 0.78,
-      "needs_human_review": false,
-      "scorer_version": "0.1.0"
+      "job_id": "00000000-0000-0000-0000-000000000501",
+      "status": "retrying",
+      "progress": 25,
+      "error_code": "runtimeerror",
+      "error_detail": "forced_generation_failure",
+      "submitted_at": "2026-02-27T12:00:00Z",
+      "started_at": "2026-02-27T12:00:01Z",
+      "completed_at": null,
+      "next_attempt_at": "2026-02-27T12:00:03Z"
+    }
+  },
+  "job_result_generate_completed": {
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000501",
+      "status": "completed",
+      "result": {
+        "task_family": {
+          "id": "00000000-0000-0000-0000-000000000050",
+          "status": "generated",
+          "version": "0.1.0"
+        },
+        "rubric": {
+          "id": "00000000-0000-0000-0000-000000000060",
+          "version": "0.1.0"
+        }
+      }
+    }
+  },
+  "score_session_submit": {
+    "request": {
+      "headers": {
+        "Idempotency-Key": "score-001"
+      }
+    },
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000601",
+      "status": "pending",
+      "submitted_at": "2026-02-27T12:05:00Z"
+    }
+  },
+  "job_result_score_completed": {
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000601",
+      "status": "completed",
+      "result": {
+        "session_id": "00000000-0000-0000-0000-000000000100",
+        "confidence": 0.78,
+        "needs_human_review": false,
+        "scorer_version": "0.1.0",
+        "rubric_version": "0.1.0",
+        "task_family_version": "0.1.0",
+        "model_hash": "local-baseline",
+        "trigger_codes": [],
+        "export_run_id": "00000000-0000-0000-0000-000000000701"
+      }
+    }
+  },
+  "job_result_failed_permanent": {
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000999",
+      "status": "failed_permanent",
+      "result": {
+        "error_code": "runtimeerror",
+        "error_detail": "forced_generation_failure"
+      }
     }
   },
   "review_queue_item": {
@@ -95,15 +162,6 @@
       "max_retention_ttl_days": 90
     }
   },
-  "purge_expired": {
-    "request": {
-      "dry_run": false
-    },
-    "response": {
-      "purged_sessions": 1,
-      "dry_run": false
-    }
-  },
   "sql_run": {
     "request": {
       "query": "SELECT * FROM funnel_metrics LIMIT 5;"
@@ -111,47 +169,31 @@
     "response": {
       "ok": true,
       "row_count": 2,
-      "columns": ["metric", "value"],
+      "columns": [
+        "metric",
+        "value"
+      ],
       "rows": [
-        {"metric": "conversion_rate", "value": 0.42},
-        {"metric": "activation_rate", "value": 0.57}
+        {
+          "metric": "conversion_rate",
+          "value": 0.42
+        },
+        {
+          "metric": "activation_rate",
+          "value": 0.57
+        }
       ],
       "runtime_ms": 42
     }
   },
-  "dashboard_action": {
-    "request": {
-      "action_type": "apply_filter",
-      "payload": {"region": "NA"}
-    },
-    "response": {
-      "filters": {"region": "NA"},
-      "view": "default",
-      "annotations": []
-    }
+  "error_missing_idempotency_key": {
+    "detail": "Missing Idempotency-Key header"
   },
-  "list_sessions": {
-    "response": {
-      "items": [
-        {
-          "id": "00000000-0000-0000-0000-000000000100",
-          "tenant_id": "tenant_a",
-          "task_family_id": "00000000-0000-0000-0000-000000000050",
-          "candidate_id": "candidate_1",
-          "status": "active",
-          "policy": {
-            "raw_content_opt_in": false,
-            "retention_ttl_days": 30
-          }
-        }
-      ]
-    }
+  "error_invalid_bootstrap_token": {
+    "detail": "Invalid bootstrap token"
   },
   "error_forbidden": {
     "detail": "Forbidden"
-  },
-  "error_tenant_not_found": {
-    "detail": "Case not found"
   },
   "error_not_found": {
     "detail": "Case not found"

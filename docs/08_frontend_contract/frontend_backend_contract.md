@@ -1,54 +1,74 @@
-# Frontend/Backend Contract v0.1
+# Frontend/Backend Contract v0.2
 
 ## Integration Principles
-- Frontend builds against OpenAPI v0.1 and fixture examples.
-- Backward compatibility is not guaranteed during active development.
-- Every endpoint includes success + error examples.
-- API responses are tenant-scoped; cross-tenant resources return `404`.
-- CORS is enabled for local frontend development origins (`http://localhost:3000`, `http://localhost:3001`).
+- Frontend builds against OpenAPI `0.2.0` plus fixture payloads.
+- Breaking changes are allowed during development but must be versioned in changelog.
+- APIs are tenant-scoped; cross-tenant resources return `404` or `403` per endpoint policy.
+- No fallback routes: backend returns explicit error states for invalid payloads and policy violations.
 
-## Role Matrix
-- `org_admin`: full authoring, publish, red-team, export, audit access.
-- `reviewer`: review, score visibility, report access.
-- `candidate`: session runtime, event submission, coach messaging.
+## Auth And Role Model
+- Bootstrap token minting: `POST /v1/auth/token` with `X-Bootstrap-Token`.
+- Runtime auth: `Authorization: Bearer <jwt>`.
+- JWT claims used by backend:
+  - `sub`
+  - `role` (`org_admin`, `reviewer`, `candidate`)
+  - `tenant_id`
+  - `exp`
+  - `kid`
+
+## Async Job Lifecycle Contract
+- Async submit endpoints return `JobAccepted`:
+  - `POST /v1/cases/{case_id}/generate`
+  - `POST /v1/sessions/{session_id}/score`
+  - `POST /v1/redteam/runs`
+- Required header for async submit endpoints: `Idempotency-Key`.
+- Polling endpoints:
+  - `GET /v1/jobs/{job_id}` -> `JobStatus`
+  - `GET /v1/jobs/{job_id}/result` -> `JobResultResponse` (returns in-progress status explicitly)
+- Job states:
+  - `pending`
+  - `running`
+  - `retrying`
+  - `completed`
+  - `failed_permanent`
 
 ## Required Mocking Assets
-- Fixture payloads for all endpoints.
-- Seeded JDA scenarios and example session outputs.
-
-## Handoff Artifacts
 - OpenAPI spec: `docs/03_api/openapi.yaml`
-- Examples: `apps/api/fixtures/*.json`
+- API examples: `apps/api/fixtures/api_examples.json`
+- Seeded scenario fixtures: `apps/api/fixtures/jda_seed_scenarios.json`
 - Event schema: `docs/04_events/event_schema.md`
 
-## Frontend Bootstrap Endpoints
-- `GET /v1/business-context/packs`
-- `GET /v1/business-context/packs/{pack_id}`
-- `GET /v1/cases`
-- `GET /v1/cases/{case_id}`
-- `GET /v1/task-families`
-- `GET /v1/task-families/{task_family_id}`
-- `GET /v1/sessions`
-- `GET /v1/sessions/{session_id}`
+## Frontend First-Phase Flows
+- Case create/edit:
+  - `POST /v1/cases`
+  - `PATCH /v1/cases/{case_id}`
+- Generate submit/poll/result:
+  - `POST /v1/cases/{case_id}/generate`
+  - `GET /v1/jobs/{job_id}`
+  - `GET /v1/jobs/{job_id}/result`
+- Session runtime:
+  - `POST /v1/sessions`
+  - `POST /v1/sessions/{session_id}/events`
+  - `POST /v1/sessions/{session_id}/coach/message`
+  - `POST /v1/sessions/{session_id}/submit`
+- Score submit/poll/result:
+  - `POST /v1/sessions/{session_id}/score`
+  - `GET /v1/jobs/{job_id}`
+  - `GET /v1/jobs/{job_id}/result`
+- Report/export:
+  - `GET /v1/reports/{session_id}`
+  - `GET /v1/exports/{run_id}`
 
-## Review Workflow Endpoints
-- `POST /v1/task-families/{task_family_id}/review`
-- `POST /v1/task-families/{task_family_id}/publish` (requires `approved` status)
-- `GET /v1/review-queue`
-- `GET /v1/review-queue/{session_id}`
-- `POST /v1/review-queue/{session_id}/resolve`
-
-## Admin Policy Endpoints
-- `GET /v1/admin/policies`
-- `PATCH /v1/admin/policies`
-- `POST /v1/admin/policies/purge-expired`
-
-## Simulator Runtime Endpoints
-- `POST /v1/sessions/{session_id}/sql/run`
-- `GET /v1/sessions/{session_id}/sql/history`
-- `GET /v1/sessions/{session_id}/dashboard/state`
-- `POST /v1/sessions/{session_id}/dashboard/action`
-
-## Versioning
-- Semantic version tags for API contract.
-- Changelog entry required for each contract modification, including breaking changes.
+## Review And Governance Flows
+- Task family review/publish:
+  - `POST /v1/task-families/{task_family_id}/review`
+  - `POST /v1/task-families/{task_family_id}/publish`
+- Review queue:
+  - `GET /v1/review-queue`
+  - `GET /v1/review-queue/{session_id}`
+  - `POST /v1/review-queue/{session_id}/resolve`
+- Admin and audit:
+  - `GET /v1/admin/policies`
+  - `PATCH /v1/admin/policies`
+  - `POST /v1/admin/policies/purge-expired`
+  - `GET /v1/audit-logs`
