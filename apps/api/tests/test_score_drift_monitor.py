@@ -7,8 +7,9 @@ def test_drift_monitor_passes_for_default_fixture():
     fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "scoring_benchmark.json"
     benchmark = run_benchmark_fixture(fixture_path)
     assert benchmark["pass"] is True
-    assert benchmark["checked_cases"] >= 1
+    assert benchmark["checked_cases"] >= 3
     assert benchmark["drift_count"] == 0
+    assert benchmark["trigger_mismatch_count"] == 0
 
 
 def test_drift_monitor_detects_excessive_drift():
@@ -21,3 +22,17 @@ def test_drift_monitor_detects_excessive_drift():
     result = evaluate_drift(baseline, current, confidence_delta_max=0.1, dimension_delta_max=0.15)
     assert result["pass"] is False
     assert result["drift_count"] >= 1
+
+
+def test_drift_monitor_detects_trigger_mismatch():
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "scoring_benchmark.json"
+    payload = fixture_path.read_text(encoding="utf-8")
+    mutated = payload.replace("\"low_confidence\", \"high_ai_low_verification\"", "\"policy_violation\"")
+    temp_fixture = fixture_path.with_name("scoring_benchmark_temp_trigger_mismatch.json")
+    temp_fixture.write_text(mutated, encoding="utf-8")
+    try:
+        result = run_benchmark_fixture(temp_fixture)
+        assert result["pass"] is False
+        assert result["trigger_mismatch_count"] >= 1
+    finally:
+        temp_fixture.unlink(missing_ok=True)

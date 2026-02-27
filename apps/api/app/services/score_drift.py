@@ -8,6 +8,12 @@ from uuid import uuid4
 from app.services.scoring import score_session
 
 
+def _normalized_trigger_codes(raw: Any) -> list[str]:
+    if not isinstance(raw, list):
+        return []
+    return sorted({str(item) for item in raw})
+
+
 def evaluate_drift(
     baseline: dict[str, dict[str, Any]],
     current: dict[str, dict[str, Any]],
@@ -17,6 +23,7 @@ def evaluate_drift(
 ) -> dict[str, Any]:
     drifts: list[dict[str, Any]] = []
     checked_cases = 0
+    trigger_mismatch_count = 0
 
     for case_id, baseline_case in baseline.items():
         current_case = current.get(case_id)
@@ -54,10 +61,25 @@ def evaluate_drift(
                     }
                 )
 
+        if "trigger_codes" in baseline_case:
+            expected_trigger_codes = _normalized_trigger_codes(baseline_case.get("trigger_codes"))
+            current_trigger_codes = _normalized_trigger_codes(current_case.get("trigger_codes"))
+            if expected_trigger_codes != current_trigger_codes:
+                trigger_mismatch_count += 1
+                drifts.append(
+                    {
+                        "case_id": case_id,
+                        "reason": "trigger_code_mismatch",
+                        "expected_trigger_codes": expected_trigger_codes,
+                        "current_trigger_codes": current_trigger_codes,
+                    }
+                )
+
     return {
         "pass": len(drifts) == 0,
         "checked_cases": checked_cases,
         "drift_count": len(drifts),
+        "trigger_mismatch_count": trigger_mismatch_count,
         "drifts": drifts,
     }
 
@@ -75,6 +97,7 @@ def run_benchmark_fixture(path: str | Path) -> dict[str, Any]:
         current[case_id] = {
             "confidence": score_result.confidence,
             "dimension_scores": score_result.dimension_scores,
+            "trigger_codes": score_result.trigger_codes,
         }
 
     return evaluate_drift(

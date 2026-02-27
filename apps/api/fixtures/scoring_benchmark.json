@@ -11,7 +11,28 @@
         "sql_quality": 0.85,
         "evidence_reasoning": 0.83,
         "communication": 0.85
-      }
+      },
+      "trigger_codes": []
+    },
+    "jda_case_b": {
+      "confidence": 0.45,
+      "dimension_scores": {
+        "problem_framing": 0.42,
+        "sql_quality": 0.0,
+        "evidence_reasoning": 0.43,
+        "communication": 0.45
+      },
+      "trigger_codes": ["low_confidence"]
+    },
+    "jda_case_c": {
+      "confidence": 0.65,
+      "dimension_scores": {
+        "problem_framing": 0.62,
+        "sql_quality": 0.65,
+        "evidence_reasoning": 0.63,
+        "communication": 0.65
+      },
+      "trigger_codes": ["low_confidence", "high_ai_low_verification"]
     }
   },
   "cases": {
@@ -26,6 +47,40 @@
         {
           "event_type": "verification_step_completed",
           "payload": {}
+        }
+      ]
+    },
+    "jda_case_b": {
+      "events": [
+        {
+          "event_type": "sql_query_run",
+          "payload": {
+            "time_to_first_action_ms": 1200
+          }
+        },
+        {
+          "event_type": "sql_query_error",
+          "payload": {}
+        },
+        {
+          "event_type": "verification_step_completed",
+          "payload": {}
+        }
+      ]
+    },
+    "jda_case_c": {
+      "events": [
+        {
+          "event_type": "copilot_invoked",
+          "payload": {
+            "time_to_first_action_ms": 1500
+          }
+        },
+        {
+          "event_type": "copilot_output_accepted",
+          "payload": {
+            "accept_ratio": 0.8
+          }
         }
       ]
     }
