@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     exports,
     meta,
     redteam,
+    review_queue,
     reports,
     scoring,
     sessions,
@@ -25,4 +26,5 @@ api_router.include_router(scoring.router)
 api_router.include_router(reports.router)
 api_router.include_router(exports.router)
 api_router.include_router(redteam.router)
+api_router.include_router(review_queue.router)
 api_router.include_router(audit.router)

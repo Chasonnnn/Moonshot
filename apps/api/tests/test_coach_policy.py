@@ -13,7 +13,14 @@ def _bootstrap_session(client, admin_headers):
     case_id = case_res.json()["id"]
     gen_res = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
     tf_id = gen_res.json()["task_family"]["id"]
-    client.post(f"/v1/task-families/{tf_id}/publish", headers=admin_headers, json={})
+    review = client.post(
+        f"/v1/task-families/{tf_id}/review",
+        headers=admin_headers,
+        json={"decision": "approve", "review_note": "ready"},
+    )
+    assert review.status_code == 200
+    publish = client.post(f"/v1/task-families/{tf_id}/publish", headers=admin_headers, json={})
+    assert publish.status_code == 200
     session_res = client.post(
         "/v1/sessions",
         headers=admin_headers,

@@ -21,6 +21,7 @@ class InMemoryStore:
         self.redteam_runs: dict[UUID, dict[str, Any]] = {}
         self.audit_logs: list[dict[str, Any]] = []
         self.idempotency_cache: dict[tuple[str, str], dict[str, Any]] = {}
+        self.review_queue: dict[UUID, dict[str, Any]] = {}
 
     def with_lock(self, fn):
         with self._lock:

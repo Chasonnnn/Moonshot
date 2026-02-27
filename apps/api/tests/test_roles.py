@@ -19,6 +19,12 @@ def _create_task_family(client, admin_headers):
     generated = client.post(f"/v1/cases/{case_id}/generate", headers=admin_headers)
     assert generated.status_code == 200
     task_family_id = generated.json()["task_family"]["id"]
+    review = client.post(
+        f"/v1/task-families/{task_family_id}/review",
+        headers=admin_headers,
+        json={"decision": "approve", "review_note": "ready"},
+    )
+    assert review.status_code == 200
     published = client.post(f"/v1/task-families/{task_family_id}/publish", headers=admin_headers, json={})
     assert published.status_code == 200
     return task_family_id

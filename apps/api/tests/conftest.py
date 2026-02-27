@@ -17,6 +17,7 @@ def client() -> TestClient:
     store.reports.clear()
     store.exports.clear()
     store.redteam_runs.clear()
+    store.review_queue.clear()
     store.audit_logs.clear()
     store.idempotency_cache.clear()
     return TestClient(app)

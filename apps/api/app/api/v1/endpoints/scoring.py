@@ -1,10 +1,11 @@
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import Report, ScoreResult
+from app.schemas import Report, ReviewQueueItem, ScoreResult
 from app.services.audit import audit
 from app.services.idempotency import get_cached, set_cached
 from app.services.scoring import score_session
@@ -35,6 +36,17 @@ def score(
     store.scores[session_id] = score_result.model_dump(mode="json")
     report = Report(session_id=session_id, score_result=score_result, interpretation=interpretation)
     store.reports[session_id] = report.model_dump(mode="json")
+
+    if score_result.needs_human_review:
+        review_item = ReviewQueueItem(
+            session_id=session_id,
+            tenant_id=user.tenant_id,
+            reason="score_flagged_for_human_review",
+            created_by=user.user_id,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        store.review_queue[session_id] = review_item.model_dump(mode="json")
 
     export_run_id = uuid4()
     store.exports[export_run_id] = {"session_id": str(session_id)}

@@ -35,6 +35,13 @@ def _bootstrap_resources(client, admin_headers, reviewer_headers):
     assert generated.status_code == 200
     task_family_id = generated.json()["task_family"]["id"]
 
+    review = client.post(
+        f"/v1/task-families/{task_family_id}/review",
+        headers=reviewer_headers,
+        json={"decision": "approve", "review_note": "ready"},
+    )
+    assert review.status_code == 200
+
     published = client.post(f"/v1/task-families/{task_family_id}/publish", headers=reviewer_headers, json={})
     assert published.status_code == 200
 

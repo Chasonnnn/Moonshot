@@ -112,6 +112,11 @@ class TaskFamilyPublishRequest(BaseModel):
     approver_note: str | None = None
 
 
+class TaskFamilyReviewRequest(BaseModel):
+    decision: str
+    review_note: str | None = None
+
+
 class SessionCreate(BaseModel):
     task_family_id: UUID
     candidate_id: str
@@ -201,6 +206,23 @@ class RedTeamRun(BaseModel):
     target_id: UUID
     status: str
     findings: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ReviewQueueItem(BaseModel):
+    session_id: UUID
+    tenant_id: str
+    status: str = "open"
+    reason: str
+    created_by: str
+    reviewer_note: str | None = None
+    resolution: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ReviewQueueResolveRequest(BaseModel):
+    decision: str
+    reviewer_note: str | None = None
 
 
 class AuditLog(BaseModel):
