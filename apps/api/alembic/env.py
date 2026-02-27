@@ -13,13 +13,14 @@ if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
 
 from app.core.config import get_settings
+from app.core.migration_policy import assert_postgres_migration_url
 from app.db.base import Base
 from app.models import entities  # noqa: F401
 
 config = context.config
 
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option("sqlalchemy.url", assert_postgres_migration_url(settings.database_url))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
