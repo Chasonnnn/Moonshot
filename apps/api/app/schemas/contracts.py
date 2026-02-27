@@ -130,6 +130,7 @@ class Session(BaseModel):
     candidate_id: str
     status: str = "active"
     policy: dict[str, Any] = Field(default_factory=dict)
+    final_response: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -145,6 +146,31 @@ class EventsIngestRequest(BaseModel):
 
 class EventIngestResponse(BaseModel):
     accepted: int
+
+
+class SQLRunRequest(BaseModel):
+    query: str
+
+
+class SQLHistoryItem(BaseModel):
+    query: str
+    ok: bool
+    row_count: int | None = None
+    columns: list[str] = Field(default_factory=list)
+    error: str | None = None
+    executed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SQLRunResponse(BaseModel):
+    ok: bool
+    row_count: int
+    columns: list[str] = Field(default_factory=list)
+    rows: list[dict[str, Any]] = Field(default_factory=list)
+    runtime_ms: int
+
+
+class SQLHistoryResponse(BaseModel):
+    items: list[SQLHistoryItem] = Field(default_factory=list)
 
 
 class CoachMessageRequest(BaseModel):
@@ -223,6 +249,39 @@ class ReviewQueueItem(BaseModel):
 class ReviewQueueResolveRequest(BaseModel):
     decision: str
     reviewer_note: str | None = None
+
+
+class AdminPolicy(BaseModel):
+    tenant_id: str
+    raw_content_default_opt_in: bool = False
+    default_retention_ttl_days: int = 30
+    max_retention_ttl_days: int = 90
+
+
+class AdminPolicyUpdateRequest(BaseModel):
+    raw_content_default_opt_in: bool | None = None
+    default_retention_ttl_days: int | None = None
+    max_retention_ttl_days: int | None = None
+
+
+class PurgeExpiredRequest(BaseModel):
+    dry_run: bool = False
+
+
+class PurgeExpiredResponse(BaseModel):
+    purged_sessions: int
+    dry_run: bool
+
+
+class DashboardState(BaseModel):
+    filters: dict[str, Any] = Field(default_factory=dict)
+    view: str = "default"
+    annotations: list[str] = Field(default_factory=list)
+
+
+class DashboardActionRequest(BaseModel):
+    action_type: str
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 class AuditLog(BaseModel):

@@ -20,6 +20,9 @@ def client() -> TestClient:
     store.review_queue.clear()
     store.audit_logs.clear()
     store.idempotency_cache.clear()
+    store.admin_policies.clear()
+    store.session_sql_history.clear()
+    store.dashboard_state.clear()
     return TestClient(app)
 
 

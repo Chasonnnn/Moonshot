@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.deps import require_roles
 from app.core.security import UserContext
 from app.schemas import EventIngestResponse, EventsIngestRequest, Session, SessionCreate, SessionSubmitRequest
+from app.services.admin_policy import get_policy
 from app.services.audit import audit
 from app.services.store import store
 
@@ -37,11 +38,25 @@ def create_session(
     if _tenant_for_task_family(payload.task_family_id) != user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task family not found")
 
+    tenant_policy = get_policy(user.tenant_id)
+    resolved_policy = dict(payload.policy)
+    resolved_policy.setdefault("raw_content_opt_in", tenant_policy.raw_content_default_opt_in)
+    resolved_policy.setdefault("retention_ttl_days", tenant_policy.default_retention_ttl_days)
+
+    ttl = int(resolved_policy["retention_ttl_days"])
+    if ttl <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="retention_ttl_days must be > 0")
+    if ttl > tenant_policy.max_retention_ttl_days:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"retention_ttl_days cannot exceed {tenant_policy.max_retention_ttl_days}",
+        )
+
     session = Session(
         tenant_id=user.tenant_id,
         task_family_id=payload.task_family_id,
         candidate_id=payload.candidate_id,
-        policy=payload.policy,
+        policy=resolved_policy,
     )
     store.sessions[session.id] = session.model_dump(mode="json")
     store.session_events[session.id] = []

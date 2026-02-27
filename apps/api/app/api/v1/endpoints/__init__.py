@@ -1,4 +1,5 @@
 from app.api.v1.endpoints import (
+    admin_policies,
     audit,
     business_context,
     cases,
@@ -9,11 +10,13 @@ from app.api.v1.endpoints import (
     review_queue,
     reports,
     scoring,
+    simulator_runtime,
     sessions,
     task_families,
 )
 
 __all__ = [
+    "admin_policies",
     "audit",
     "business_context",
     "cases",
@@ -24,6 +27,7 @@ __all__ = [
     "review_queue",
     "reports",
     "scoring",
+    "simulator_runtime",
     "sessions",
     "task_families",
 ]

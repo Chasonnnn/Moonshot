@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    admin_policies,
     audit,
     business_context,
     cases,
@@ -11,16 +12,19 @@ from app.api.v1.endpoints import (
     review_queue,
     reports,
     scoring,
+    simulator_runtime,
     sessions,
     task_families,
 )
 
 api_router = APIRouter()
 api_router.include_router(meta.router)
+api_router.include_router(admin_policies.router)
 api_router.include_router(business_context.router)
 api_router.include_router(cases.router)
 api_router.include_router(task_families.router)
 api_router.include_router(sessions.router)
+api_router.include_router(simulator_runtime.router)
 api_router.include_router(coach.router)
 api_router.include_router(scoring.router)
 api_router.include_router(reports.router)

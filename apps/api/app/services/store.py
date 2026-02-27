@@ -22,6 +22,9 @@ class InMemoryStore:
         self.audit_logs: list[dict[str, Any]] = []
         self.idempotency_cache: dict[tuple[str, str], dict[str, Any]] = {}
         self.review_queue: dict[UUID, dict[str, Any]] = {}
+        self.admin_policies: dict[str, dict[str, Any]] = {}
+        self.session_sql_history: dict[UUID, list[dict[str, Any]]] = {}
+        self.dashboard_state: dict[UUID, dict[str, Any]] = {}
 
     def with_lock(self, fn):
         with self._lock:
