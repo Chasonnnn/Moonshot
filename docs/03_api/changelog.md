@@ -32,6 +32,33 @@
   - `fairness_smoke_runs`
 - Added strict release-gate CI job with Postgres migration gate + staging smoke + load gate.
 - Added managed-secrets startup validation settings for enterprise deployments.
+- Added machine-readable error envelope fields on API errors:
+  - `error_code`
+  - `error_detail`
+  - `request_id`
+- Added async job diagnostics fields:
+  - `attempt_count`
+  - `max_attempts`
+  - `last_error_code`
+- Job result polling now returns explicit not-ready payload for incomplete jobs:
+  - `error_code=job_not_ready`
+- Updated policy defaults: `default_retention_ttl_days=90`.
+- Added queue runtime probe in SLO endpoint:
+  - `probes.queue_runtime.detail.queue_backlog_count`
+  - `probes.queue_runtime.detail.queue_oldest_pending_age_seconds`
+  - `probes.queue_runtime.detail.queue_retrying_count`
+  - `probes.queue_runtime.detail.queue_failed_permanent_count`
+  - `probes.queue_runtime.detail.queue_inflight_leased_count`
+- Added job stale-lease inspector endpoint:
+  - `GET /v1/jobs/stale-leases`
+- Added worker health endpoint:
+  - `GET /v1/workers/health`
+- Added coach policy hash propagation:
+  - `CoachResponse.policy_hash`
+  - `ContextInjectionTrace.policy_hash`
+  - `audit.metadata.policy_hash` for coach actions
+- Added scorer audit metadata enrichment:
+  - `audit.metadata.model_hash`
 - Added new domain types:
   - `TaskQualitySignal`
   - `CoachFeedback`

@@ -64,6 +64,8 @@ def _build_endpoints() -> list[EndpointSpec]:
         EndpointSpec(name="task_families_list", method="GET", path="/v1/task-families", expected_status=200, role="reviewer"),
         EndpointSpec(name="sessions_list", method="GET", path="/v1/sessions", expected_status=200, role="reviewer"),
         EndpointSpec(name="jobs_list", method="GET", path="/v1/jobs", expected_status=200, role="org_admin"),
+        EndpointSpec(name="jobs_stale_leases", method="GET", path="/v1/jobs/stale-leases", expected_status=200, role="org_admin"),
+        EndpointSpec(name="workers_health", method="GET", path="/v1/workers/health", expected_status=200, role="org_admin"),
         EndpointSpec(name="audit_logs", method="GET", path="/v1/audit-logs", expected_status=200, role="org_admin"),
         EndpointSpec(name="slo_probes", method="GET", path="/v1/slo/probes", expected_status=200, role="org_admin"),
     ]

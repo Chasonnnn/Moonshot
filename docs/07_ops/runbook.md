@@ -9,6 +9,9 @@
 - Required: `MOONSHOT_DATABASE_URL`
 - Required when provider is Gemini: `MOONSHOT_GEMINI_API_KEY`
 - Optional worker lease tuning: `MOONSHOT_WORKER_LEASE_SECONDS`
+- Optional worker heartbeat tuning:
+  - `MOONSHOT_WORKER_HEARTBEAT_INTERVAL_SECONDS`
+  - `MOONSHOT_WORKER_STALE_AFTER_SECONDS`
 - Optional managed-secrets mode:
   - `MOONSHOT_MANAGED_SECRETS_ENABLED`
   - `MOONSHOT_MANAGED_SECRETS_REQUIRED`
@@ -35,11 +38,13 @@
 3. Async job lifecycle checks (`/v1/jobs*`).
 4. Score drift benchmark check (`check_score_drift.py`).
 5. SLO probe endpoint check (`/v1/slo/probes`).
-6. Task quality endpoints smoke (`/v1/task-families/{id}/quality*`).
-7. Interpretation view flow check (`/v1/reports/{session_id}/interpret*`).
-8. Context trace endpoint check (`/v1/context/injection-traces/{session_id}`).
-9. Fairness smoke run check (`/v1/fairness/smoke-runs*`).
-10. CI strict release-gate job must pass:
+6. Worker health endpoint check (`/v1/workers/health`).
+7. Stale lease endpoint check (`/v1/jobs/stale-leases`).
+8. Task quality endpoints smoke (`/v1/task-families/{id}/quality*`).
+9. Interpretation view flow check (`/v1/reports/{session_id}/interpret*`).
+10. Context trace endpoint check (`/v1/context/injection-traces/{session_id}`).
+11. Fairness smoke run check (`/v1/fairness/smoke-runs*`).
+12. CI strict release-gate job must pass:
   - Postgres migration gate
   - staging smoke gate
   - load gate

@@ -22,11 +22,31 @@ Submit endpoints return `JobAccepted`:
 
 Polling:
 - `GET /v1/jobs`
+- `GET /v1/jobs/stale-leases`
 - `GET /v1/jobs/{job_id}`
 - `GET /v1/jobs/{job_id}/result`
 
+Job status diagnostics:
+- `attempt_count`
+- `max_attempts`
+- `last_error_code`
+
+When a job result is not ready yet, `GET /v1/jobs/{job_id}/result` returns:
+- `status` in `pending|running|retrying`
+- `result.error_code = job_not_ready`
+
 Required header for async submit endpoints:
 - `Idempotency-Key`
+
+Error envelope on non-2xx responses:
+- `detail`
+- `error_code`
+- `error_detail`
+- `request_id`
+
+Worker runtime health:
+- `GET /v1/workers/health`
+- Response includes `overall_status`, `workers[]`, and `stale_leases`.
 
 ## New Evidence-Loop Flows (v0.3)
 ### Co-design quality loop

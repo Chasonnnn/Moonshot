@@ -91,7 +91,31 @@
       "completed_at": null,
       "next_attempt_at": "2026-02-27T12:00:03Z",
       "lease_owner": "worker-a",
-      "lease_expires_at": "2026-02-27T12:00:30Z"
+      "lease_expires_at": "2026-02-27T12:00:30Z",
+      "attempt_count": 1,
+      "max_attempts": 3,
+      "last_error_code": "internal_error"
+    }
+  },
+  "jobs_stale_leases": {
+    "response": {
+      "items": [
+        {
+          "job_id": "00000000-0000-0000-0000-000000000777",
+          "status": "running",
+          "job_type": "generate",
+          "target_type": "case",
+          "target_id": "00000000-0000-0000-0000-000000000010",
+          "progress": 50,
+          "submitted_at": "2026-02-27T12:00:00Z",
+          "started_at": "2026-02-27T12:00:01Z",
+          "lease_owner": "worker-stale",
+          "lease_expires_at": "2026-02-27T12:00:10Z",
+          "attempt_count": 1,
+          "max_attempts": 3,
+          "last_error_code": null
+        }
+      ]
     }
   },
   "job_list_failed_permanent": {
@@ -106,9 +130,22 @@
           "progress": 100,
           "error_code": "internal_error",
           "error_detail": "forced_generation_failure",
-          "submitted_at": "2026-02-27T12:00:00Z"
+          "submitted_at": "2026-02-27T12:00:00Z",
+          "attempt_count": 3,
+          "max_attempts": 3,
+          "last_error_code": "internal_error"
         }
       ]
+    }
+  },
+  "job_result_pending": {
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000501",
+      "status": "pending",
+      "result": {
+        "error_code": "job_not_ready",
+        "error_detail": "Job result not available yet"
+      }
     }
   },
   "job_result_generate_completed": {
@@ -220,7 +257,7 @@
     "response": {
       "tenant_id": "tenant_a",
       "raw_content_default_opt_in": false,
-      "default_retention_ttl_days": 30,
+      "default_retention_ttl_days": 90,
       "max_retention_ttl_days": 90
     }
   },
@@ -249,16 +286,28 @@
     }
   },
   "error_missing_idempotency_key": {
-    "detail": "Missing Idempotency-Key header"
+    "detail": "Missing Idempotency-Key header",
+    "error_code": "missing_idempotency_key",
+    "error_detail": "Missing Idempotency-Key header",
+    "request_id": "9ab7a95e-92ea-4ed1-91d8-43700177a2f1"
   },
   "error_invalid_bootstrap_token": {
-    "detail": "Invalid bootstrap token"
+    "detail": "Invalid bootstrap token",
+    "error_code": "unauthorized",
+    "error_detail": "Invalid bootstrap token",
+    "request_id": "f6af84dd-c3e7-46f4-a95f-7c32038f4d7a"
   },
   "error_forbidden": {
-    "detail": "Forbidden"
+    "detail": "Forbidden",
+    "error_code": "forbidden",
+    "error_detail": "Forbidden",
+    "request_id": "8ecf9387-4c54-4b52-8071-e66e1ed7a3ff"
   },
   "error_not_found": {
-    "detail": "Case not found"
+    "detail": "Case not found",
+    "error_code": "not_found",
+    "error_detail": "Case not found",
+    "request_id": "f8f0a7a8-1ea9-4fde-a3ee-313d83a64c47"
   },
   "audit_verify_ok": {
     "response": {
@@ -293,8 +342,35 @@
             "checked_cases": 1,
             "drift_count": 0
           }
+        },
+        "queue_runtime": {
+          "status": "ok",
+          "latency_ms": 2,
+          "detail": {
+            "queue_backlog_count": 0,
+            "queue_oldest_pending_age_seconds": 0,
+            "queue_retrying_count": 0,
+            "queue_failed_permanent_count": 0,
+            "queue_inflight_leased_count": 0
+          }
         }
       }
+    }
+  },
+  "workers_health": {
+    "response": {
+      "overall_status": "ok",
+      "workers": [
+        {
+          "worker_id": "worker-a1b2c3d4",
+          "last_seen_at": "2026-02-27T12:00:02Z",
+          "seconds_since_last_seen": 2,
+          "status": "ok",
+          "last_job_id": "processed"
+        }
+      ],
+      "stale_leases": 0,
+      "checked_at": "2026-02-27T12:00:04Z"
     }
   },
   "task_quality_signal": {
@@ -331,9 +407,18 @@
       "id": "00000000-0000-0000-0000-000000000100",
       "policy": {
         "raw_content_opt_in": false,
-        "retention_ttl_days": 30,
+        "retention_ttl_days": 90,
         "coach_mode": "practice"
       }
+    }
+  },
+  "coach_message_blocked": {
+    "response": {
+      "allowed": false,
+      "policy_reason": "direct_answer_disallowed",
+      "policy_version": "0.3.0",
+      "policy_hash": "9ff5aa9c84ab7f8f275f6f7e36c5d2231a52a9ed6cd9afc68c47f288724bc4a0",
+      "blocked_rule_id": "direct_exact_answer"
     }
   },
   "interpretation_view": {

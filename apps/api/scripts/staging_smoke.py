@@ -350,6 +350,24 @@ def main() -> int:
         step="slo_probes",
         expected_status=200,
     )
+    _require_ok(
+        requests.get(
+            f"{base_url}/v1/workers/health",
+            headers=admin_headers,
+            timeout=10,
+        ),
+        step="workers_health",
+        expected_status=200,
+    )
+    _require_ok(
+        requests.get(
+            f"{base_url}/v1/jobs/stale-leases",
+            headers=admin_headers,
+            timeout=10,
+        ),
+        step="jobs_stale_leases",
+        expected_status=200,
+    )
 
     print("staging smoke: PASS")
     return 0
