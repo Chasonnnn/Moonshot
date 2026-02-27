@@ -1,13 +1,14 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import TaskFamily, TaskFamilyPublishRequest, TaskFamilyReviewRequest, TaskQualitySignal
+from app.schemas import JobAccepted, TaskFamily, TaskFamilyPublishRequest, TaskFamilyReviewRequest, TaskQualitySignal
 from app.services.audit import audit
+from app.services.jobs import submit_job
 from app.services.repositories import case_repository
-from app.services.task_quality import evaluate_task_quality, get_task_quality
+from app.services.task_quality import get_task_quality
 
 router = APIRouter(prefix="/v1/task-families", tags=["task-families"])
 
@@ -94,21 +95,26 @@ def publish_task_family(
     return task_family
 
 
-@router.post("/{task_family_id}/quality/evaluate", response_model=TaskQualitySignal)
+@router.post("/{task_family_id}/quality/evaluate", response_model=JobAccepted, status_code=status.HTTP_202_ACCEPTED)
 def evaluate_task_family_quality(
     task_family_id: UUID,
     user: UserContext = Depends(require_roles("org_admin", "reviewer")),
-) -> TaskQualitySignal:
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+) -> JobAccepted:
+    if idempotency_key is None or not idempotency_key.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing Idempotency-Key header")
+
     _get_task_family_for_tenant(task_family_id, user.tenant_id)
-    signal = evaluate_task_quality(task_family_id, evaluated_by_role=user.role)
-    audit(
-        user,
-        "evaluate_quality",
-        "task_family",
-        str(task_family_id),
-        {"quality_score": signal.quality_score},
+    accepted = submit_job(
+        job_type="quality_evaluate",
+        target_type="task_family",
+        target_id=task_family_id,
+        user=user,
+        request_payload={"task_family_id": str(task_family_id), "evaluated_by_role": user.role},
+        idempotency_key=idempotency_key,
     )
-    return signal
+    audit(user, "submit_job", "task_family_quality", str(task_family_id), {"job_id": str(accepted.job_id)})
+    return accepted
 
 
 @router.get("/{task_family_id}/quality", response_model=TaskQualitySignal)

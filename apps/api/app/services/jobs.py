@@ -10,11 +10,22 @@ from app.core.config import get_settings
 from app.core.security import UserContext
 from app.db.session import SessionLocal
 from app.models.entities import JobAttemptModel, JobRunModel
-from app.schemas import AuditLog, JobAccepted, JobResultResponse, JobStatus, Report, ReviewQueueItem, Session
+from app.schemas import (
+    AuditLog,
+    FairnessSmokeRunCreate,
+    InterpretationRequest,
+    JobAccepted,
+    JobResultResponse,
+    JobStatus,
+    Report,
+    ReviewQueueItem,
+    Session,
+)
 from app.services.context_injection import append_context_trace
 from app.services.exporting import build_export
 from app.services.generation import generate_from_case
 from app.services.idempotency import get_cached, set_cached
+from app.services.interpretation_views import create_interpretation_view
 from app.services.redteam import run_redteam
 from app.services.repositories import (
     case_repository,
@@ -22,8 +33,10 @@ from app.services.repositories import (
     scoring_repository,
     session_repository,
 )
+from app.services.fairness import create_fairness_smoke_run
 from app.services.scoring import score_session
 from app.services.store import store
+from app.services.task_quality import evaluate_task_quality
 
 
 def _now() -> datetime:
@@ -296,6 +309,56 @@ def _handle_redteam(job: JobRunModel) -> dict[str, Any]:
     return result.model_dump(mode="json")
 
 
+def _handle_quality_evaluate(job: JobRunModel) -> dict[str, Any]:
+    task_family_id = UUID(job.request_payload["task_family_id"])
+    evaluated_by_role = str(job.request_payload.get("evaluated_by_role", "system"))
+    signal = evaluate_task_quality(task_family_id, evaluated_by_role=evaluated_by_role)
+    _audit_system(
+        job.tenant_id,
+        "evaluate_quality",
+        "task_family",
+        str(task_family_id),
+        {"quality_score": signal.quality_score},
+    )
+    return signal.model_dump(mode="json")
+
+
+def _handle_interpretation_generate(job: JobRunModel) -> dict[str, Any]:
+    session_id = UUID(job.request_payload["session_id"])
+    request_payload = InterpretationRequest.model_validate(job.request_payload["interpretation_request"])
+    view = create_interpretation_view(session_id, request_payload, tenant_id=job.tenant_id)
+    append_context_trace(
+        session_id=session_id,
+        tenant_id=job.tenant_id,
+        agent_type="evaluator",
+        actor_role="system",
+        mode="analysis",
+        context_keys=["task_rubric", "score_result", "interpretation_request"],
+        policy_version=None,
+    )
+    _audit_system(
+        job.tenant_id,
+        "interpret",
+        "report",
+        str(session_id),
+        {"view_id": str(view.view_id)},
+    )
+    return view.model_dump(mode="json")
+
+
+def _handle_fairness_smoke_run(job: JobRunModel) -> dict[str, Any]:
+    payload = FairnessSmokeRunCreate.model_validate(job.request_payload)
+    run = create_fairness_smoke_run(job.tenant_id, payload)
+    _audit_system(
+        job.tenant_id,
+        "fairness_smoke_run",
+        "fairness",
+        str(run.id),
+        {"scope": run.scope, "sample_size": run.summary.get("sample_size", 0)},
+    )
+    return run.model_dump(mode="json")
+
+
 def _execute_job(job: JobRunModel) -> dict[str, Any]:
     if job.job_type == "generate":
         return _handle_generate_case(job)
@@ -305,6 +368,12 @@ def _execute_job(job: JobRunModel) -> dict[str, Any]:
         return _handle_redteam(job)
     if job.job_type == "export":
         return _handle_export_session(job)
+    if job.job_type == "quality_evaluate":
+        return _handle_quality_evaluate(job)
+    if job.job_type == "interpretation_generate":
+        return _handle_interpretation_generate(job)
+    if job.job_type == "fairness_smoke_run":
+        return _handle_fairness_smoke_run(job)
     raise RuntimeError("unsupported_job_type")
 
 

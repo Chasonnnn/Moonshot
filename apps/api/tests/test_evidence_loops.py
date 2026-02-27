@@ -97,9 +97,12 @@ def test_task_family_quality_evaluate_and_get(client, admin_headers, reviewer_he
     forbidden = client.post(f"/v1/task-families/{task_family_id}/quality/evaluate", headers=candidate_headers)
     assert forbidden.status_code == 403
 
-    evaluate = client.post(f"/v1/task-families/{task_family_id}/quality/evaluate", headers=reviewer_headers)
-    assert evaluate.status_code == 200
-    payload = evaluate.json()
+    evaluate = client.post(
+        f"/v1/task-families/{task_family_id}/quality/evaluate",
+        headers={**reviewer_headers, "Idempotency-Key": "quality-evaluate-1"},
+    )
+    assert evaluate.status_code == 202
+    payload = _job_result(client, evaluate.json()["job_id"], reviewer_headers)
     assert payload["task_family_id"] == task_family_id
     assert payload["variant_count"] >= 3
     assert "quality_score" in payload
@@ -154,15 +157,15 @@ def test_report_interpretation_view_keeps_score_stable(client, admin_headers, re
 
     interpret = client.post(
         f"/v1/reports/{session_id}/interpret",
-        headers=reviewer_headers,
+        headers={**reviewer_headers, "Idempotency-Key": "interpretation-generate-1"},
         json={
             "focus_dimensions": ["sql_quality"],
             "include_sensitivity": True,
             "weight_overrides": {"sql_quality": 1.2, "communication": 0.8},
         },
     )
-    assert interpret.status_code == 201
-    payload = interpret.json()
+    assert interpret.status_code == 202
+    payload = _job_result(client, interpret.json()["job_id"], reviewer_headers)
     assert payload["session_id"] == session_id
     assert payload["scoring_version_lock"]["scorer_version"] == "0.1.0"
     assert payload["include_sensitivity"] is True
@@ -183,9 +186,13 @@ def test_fairness_smoke_runs_create_and_get(client, admin_headers, reviewer_head
     forbidden = client.post("/v1/fairness/smoke-runs", headers=reviewer_headers, json={"scope": "tenant_recent"})
     assert forbidden.status_code == 403
 
-    created = client.post("/v1/fairness/smoke-runs", headers=admin_headers, json={"scope": "tenant_recent"})
-    assert created.status_code == 201
-    payload = created.json()
+    created = client.post(
+        "/v1/fairness/smoke-runs",
+        headers={**admin_headers, "Idempotency-Key": "fairness-run-1"},
+        json={"scope": "tenant_recent"},
+    )
+    assert created.status_code == 202
+    payload = _job_result(client, created.json()["job_id"], admin_headers)
     assert payload["status"] == "completed"
     assert payload["scope"] == "tenant_recent"
     assert "group_metrics" in payload["summary"]

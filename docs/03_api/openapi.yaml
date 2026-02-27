@@ -625,13 +625,21 @@ paths:
           type: string
           format: uuid
           title: Task Family Id
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
       responses:
-        '200':
+        '202':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskQualitySignal'
+                $ref: '#/components/schemas/JobAccepted'
         '422':
           description: Validation Error
           content:
@@ -1127,6 +1135,14 @@ paths:
           type: string
           format: uuid
           title: Session Id
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
       requestBody:
         required: true
         content:
@@ -1134,12 +1150,12 @@ paths:
             schema:
               $ref: '#/components/schemas/InterpretationRequest'
       responses:
-        '201':
+        '202':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InterpretationView'
+                $ref: '#/components/schemas/JobAccepted'
         '422':
           description: Validation Error
           content:
@@ -1489,27 +1505,36 @@ paths:
       - fairness
       summary: Create Smoke Run
       operationId: create_smoke_run_v1_fairness_smoke_runs_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FairnessSmokeRunCreate'
-        required: true
       responses:
-        '201':
+        '202':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FairnessSmokeRun'
+                $ref: '#/components/schemas/JobAccepted'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - HTTPBearer: []
   /v1/fairness/smoke-runs/{run_id}:
     get:
       tags:

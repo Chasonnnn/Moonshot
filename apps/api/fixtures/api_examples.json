@@ -311,6 +311,18 @@
       "quality_score": 0.74
     }
   },
+  "quality_evaluate_submit": {
+    "request": {
+      "headers": {
+        "Idempotency-Key": "quality-001"
+      }
+    },
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000903",
+      "status": "pending",
+      "submitted_at": "2026-02-27T12:10:00Z"
+    }
+  },
   "session_mode_update": {
     "request": {
       "mode": "practice"
@@ -343,6 +355,27 @@
       }
     }
   },
+  "interpretation_submit": {
+    "request": {
+      "headers": {
+        "Idempotency-Key": "interpret-001"
+      },
+      "body": {
+        "focus_dimensions": [
+          "sql_quality"
+        ],
+        "include_sensitivity": true,
+        "weight_overrides": {
+          "sql_quality": 1.2
+        }
+      }
+    },
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000904",
+      "status": "pending",
+      "submitted_at": "2026-02-27T12:11:00Z"
+    }
+  },
   "fairness_smoke_run": {
     "response": {
       "id": "00000000-0000-0000-0000-000000000902",
@@ -362,6 +395,22 @@
           }
         }
       }
+    }
+  },
+  "fairness_smoke_submit": {
+    "request": {
+      "headers": {
+        "Idempotency-Key": "fairness-001"
+      },
+      "body": {
+        "scope": "tenant_recent",
+        "include_language_proxy": true
+      }
+    },
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000905",
+      "status": "pending",
+      "submitted_at": "2026-02-27T12:12:00Z"
     }
   }
 }
