@@ -8,6 +8,7 @@
 ## Environment
 - Required: `MOONSHOT_DATABASE_URL`
 - Example: `postgresql+psycopg://moonshot:moonshot@localhost:5432/moonshot`
+- Required when `MOONSHOT_MODEL_PROVIDER=gemini`: `MOONSHOT_GEMINI_API_KEY`
 
 ## SLO Targets (Pilot)
 - API availability: 99.5%
@@ -23,7 +24,7 @@
 ## Operational Procedures
 1. Apply schema migration (`alembic upgrade head`) before serving traffic.
 2. Verify contract tests and smoke tests.
-3. Validate async job paths (`/v1/jobs/{job_id}`, `/v1/jobs/{job_id}/result`) for generate/score/red-team jobs.
+3. Validate async job paths (`/v1/jobs/{job_id}`, `/v1/jobs/{job_id}/result`) for generate/score/export/red-team jobs.
 4. Validate event ingestion, scoring, report, and export paths.
 5. Verify audit log and red-team APIs are reachable.
 

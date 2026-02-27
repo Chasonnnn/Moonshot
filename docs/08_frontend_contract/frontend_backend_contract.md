@@ -20,6 +20,7 @@
 - Async submit endpoints return `JobAccepted`:
   - `POST /v1/cases/{case_id}/generate`
   - `POST /v1/sessions/{session_id}/score`
+  - `POST /v1/exports`
   - `POST /v1/redteam/runs`
 - Required header for async submit endpoints: `Idempotency-Key`.
 - Polling endpoints:
@@ -57,6 +58,7 @@
   - `GET /v1/jobs/{job_id}/result`
 - Report/export:
   - `GET /v1/reports/{session_id}`
+  - `POST /v1/exports`
   - `GET /v1/exports/{run_id}`
 
 ## Review And Governance Flows

@@ -936,6 +936,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/exports:
+    post:
+      tags:
+      - exports
+      summary: Create Export Job
+      operationId: create_export_job_v1_exports_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportCreateRequest'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAccepted'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/exports/{run_id}:
     get:
       tags:
@@ -1630,6 +1666,16 @@ components:
       - json
       - tableau_schema
       title: ExportBundle
+    ExportCreateRequest:
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+      type: object
+      required:
+      - session_id
+      title: ExportCreateRequest
     HTTPValidationError:
       properties:
         detail:

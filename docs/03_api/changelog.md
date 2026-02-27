@@ -9,6 +9,7 @@
 - Converted heavy operations to async submit with `JobAccepted` response (`202`):
   - `POST /v1/cases/{case_id}/generate`
   - `POST /v1/sessions/{session_id}/score`
+  - `POST /v1/exports`
   - `POST /v1/redteam/runs`
 - Enforced idempotency headers for async submit endpoints.
 - Replaced header-spoof auth runtime behavior with JWT bearer-token claims (`sub`, `role`, `tenant_id`, `exp`, `kid`).
@@ -16,6 +17,7 @@
 - Added policy metadata to coach responses (`policy_version`, `blocked_rule_id`).
 - Added score diagnostics (`trigger_codes`) and maintained provenance fields for reports.
 - Added model-provider abstraction layer with explicit no-fallback behavior for unsupported providers.
+- Wired Gemini provider to the live Gemini SDK (`google-genai`) with explicit API-key requirement (`MOONSHOT_GEMINI_API_KEY`).
 
 ## 0.1.4 - 2026-02-26
 - Added simulator runtime endpoints:

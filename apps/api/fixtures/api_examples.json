@@ -130,8 +130,48 @@
         "rubric_version": "0.1.0",
         "task_family_version": "0.1.0",
         "model_hash": "local-baseline",
-        "trigger_codes": [],
-        "export_run_id": "00000000-0000-0000-0000-000000000701"
+        "trigger_codes": []
+      }
+    }
+  },
+  "export_submit": {
+    "request": {
+      "headers": {
+        "Idempotency-Key": "export-001"
+      },
+      "body": {
+        "session_id": "00000000-0000-0000-0000-000000000100"
+      }
+    },
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000701",
+      "status": "pending",
+      "submitted_at": "2026-02-27T12:07:00Z"
+    }
+  },
+  "job_result_export_completed": {
+    "response": {
+      "job_id": "00000000-0000-0000-0000-000000000701",
+      "status": "completed",
+      "result": {
+        "run_id": "00000000-0000-0000-0000-000000000801",
+        "csv": "session_id,confidence,needs_human_review,query_error_rate,ai_prompt_count,policy_violation_count\n00000000-0000-0000-0000-000000000100,0.78,false,0.1,2,0",
+        "json": {
+          "session_id": "00000000-0000-0000-0000-000000000100"
+        },
+        "tableau_schema": {
+          "table": "moonshot_scores",
+          "fields": [
+            {
+              "name": "session_id",
+              "type": "string"
+            },
+            {
+              "name": "confidence",
+              "type": "float"
+            }
+          ]
+        }
       }
     }
   },
