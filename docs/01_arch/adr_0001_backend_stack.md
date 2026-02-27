@@ -11,5 +11,6 @@ Use FastAPI + Pydantic for API layer, SQLAlchemy ORM and Alembic for data model 
 
 ## Consequences
 - Fast iteration and clear OpenAPI generation.
-- Simple transition from local SQLite test mode to PostgreSQL.
+- PostgreSQL is the authoritative migration/runtime database.
+- SQLite is allowed for fast unit tests only (not Alembic migration targets).
 - Clear migration/versioning workflow for schema evolution.

@@ -58,6 +58,7 @@ jobs:
       - name: Postgres migration gate
         run: |
           cd apps/api
+          uv run python scripts/guard_postgres_migration_target.py
           uv run alembic upgrade head
       - name: Start API and worker
         run: |

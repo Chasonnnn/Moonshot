@@ -59,6 +59,9 @@
   - `audit.metadata.policy_hash` for coach actions
 - Added scorer audit metadata enrichment:
   - `audit.metadata.model_hash`
+- Added Postgres-only migration guardrails:
+  - Alembic env now rejects SQLite URLs with explicit failure message.
+  - startup and CI migration gates run `guard_postgres_migration_target.py`.
 - Added new domain types:
   - `TaskQualitySignal`
   - `CoachFeedback`

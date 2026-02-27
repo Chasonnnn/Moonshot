@@ -26,7 +26,7 @@
 
 ## Startup Procedure
 1. Start database.
-2. Run migrations.
+2. Run migrations (PostgreSQL targets only; SQLite migration targets are rejected by guard).
 3. Start API and worker.
 4. Verify `/health` and `/v1/meta/version`.
 5. Run staging smoke E2E script.
