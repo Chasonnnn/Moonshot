@@ -20,6 +20,17 @@ cd /Users/chason/Moonshot
 uv run --extra dev pytest
 ```
 
+## Frontend local run
+
+```bash
+cd /Users/chason/Moonshot/apps/app
+cp .env.example .env.local
+pnpm install
+pnpm dev
+```
+
+Integration page: `http://localhost:3000/pilots`
+
 ## Docs
 - API contract: `docs/03_api/openapi.yaml`
 - Domain model: `docs/02_domain/domain_model.md`
