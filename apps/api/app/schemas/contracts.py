@@ -370,6 +370,17 @@ class JobStatusListResponse(BaseModel):
     items: list[JobStatus] = Field(default_factory=list)
 
 
+class SLOProbeResult(BaseModel):
+    status: str
+    latency_ms: int
+    detail: dict[str, Any] = Field(default_factory=dict)
+
+
+class SLOProbeResponse(BaseModel):
+    overall_status: str
+    probes: dict[str, SLOProbeResult] = Field(default_factory=dict)
+
+
 class JobResultResponse(BaseModel):
     job_id: UUID
     status: str

@@ -14,6 +14,7 @@ from app.api.v1.endpoints import (
     review_queue,
     reports,
     scoring,
+    slo,
     simulator_runtime,
     sessions,
     task_families,
@@ -35,4 +36,5 @@ api_router.include_router(reports.router)
 api_router.include_router(exports.router)
 api_router.include_router(redteam.router)
 api_router.include_router(review_queue.router)
+api_router.include_router(slo.router)
 api_router.include_router(audit.router)
