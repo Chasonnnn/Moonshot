@@ -25,6 +25,8 @@ jobs:
         run: uv run python apps/api/scripts/check_openapi_sync.py
       - name: API examples contract check
         run: uv run python apps/api/scripts/check_api_examples.py
+      - name: Export schema lock check
+        run: uv run python apps/api/scripts/check_export_schema.py
       - name: Score drift baseline check
         run: uv run python apps/api/scripts/check_score_drift.py
 
