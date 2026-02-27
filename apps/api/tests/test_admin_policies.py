@@ -100,9 +100,11 @@ def test_admin_can_purge_expired_raw_content(client, admin_headers, candidate_he
     from app.services.store import store
 
     created_at = datetime.now(timezone.utc) - timedelta(days=3)
-    row = store.sessions[next(key for key in store.sessions if str(key) == session_id)]
+    session_key = next(key for key in store.sessions if str(key) == session_id)
+    row = store.sessions[session_key]
     row["created_at"] = created_at.isoformat()
     row["updated_at"] = created_at.isoformat()
+    store.sessions[session_key] = row
 
     purge = client.post("/v1/admin/policies/purge-expired", headers=admin_headers, json={})
     assert purge.status_code == 200

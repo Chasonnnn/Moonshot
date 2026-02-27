@@ -58,7 +58,7 @@ def purge_expired_raw_content(
     policy = get_policy(user.tenant_id)
     purged = 0
 
-    for _, session in store.sessions.items():
+    for session_key, session in store.sessions.items():
         if session.get("tenant_id") != user.tenant_id:
             continue
         if not session.get("policy", {}).get("raw_content_opt_in", policy.raw_content_default_opt_in):
@@ -68,6 +68,8 @@ def purge_expired_raw_content(
 
         ttl_days = int(session.get("policy", {}).get("retention_ttl_days", policy.default_retention_ttl_days))
         created_at = datetime.fromisoformat(session["created_at"])
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
         expires_at = created_at + timedelta(days=ttl_days)
         if now < expires_at:
             continue
@@ -76,6 +78,7 @@ def purge_expired_raw_content(
         if not payload.dry_run:
             session["final_response"] = None
             session["updated_at"] = now.isoformat()
+            store.sessions[session_key] = session
 
     audit(
         user,

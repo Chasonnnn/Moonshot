@@ -1,3 +1,7 @@
+import os
+
+os.environ["MOONSHOT_DATABASE_URL"] = "sqlite+pysqlite:////tmp/moonshot_test.db"
+
 from fastapi.testclient import TestClient
 import pytest
 
@@ -7,6 +11,7 @@ from app.services.store import store
 
 @pytest.fixture()
 def client() -> TestClient:
+    store.ensure_schema()
     store.business_context_packs.clear()
     store.cases.clear()
     store.task_families.clear()
