@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from app.providers import get_coach_provider
 from app.schemas import CoachResponse
 
 POLICY_PATH = Path("/Users/chason/Moonshot/apps/api/app/policies/coach_policy.yaml")
@@ -49,13 +50,19 @@ def coach_reply(message: str, session_context: str) -> CoachResponse:
                 blocked_rule_id=rule["id"],
             )
 
+    provider = get_coach_provider()
+    prompt = (
+        "You are a constrained interview coach. "
+        "Do not provide direct answers. Give only contextual guidance.\n\n"
+        f"Session context:\n{session_context[:1200]}\n\n"
+        f"Candidate message:\n{message}\n\n"
+        "Return a short coaching hint focused on constraints, assumptions, and verification steps."
+    )
+    output = provider.contextual_hint(prompt)
+
     return CoachResponse(
         allowed=True,
-        response=(
-            "Context reminder: "
-            f"{session_context[:280]}"
-            " | Focus on assumptions, evidence quality, and policy constraints before submission."
-        ),
+        response=output.content,
         policy_reason="context_only_allowed",
         policy_version=policy["version"],
         blocked_rule_id=None,

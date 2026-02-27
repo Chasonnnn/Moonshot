@@ -3,6 +3,7 @@ from uuid import uuid4
 
 os.environ["MOONSHOT_DATABASE_URL"] = f"sqlite+pysqlite:////tmp/moonshot_test_{uuid4().hex}.db"
 os.environ.setdefault("MOONSHOT_AUTH_BOOTSTRAP_TOKEN", "moonshot-bootstrap-dev")
+os.environ.setdefault("MOONSHOT_MODEL_PROVIDER", "openai")
 
 from fastapi.testclient import TestClient
 import pytest

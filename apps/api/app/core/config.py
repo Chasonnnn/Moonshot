@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     worker_retry_base_seconds: float = 2.0
 
     model_provider: str = "gemini"
+    gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.0-flash"
     openai_model: str = "gpt-5-mini"
 
