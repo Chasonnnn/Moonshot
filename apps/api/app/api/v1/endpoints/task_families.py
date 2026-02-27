@@ -6,41 +6,33 @@ from app.api.deps import require_roles
 from app.core.security import UserContext
 from app.schemas import TaskFamily, TaskFamilyPublishRequest, TaskFamilyReviewRequest
 from app.services.audit import audit
-from app.services.store import store
+from app.services.repositories import case_repository
 
 router = APIRouter(prefix="/v1/task-families", tags=["task-families"])
 
 
-def _case_for_task_family(task_family: dict):
-    case_id = UUID(task_family["case_id"])
-    case_payload = store.cases.get(case_id)
+def _case_for_task_family(task_family: TaskFamily):
+    case_payload = case_repository.get_case(task_family.case_id)
     if case_payload is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found for task family")
     return case_payload
 
 
 def _get_task_family_for_tenant(task_family_id: UUID, tenant_id: str) -> TaskFamily:
-    existing = store.task_families.get(task_family_id)
+    existing = case_repository.get_task_family(task_family_id)
     if existing is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task family not found")
     case_payload = _case_for_task_family(existing)
-    if case_payload["tenant_id"] != tenant_id:
+    if case_payload.tenant_id != tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task family not found")
-    return TaskFamily.model_validate(existing)
+    return existing
 
 
 @router.get("", response_model=dict[str, list[TaskFamily]])
 def list_task_families(
     user: UserContext = Depends(require_roles("org_admin", "reviewer")),
 ) -> dict[str, list[TaskFamily]]:
-    items: list[TaskFamily] = []
-    for row in store.task_families.values():
-        case_payload = store.cases.get(UUID(row["case_id"]))
-        if case_payload is None:
-            continue
-        if case_payload["tenant_id"] != user.tenant_id:
-            continue
-        items.append(TaskFamily.model_validate(row))
+    items = case_repository.list_task_families(user.tenant_id)
     return {"items": items}
 
 
@@ -74,7 +66,7 @@ def review_task_family(
 
     merged = {**existing, "status": next_status}
     task_family = TaskFamily.model_validate(merged)
-    store.task_families[task_family_id] = task_family.model_dump(mode="json")
+    case_repository.save_task_family(task_family)
     audit(
         user,
         "review",
@@ -96,6 +88,6 @@ def publish_task_family(
         raise HTTPException(status_code=400, detail="Task family must be approved before publish")
     merged = {**existing, "status": "published"}
     task_family = TaskFamily.model_validate(merged)
-    store.task_families[task_family_id] = task_family.model_dump(mode="json")
+    case_repository.save_task_family(task_family)
     audit(user, "publish", "task_family", str(task_family_id), {"approver_note": payload.approver_note})
     return task_family

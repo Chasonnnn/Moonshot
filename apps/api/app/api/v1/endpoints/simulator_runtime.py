@@ -17,6 +17,7 @@ from app.schemas import (
     SQLRunResponse,
 )
 from app.services.audit import audit
+from app.services.repositories import session_repository
 from app.services.store import store
 
 router = APIRouter(prefix="/v1/sessions", tags=["simulator-runtime"])
@@ -25,9 +26,10 @@ DISALLOWED_SQL_PATTERN = re.compile(r"\b(drop|delete|truncate|update|insert|alte
 
 
 def _get_session_for_access(session_id: UUID, user: UserContext, allow_reviewer: bool = True) -> dict:
-    session = store.sessions.get(session_id)
-    if session is None or session.get("tenant_id") != user.tenant_id:
+    session_obj = session_repository.get_session(session_id)
+    if session_obj is None or session_obj.tenant_id != user.tenant_id:
         raise HTTPException(status_code=404, detail="Session not found")
+    session = session_obj.model_dump(mode="json")
 
     if user.role == "candidate" and session.get("candidate_id") != user.user_id:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -63,8 +65,9 @@ def run_sql_query(
     if DISALLOWED_SQL_PATTERN.search(query):
         error_item = SQLHistoryItem(query=query, ok=False, error="disallowed_sql_operation")
         _sql_history(session_id).append(error_item.model_dump(mode="json"))
-        store.session_events[session_id].append(
-            {"event_type": "sql_query_error", "payload": {"reason": "disallowed_sql_operation"}}
+        session_repository.append_events(
+            session_id,
+            [{"event_type": "sql_query_error", "payload": {"reason": "disallowed_sql_operation"}}],
         )
         raise HTTPException(status_code=400, detail="disallowed sql operation")
 
@@ -77,8 +80,9 @@ def run_sql_query(
 
     history_item = SQLHistoryItem(query=query, ok=True, row_count=response.row_count, columns=columns)
     _sql_history(session_id).append(history_item.model_dump(mode="json"))
-    store.session_events[session_id].append(
-        {"event_type": "sql_query_run", "payload": {"row_count": response.row_count, "runtime_ms": response.runtime_ms}}
+    session_repository.append_events(
+        session_id,
+        [{"event_type": "sql_query_run", "payload": {"row_count": response.row_count, "runtime_ms": response.runtime_ms}}],
     )
     audit(user, "run_sql", "session", str(session_id), {"row_count": response.row_count})
     return response
@@ -135,6 +139,6 @@ def apply_dashboard_action(
 
     state["updated_at"] = datetime.now(timezone.utc).isoformat()
     store.dashboard_state[session_id] = state
-    store.session_events[session_id].append({"event_type": event_type, "payload": payload.payload})
+    session_repository.append_events(session_id, [{"event_type": event_type, "payload": payload.payload}])
     audit(user, "dashboard_action", "session", str(session_id), {"action_type": action_type})
     return DashboardState.model_validate(state)

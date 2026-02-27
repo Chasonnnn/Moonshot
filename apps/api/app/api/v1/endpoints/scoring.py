@@ -5,11 +5,11 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import Report, ReviewQueueItem, ScoreResult
+from app.schemas import Report, ReviewQueueItem, ScoreResult, Session
 from app.services.audit import audit
 from app.services.idempotency import get_cached, set_cached
+from app.services.repositories import scoring_repository, session_repository
 from app.services.scoring import score_session
-from app.services.store import store
 
 router = APIRouter(prefix="/v1/sessions", tags=["scoring"])
 
@@ -25,17 +25,17 @@ def score(
     if cached is not None:
         return ScoreResult.model_validate(cached)
 
-    session = store.sessions.get(session_id)
-    if session is None or session["tenant_id"] != user.tenant_id:
+    session = session_repository.get_session(session_id)
+    if session is None or session.tenant_id != user.tenant_id:
         raise HTTPException(status_code=404, detail="Session not found")
-    if session["status"] != "submitted":
+    if session.status != "submitted":
         raise HTTPException(status_code=400, detail="Session must be submitted before scoring")
 
-    events = store.session_events.get(session_id, [])
+    events = session_repository.list_events(session_id)
     score_result, interpretation = score_session(session_id, events)
-    store.scores[session_id] = score_result.model_dump(mode="json")
+    scoring_repository.save_score(score_result)
     report = Report(session_id=session_id, score_result=score_result, interpretation=interpretation)
-    store.reports[session_id] = report.model_dump(mode="json")
+    scoring_repository.save_report(report)
 
     if score_result.needs_human_review:
         review_item = ReviewQueueItem(
@@ -46,13 +46,13 @@ def score(
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
-        store.review_queue[session_id] = review_item.model_dump(mode="json")
+        scoring_repository.save_review_item(review_item)
 
     export_run_id = uuid4()
-    store.exports[export_run_id] = {"session_id": str(session_id)}
+    scoring_repository.save_export_run(export_run_id, session_id)
 
-    session["status"] = "scored"
-    store.sessions[session_id] = session
+    updated_session = Session.model_validate({**session.model_dump(mode="json"), "status": "scored"})
+    session_repository.save_session(updated_session)
 
     payload = score_result.model_dump(mode="json")
     set_cached(cache_scope, idempotency_key, payload)

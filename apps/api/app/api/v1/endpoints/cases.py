@@ -8,16 +8,16 @@ from app.schemas import CaseCreate, CaseSpec, CaseUpdate, GenerationResult
 from app.services.audit import audit
 from app.services.generation import generate_from_case
 from app.services.idempotency import get_cached, set_cached
-from app.services.store import store
+from app.services.repositories import case_repository
 
 router = APIRouter(prefix="/v1/cases", tags=["cases"])
 
 
 def _get_case_for_tenant(case_id: UUID, tenant_id: str) -> CaseSpec:
-    existing = store.cases.get(case_id)
-    if existing is None or existing["tenant_id"] != tenant_id:
+    existing = case_repository.get_case(case_id)
+    if existing is None or existing.tenant_id != tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
-    return CaseSpec.model_validate(existing)
+    return existing
 
 
 @router.post("", response_model=CaseSpec, status_code=status.HTTP_201_CREATED)
@@ -26,7 +26,7 @@ def create_case(
     user: UserContext = Depends(require_roles("org_admin")),
 ) -> CaseSpec:
     case = CaseSpec(tenant_id=user.tenant_id, **payload.model_dump())
-    store.cases[case.id] = case.model_dump(mode="json")
+    case_repository.save_case(case)
     audit(user, "create", "case", str(case.id))
     return case
 
@@ -35,11 +35,7 @@ def create_case(
 def list_cases(
     user: UserContext = Depends(require_roles("org_admin", "reviewer")),
 ) -> dict[str, list[CaseSpec]]:
-    items = [
-        CaseSpec.model_validate(row)
-        for row in store.cases.values()
-        if row["tenant_id"] == user.tenant_id
-    ]
+    items = case_repository.list_cases(user.tenant_id)
     return {"items": items}
 
 
@@ -60,7 +56,7 @@ def update_case(
     existing = _get_case_for_tenant(case_id, user.tenant_id).model_dump(mode="json")
     merged = {**existing, **payload.model_dump(exclude_none=True)}
     case = CaseSpec.model_validate(merged)
-    store.cases[case_id] = case.model_dump(mode="json")
+    case_repository.save_case(case)
     audit(user, "update", "case", str(case_id))
     return case
 
@@ -78,8 +74,8 @@ def generate_case(
 
     case = _get_case_for_tenant(case_id, user.tenant_id)
     generated = generate_from_case(case)
-    store.task_families[generated.task_family.id] = generated.task_family.model_dump(mode="json")
-    store.rubrics[generated.rubric.id] = generated.rubric.model_dump(mode="json")
+    case_repository.save_task_family(generated.task_family)
+    case_repository.save_rubric(generated.rubric)
 
     payload = generated.model_dump(mode="json")
     set_cached(cache_scope, idempotency_key, payload)

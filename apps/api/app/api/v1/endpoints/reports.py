@@ -6,7 +6,7 @@ from app.api.deps import require_roles
 from app.core.security import UserContext
 from app.schemas import Report
 from app.services.audit import audit
-from app.services.store import store
+from app.services.repositories import scoring_repository, session_repository
 
 router = APIRouter(prefix="/v1/reports", tags=["reports"])
 
@@ -16,11 +16,11 @@ def get_report(
     session_id: UUID,
     user: UserContext = Depends(require_roles("reviewer", "org_admin")),
 ) -> Report:
-    existing = store.reports.get(session_id)
+    existing = scoring_repository.get_report(session_id)
     if existing is None:
         raise HTTPException(status_code=404, detail="Report not found")
-    session = store.sessions.get(session_id)
-    if session is None or session["tenant_id"] != user.tenant_id:
+    session = session_repository.get_session(session_id)
+    if session is None or session.tenant_id != user.tenant_id:
         raise HTTPException(status_code=404, detail="Report not found")
     audit(user, "read", "report", str(session_id))
-    return Report.model_validate(existing)
+    return existing

@@ -11,10 +11,11 @@ from app.schemas import (
     AdminPolicyUpdateRequest,
     PurgeExpiredRequest,
     PurgeExpiredResponse,
+    Session,
 )
 from app.services.admin_policy import get_policy, save_policy
 from app.services.audit import audit
-from app.services.store import store
+from app.services.repositories import session_repository
 
 router = APIRouter(prefix="/v1/admin/policies", tags=["admin-policies"])
 
@@ -58,16 +59,16 @@ def purge_expired_raw_content(
     policy = get_policy(user.tenant_id)
     purged = 0
 
-    for session_key, session in store.sessions.items():
-        if session.get("tenant_id") != user.tenant_id:
+    for session in session_repository.list_sessions(user.tenant_id):
+        session_key = session.id
+        session_payload = session.model_dump(mode="json")
+        if not session_payload.get("policy", {}).get("raw_content_opt_in", policy.raw_content_default_opt_in):
             continue
-        if not session.get("policy", {}).get("raw_content_opt_in", policy.raw_content_default_opt_in):
-            continue
-        if session.get("final_response") in (None, ""):
+        if session_payload.get("final_response") in (None, ""):
             continue
 
-        ttl_days = int(session.get("policy", {}).get("retention_ttl_days", policy.default_retention_ttl_days))
-        created_at = datetime.fromisoformat(session["created_at"])
+        ttl_days = int(session_payload.get("policy", {}).get("retention_ttl_days", policy.default_retention_ttl_days))
+        created_at = datetime.fromisoformat(session_payload["created_at"])
         if created_at.tzinfo is None:
             created_at = created_at.replace(tzinfo=timezone.utc)
         expires_at = created_at + timedelta(days=ttl_days)
@@ -76,9 +77,10 @@ def purge_expired_raw_content(
 
         purged += 1
         if not payload.dry_run:
-            session["final_response"] = None
-            session["updated_at"] = now.isoformat()
-            store.sessions[session_key] = session
+            updated = session.model_dump(mode="json")
+            updated["final_response"] = None
+            updated["updated_at"] = now.isoformat()
+            session_repository.save_session(Session.model_validate(updated))
 
     audit(
         user,

@@ -7,7 +7,7 @@ from app.core.security import UserContext
 from app.schemas import CoachMessageRequest, CoachResponse
 from app.services.audit import audit
 from app.services.coach import coach_reply
-from app.services.store import store
+from app.services.repositories import case_repository, session_repository
 
 router = APIRouter(prefix="/v1/sessions", tags=["coach"])
 
@@ -18,26 +18,28 @@ def send_coach_message(
     payload: CoachMessageRequest,
     user: UserContext = Depends(require_roles("candidate")),
 ) -> CoachResponse:
-    session = store.sessions.get(session_id)
-    if session is None or session["tenant_id"] != user.tenant_id:
+    session = session_repository.get_session(session_id)
+    if session is None or session.tenant_id != user.tenant_id:
         raise HTTPException(status_code=404, detail="Session not found")
-    if session["candidate_id"] != user.user_id:
+    if session.candidate_id != user.user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    task_family = store.task_families.get(UUID(session["task_family_id"]))
-    case_id = task_family["case_id"] if task_family else None
-    case = store.cases.get(UUID(case_id)) if case_id else None
-    context = case["scenario"] if case else "Follow the scenario constraints and business context."
+    task_family = case_repository.get_task_family(session.task_family_id)
+    case = case_repository.get_case(task_family.case_id) if task_family else None
+    context = case.scenario if case else "Follow the scenario constraints and business context."
 
     response = coach_reply(payload.message, context)
-    store.session_events[session_id].append(
-        {
-            "event_type": "coach_message",
-            "payload": {
-                "allowed": response.allowed,
-                "policy_reason": response.policy_reason,
-            },
-        }
+    session_repository.append_events(
+        session_id,
+        [
+            {
+                "event_type": "coach_message",
+                "payload": {
+                    "allowed": response.allowed,
+                    "policy_reason": response.policy_reason,
+                },
+            }
+        ],
     )
     audit(user, "coach_message", "session", str(session_id), {"allowed": response.allowed})
     return response

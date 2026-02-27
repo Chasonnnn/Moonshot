@@ -7,27 +7,23 @@ from app.core.security import UserContext
 from app.schemas import EventIngestResponse, EventsIngestRequest, Session, SessionCreate, SessionSubmitRequest
 from app.services.admin_policy import get_policy
 from app.services.audit import audit
-from app.services.store import store
+from app.services.repositories import case_repository, session_repository
 
 router = APIRouter(prefix="/v1/sessions", tags=["sessions"])
 
 
 def _tenant_for_task_family(task_family_id: UUID) -> str:
-    task_family = store.task_families.get(task_family_id)
-    if task_family is None:
+    tenant = case_repository.tenant_for_task_family(task_family_id)
+    if tenant is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task family not found")
-    case_id = UUID(task_family["case_id"])
-    case_payload = store.cases.get(case_id)
-    if case_payload is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found for task family")
-    return case_payload["tenant_id"]
+    return tenant
 
 
 def _get_session_for_tenant(session_id: UUID, tenant_id: str) -> Session:
-    session_payload = store.sessions.get(session_id)
-    if session_payload is None or session_payload["tenant_id"] != tenant_id:
+    session = session_repository.get_session(session_id)
+    if session is None or session.tenant_id != tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
-    return Session.model_validate(session_payload)
+    return session
 
 
 @router.post("", response_model=Session, status_code=status.HTTP_201_CREATED)
@@ -58,8 +54,7 @@ def create_session(
         candidate_id=payload.candidate_id,
         policy=resolved_policy,
     )
-    store.sessions[session.id] = session.model_dump(mode="json")
-    store.session_events[session.id] = []
+    session_repository.save_session(session)
     audit(user, "create", "session", str(session.id), {"candidate_id": payload.candidate_id})
     return session
 
@@ -68,11 +63,7 @@ def create_session(
 def list_sessions(
     user: UserContext = Depends(require_roles("org_admin", "reviewer")),
 ) -> dict[str, list[Session]]:
-    items = [
-        Session.model_validate(row)
-        for row in store.sessions.values()
-        if row["tenant_id"] == user.tenant_id
-    ]
+    items = session_repository.list_sessions(user.tenant_id)
     return {"items": items}
 
 
@@ -97,10 +88,9 @@ def ingest_events(
     if session.candidate_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
-    for event in payload.events:
-        store.session_events[session_id].append(event.model_dump(mode="json"))
+    accepted = session_repository.append_events(session_id, payload.events)
     audit(user, "ingest", "event", str(session_id), {"count": len(payload.events)})
-    return EventIngestResponse(accepted=len(payload.events))
+    return EventIngestResponse(accepted=accepted)
 
 
 @router.post("/{session_id}/submit", response_model=Session)
@@ -109,18 +99,19 @@ def submit_session(
     payload: SessionSubmitRequest,
     user: UserContext = Depends(require_roles("candidate")),
 ) -> Session:
-    existing = _get_session_for_tenant(session_id, user.tenant_id).model_dump(mode="json")
-    if existing["candidate_id"] != user.user_id:
+    existing = _get_session_for_tenant(session_id, user.tenant_id)
+    if existing.candidate_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
+    existing_payload = existing.model_dump(mode="json")
     merged = {
-        **existing,
+        **existing_payload,
         "status": "submitted",
     }
-    if existing.get("policy", {}).get("raw_content_opt_in", False):
+    if existing.policy.get("raw_content_opt_in", False):
         merged["final_response"] = payload.final_response
 
     session = Session.model_validate(merged)
-    store.sessions[session_id] = session.model_dump(mode="json")
+    session_repository.save_session(session)
     audit(user, "submit", "session", str(session_id))
     return session
