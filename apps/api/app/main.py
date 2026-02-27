@@ -8,7 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.core.secrets import load_managed_secrets
 
+load_managed_secrets()
 settings = get_settings()
 logger = logging.getLogger("moonshot.request")
 if not logging.getLogger().handlers:

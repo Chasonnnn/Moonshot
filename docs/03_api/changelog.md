@@ -15,6 +15,23 @@
 - Added fairness smoke run APIs:
   - `POST /v1/fairness/smoke-runs`
   - `GET /v1/fairness/smoke-runs/{run_id}`
+- Converted v0.3 heavy operations to async submit (`202` + `JobAccepted`):
+  - `POST /v1/task-families/{task_family_id}/quality/evaluate`
+  - `POST /v1/reports/{session_id}/interpret`
+  - `POST /v1/fairness/smoke-runs`
+- Enforced `Idempotency-Key` on new async submit endpoints.
+- Added worker job types:
+  - `quality_evaluate`
+  - `interpretation_generate`
+  - `fairness_smoke_run`
+- Added Postgres-backed persistence for v0.3 entities:
+  - `task_quality_signals`
+  - `coach_feedback`
+  - `interpretation_views`
+  - `context_injection_traces`
+  - `fairness_smoke_runs`
+- Added strict release-gate CI job with Postgres migration gate + staging smoke + load gate.
+- Added managed-secrets startup validation settings for enterprise deployments.
 - Added new domain types:
   - `TaskQualitySignal`
   - `CoachFeedback`

@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.0-flash"
     openai_model: str = "gpt-5-mini"
+    managed_secrets_enabled: bool = False
+    managed_secrets_required: bool = False
+    managed_secrets_region: str | None = None
+    jwt_signing_keys_secret_id: str | None = None
+    gemini_api_key_secret_id: str | None = None
 
     model_config = SettingsConfigDict(env_prefix="MOONSHOT_", extra="ignore")
 

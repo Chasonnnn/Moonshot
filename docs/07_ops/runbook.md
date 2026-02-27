@@ -9,6 +9,12 @@
 - Required: `MOONSHOT_DATABASE_URL`
 - Required when provider is Gemini: `MOONSHOT_GEMINI_API_KEY`
 - Optional worker lease tuning: `MOONSHOT_WORKER_LEASE_SECONDS`
+- Optional managed-secrets mode:
+  - `MOONSHOT_MANAGED_SECRETS_ENABLED`
+  - `MOONSHOT_MANAGED_SECRETS_REQUIRED`
+  - `MOONSHOT_MANAGED_SECRETS_REGION`
+  - `MOONSHOT_JWT_SIGNING_KEYS_SECRET_ID`
+  - `MOONSHOT_GEMINI_API_KEY_SECRET_ID`
 
 ## SLO Targets (Pilot)
 - API availability: 99.5%
@@ -33,6 +39,10 @@
 7. Interpretation view flow check (`/v1/reports/{session_id}/interpret*`).
 8. Context trace endpoint check (`/v1/context/injection-traces/{session_id}`).
 9. Fairness smoke run check (`/v1/fairness/smoke-runs*`).
+10. CI strict release-gate job must pass:
+  - Postgres migration gate
+  - staging smoke gate
+  - load gate
 
 ## Incident Response (MVP)
 - Severity definitions: SEV1/SEV2/SEV3.

@@ -6,6 +6,7 @@
 - Immutable audit logging with hash-chain verification.
 - Idempotency keys for async mutation endpoints.
 - No fallback routes; explicit error responses.
+- Managed-secrets startup validation supports fail-closed behavior when required.
 
 ## Privacy Defaults
 - Derived telemetry storage by default.
