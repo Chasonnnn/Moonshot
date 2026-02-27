@@ -33,37 +33,47 @@ def _load_policy() -> dict:
     }
 
 
-def coach_reply(message: str, session_context: str) -> CoachResponse:
+def coach_reply(message: str, session_context: str, *, mode: str = "assessment") -> CoachResponse:
     policy = _load_policy()
     lowered = message.lower()
 
-    for rule in policy["blocked_rules"]:
-        if re.search(rule["regex"], lowered):
-            return CoachResponse(
-                allowed=False,
-                response=(
-                    "I can clarify business context and constraints, but I cannot provide direct answers or solve the task. "
-                    "Please describe your current approach and I can help validate constraints."
-                ),
-                policy_reason="direct_answer_disallowed",
-                policy_version=policy["version"],
-                blocked_rule_id=rule["id"],
-            )
+    if mode == "assessment":
+        for rule in policy["blocked_rules"]:
+            if re.search(rule["regex"], lowered):
+                return CoachResponse(
+                    allowed=False,
+                    response=(
+                        "I can clarify business context and constraints, but I cannot provide direct answers or solve the task. "
+                        "Please describe your current approach and I can help validate constraints."
+                    ),
+                    policy_reason="direct_answer_disallowed",
+                    policy_version=policy["version"],
+                    blocked_rule_id=rule["id"],
+                )
 
     provider = get_coach_provider()
-    prompt = (
-        "You are a constrained interview coach. "
-        "Do not provide direct answers. Give only contextual guidance.\n\n"
-        f"Session context:\n{session_context[:1200]}\n\n"
-        f"Candidate message:\n{message}\n\n"
-        "Return a short coaching hint focused on constraints, assumptions, and verification steps."
-    )
+    if mode == "practice":
+        prompt = (
+            "You are a coaching assistant in practice mode. "
+            "Provide structured guidance and learning scaffolds without giving final submission text.\n\n"
+            f"Session context:\n{session_context[:1200]}\n\n"
+            f"Learner message:\n{message}\n\n"
+            "Return: (1) what is correct, (2) what is risky, (3) what is missing, (4) next-step checklist."
+        )
+    else:
+        prompt = (
+            "You are a constrained interview coach in assessment mode. "
+            "Do not provide direct answers. Give only contextual guidance.\n\n"
+            f"Session context:\n{session_context[:1200]}\n\n"
+            f"Candidate message:\n{message}\n\n"
+            "Return a short coaching hint focused on constraints, assumptions, and verification steps."
+        )
     output = provider.contextual_hint(prompt)
 
     return CoachResponse(
         allowed=True,
         response=output.content,
-        policy_reason="context_only_allowed",
+        policy_reason="practice_guidance_allowed" if mode == "practice" else "context_only_allowed",
         policy_version=policy["version"],
         blocked_rule_id=None,
     )

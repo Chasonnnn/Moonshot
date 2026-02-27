@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import EventIngestResponse, EventsIngestRequest, Session, SessionCreate, SessionSubmitRequest
+from app.schemas import EventIngestResponse, EventsIngestRequest, Session, SessionCreate, SessionModeRequest, SessionSubmitRequest
 from app.services.admin_policy import get_policy
 from app.services.audit import audit
 from app.services.repositories import case_repository, session_repository
@@ -114,4 +114,25 @@ def submit_session(
     session = Session.model_validate(merged)
     session_repository.save_session(session)
     audit(user, "submit", "session", str(session_id))
+    return session
+
+
+@router.post("/{session_id}/mode", response_model=Session)
+def set_session_coaching_mode(
+    session_id: UUID,
+    payload: SessionModeRequest,
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> Session:
+    existing = _get_session_for_tenant(session_id, user.tenant_id)
+    requested_mode = payload.mode.strip().lower()
+    if requested_mode not in {"practice", "assessment"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="mode must be one of: practice, assessment")
+
+    merged = existing.model_dump(mode="json")
+    merged_policy = dict(merged.get("policy", {}))
+    merged_policy["coach_mode"] = requested_mode
+    merged["policy"] = merged_policy
+    session = Session.model_validate(merged)
+    session_repository.save_session(session)
+    audit(user, "set_mode", "session", str(session_id), {"coach_mode": requested_mode})
     return session

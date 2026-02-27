@@ -639,6 +639,11 @@ class SQLStore:
             key_attr="id",
             uuid_keys=True,
         )
+        self.task_quality_signals: dict[UUID, dict[str, Any]] = {}
+        self.coach_feedback: dict[UUID, list[dict[str, Any]]] = {}
+        self.interpretation_views: dict[UUID, dict[str, Any]] = {}
+        self.context_injection_traces: dict[UUID, list[dict[str, Any]]] = {}
+        self.fairness_smoke_runs: dict[UUID, dict[str, Any]] = {}
 
     def ensure_schema(self) -> None:
         Base.metadata.create_all(bind=engine)

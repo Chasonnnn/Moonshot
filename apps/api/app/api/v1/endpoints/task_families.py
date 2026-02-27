@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import TaskFamily, TaskFamilyPublishRequest, TaskFamilyReviewRequest
+from app.schemas import TaskFamily, TaskFamilyPublishRequest, TaskFamilyReviewRequest, TaskQualitySignal
 from app.services.audit import audit
 from app.services.repositories import case_repository
+from app.services.task_quality import evaluate_task_quality, get_task_quality
 
 router = APIRouter(prefix="/v1/task-families", tags=["task-families"])
 
@@ -91,3 +92,32 @@ def publish_task_family(
     case_repository.save_task_family(task_family)
     audit(user, "publish", "task_family", str(task_family_id), {"approver_note": payload.approver_note})
     return task_family
+
+
+@router.post("/{task_family_id}/quality/evaluate", response_model=TaskQualitySignal)
+def evaluate_task_family_quality(
+    task_family_id: UUID,
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> TaskQualitySignal:
+    _get_task_family_for_tenant(task_family_id, user.tenant_id)
+    signal = evaluate_task_quality(task_family_id, evaluated_by_role=user.role)
+    audit(
+        user,
+        "evaluate_quality",
+        "task_family",
+        str(task_family_id),
+        {"quality_score": signal.quality_score},
+    )
+    return signal
+
+
+@router.get("/{task_family_id}/quality", response_model=TaskQualitySignal)
+def get_task_family_quality(
+    task_family_id: UUID,
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> TaskQualitySignal:
+    _get_task_family_for_tenant(task_family_id, user.tenant_id)
+    signal = get_task_quality(task_family_id)
+    if signal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task quality signal not found")
+    return signal

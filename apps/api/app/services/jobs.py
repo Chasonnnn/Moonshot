@@ -11,6 +11,7 @@ from app.core.security import UserContext
 from app.db.session import SessionLocal
 from app.models.entities import JobAttemptModel, JobRunModel
 from app.schemas import AuditLog, JobAccepted, JobResultResponse, JobStatus, Report, ReviewQueueItem, Session
+from app.services.context_injection import append_context_trace
 from app.services.exporting import build_export
 from app.services.generation import generate_from_case
 from app.services.idempotency import get_cached, set_cached
@@ -239,6 +240,15 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
     scoring_repository.save_score(score_result)
     report = Report(session_id=session_id, score_result=score_result, interpretation=interpretation)
     scoring_repository.save_report(report)
+    append_context_trace(
+        session_id=session_id,
+        tenant_id=job.tenant_id,
+        agent_type="evaluator",
+        actor_role="system",
+        mode="assessment",
+        context_keys=["task_rubric", "scoring_config", "session_events"],
+        policy_version=None,
+    )
 
     if score_result.needs_human_review:
         review_item = ReviewQueueItem(

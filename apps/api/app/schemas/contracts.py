@@ -193,6 +193,26 @@ class CoachResponse(BaseModel):
     blocked_rule_id: str | None = None
 
 
+class SessionModeRequest(BaseModel):
+    mode: str
+
+
+class CoachFeedbackRequest(BaseModel):
+    helpful: bool
+    confusion_tags: list[str] = Field(default_factory=list)
+    notes: str | None = None
+
+
+class CoachFeedback(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    session_id: UUID
+    candidate_id: str
+    helpful: bool
+    confusion_tags: list[str] = Field(default_factory=list)
+    notes: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class SessionSubmitRequest(BaseModel):
     final_response: str | None = None
 
@@ -221,6 +241,89 @@ class Report(BaseModel):
     session_id: UUID
     score_result: ScoreResult
     interpretation: Interpretation
+
+
+class InterpretationRequest(BaseModel):
+    focus_dimensions: list[str] = Field(default_factory=list)
+    include_sensitivity: bool = False
+    weight_overrides: dict[str, float] = Field(default_factory=dict)
+
+
+class ScoringVersionLock(BaseModel):
+    scorer_version: str
+    rubric_version: str
+    task_family_version: str
+    model_hash: str
+
+
+class InterpretationView(BaseModel):
+    view_id: UUID = Field(default_factory=uuid4)
+    session_id: UUID
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    focus_dimensions: list[str] = Field(default_factory=list)
+    include_sensitivity: bool = False
+    weight_overrides: dict[str, float] = Field(default_factory=dict)
+    breakdown: dict[str, Any] = Field(default_factory=dict)
+    caveats: list[str] = Field(default_factory=list)
+    scoring_version_lock: ScoringVersionLock
+
+
+class InterpretationViewListResponse(BaseModel):
+    items: list[InterpretationView] = Field(default_factory=list)
+
+
+class TaskQualitySignal(BaseModel):
+    task_family_id: UUID
+    variant_count: int
+    diversity_score: float
+    clarity_score: float
+    realism_score: float
+    variant_stability_score: float
+    admin_acceptance_rate: float
+    mean_edit_distance: float
+    rubric_leakage_detected: bool
+    quality_score: float
+    evaluated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    evaluated_by_role: str | None = None
+
+
+class ContextInjectionTrace(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    session_id: UUID
+    tenant_id: str
+    agent_type: str
+    actor_role: str
+    mode: str
+    context_keys: list[str] = Field(default_factory=list)
+    precedence_order: list[str] = Field(
+        default_factory=lambda: [
+            "task_rubric",
+            "org_policy",
+            "role_profile",
+            "learner_progress",
+            "aggregated_insights",
+        ]
+    )
+    policy_version: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ContextInjectionTraceListResponse(BaseModel):
+    items: list[ContextInjectionTrace] = Field(default_factory=list)
+
+
+class FairnessSmokeRunCreate(BaseModel):
+    scope: str = "tenant_recent"
+    include_language_proxy: bool = True
+
+
+class FairnessSmokeRun(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    tenant_id: str
+    scope: str
+    status: str = "completed"
+    summary: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ExportCreateRequest(BaseModel):

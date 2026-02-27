@@ -7,7 +7,9 @@ from app.api.v1.endpoints import (
     business_context,
     cases,
     coach,
+    context_traces,
     exports,
+    fairness,
     jobs,
     meta,
     redteam,
@@ -38,3 +40,5 @@ api_router.include_router(redteam.router)
 api_router.include_router(review_queue.router)
 api_router.include_router(slo.router)
 api_router.include_router(audit.router)
+api_router.include_router(context_traces.router)
+api_router.include_router(fairness.router)

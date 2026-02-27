@@ -34,6 +34,11 @@ def client() -> TestClient:
     store.dashboard_state.clear()
     store.job_attempts.clear()
     store.job_runs.clear()
+    store.task_quality_signals.clear()
+    store.coach_feedback.clear()
+    store.interpretation_views.clear()
+    store.context_injection_traces.clear()
+    store.fairness_smoke_runs.clear()
     return TestClient(app)
 
 
