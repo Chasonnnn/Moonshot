@@ -97,5 +97,14 @@ def test_report_and_export_flow(client, admin_headers, reviewer_headers, candida
     export_resp = client.get(f"/v1/exports/{export_run_id}", headers=reviewer_headers)
     assert export_resp.status_code == 200
     export_payload = export_resp.json()
-    assert "session_id,confidence,needs_human_review" in export_payload["csv"]
+    assert export_payload["schema_version"] == "1.0.0"
+    assert export_payload["csv_headers"] == [
+        "session_id",
+        "confidence",
+        "needs_human_review",
+        "query_error_rate",
+        "ai_prompt_count",
+        "policy_violation_count",
+    ]
+    assert export_payload["csv"].splitlines()[0] == ",".join(export_payload["csv_headers"])
     assert "tableau_schema" in export_payload

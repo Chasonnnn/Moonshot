@@ -336,6 +336,8 @@ class ExportBundle(BaseModel):
     model_config = {"populate_by_name": True}
 
     run_id: UUID
+    schema_version: str
+    csv_headers: list[str] = Field(default_factory=list)
     csv: str
     json_payload: dict[str, Any] = Field(alias="json")
     tableau_schema: dict[str, Any]
