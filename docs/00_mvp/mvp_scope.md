@@ -1,4 +1,4 @@
-# Moonshot MVP Scope (Backend-First, v0.3.1)
+# Moonshot MVP Scope (Backend-First, v0.4.0)
 
 ## Objective
 Ship an evidence-loop MVP where task generation, coaching, and scoring are grounded in real business context and continuously improved with auditable feedback loops.
@@ -13,7 +13,7 @@ A pilot-ready JDA assessment platform where an admin can:
 6. Run fairness smoke checks and trace context injection/audit lineage.
 
 ## In Scope
-- API-first contracts and docs as system of record (`v0.3.1`).
+- API-first contracts and docs as system of record (`v0.4.0`).
 - Co-design content loop with quality evaluation (`TaskQualitySignal`).
 - Coaching mode separation and coaching feedback capture.
 - Stable scoring engine + interpretation view engine split.
@@ -33,7 +33,7 @@ A pilot-ready JDA assessment platform where an admin can:
 - No fallback routes; explicit failure responses only.
 
 ## Delivery Gates
-1. OpenAPI and event schema frozen at `v0.3.1`.
+1. OpenAPI and event schema frozen at `v0.4.0`.
 2. Scoring-version lock present in interpretation views.
 3. Coaching mode policy tests and anti-leakage tests green.
 4. Task quality + fairness smoke APIs available and tested.

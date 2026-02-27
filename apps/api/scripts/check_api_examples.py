@@ -16,6 +16,7 @@ REQUIRED_EXAMPLES = [
     "quality_evaluate_submit",
     "interpretation_submit",
     "fairness_smoke_submit",
+    "report_summary_response",
     "job_result_export_completed",
 ]
 
@@ -61,6 +62,20 @@ def main() -> int:
         raise RuntimeError("api-examples: export schema_version must be `1.0.0`")
     if not isinstance(result.get("csv_headers"), list) or not result["csv_headers"]:
         raise RuntimeError("api-examples: export `csv_headers` must be a non-empty list")
+
+    summary_example = _expect(payload, "report_summary_response")
+    summary_response = _expect(summary_example, "response")
+    for required in (
+        "session_id",
+        "session_status",
+        "report_available",
+        "confidence",
+        "needs_human_review",
+        "trigger_codes",
+        "scoring_version_lock",
+    ):
+        if required not in summary_response:
+            raise RuntimeError(f"api-examples: report summary missing `{required}`")
 
     print("api-examples: OK")
     return 0

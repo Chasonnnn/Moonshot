@@ -37,6 +37,7 @@ EXPECTED_PATHS = {
     "/v1/sessions/{session_id}/submit",
     "/v1/sessions/{session_id}/score",
     "/v1/reports/{session_id}",
+    "/v1/reports/{session_id}/summary",
     "/v1/reports/{session_id}/interpret",
     "/v1/reports/{session_id}/interpretations/{view_id}",
     "/v1/exports",

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import InterpretationRequest, InterpretationView, JobAccepted, Report
+from app.schemas import InterpretationRequest, InterpretationView, JobAccepted, Report, ReportSummary, ScoringVersionLock
 from app.services.audit import audit
 from app.services.interpretation_views import get_interpretation_view
 from app.services.jobs import submit_job
@@ -26,6 +26,47 @@ def get_report(
         raise HTTPException(status_code=404, detail="Report not found")
     audit(user, "read", "report", str(session_id))
     return existing
+
+
+@router.get("/{session_id}/summary", response_model=ReportSummary)
+def get_report_summary(
+    session_id: UUID,
+    user: UserContext = Depends(require_roles("reviewer", "org_admin")),
+) -> ReportSummary:
+    session = session_repository.get_session(session_id)
+    if session is None or session.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    report = scoring_repository.get_report(session_id)
+    if report is None:
+        audit(user, "read", "report_summary", str(session_id), {"report_available": False})
+        return ReportSummary(
+            session_id=session_id,
+            session_status=session.status,
+            report_available=False,
+            confidence=None,
+            needs_human_review=None,
+            trigger_codes=[],
+            scoring_version_lock=None,
+        )
+
+    score = report.score_result
+    summary = ReportSummary(
+        session_id=session_id,
+        session_status=session.status,
+        report_available=True,
+        confidence=score.confidence,
+        needs_human_review=score.needs_human_review,
+        trigger_codes=score.trigger_codes,
+        scoring_version_lock=ScoringVersionLock(
+            scorer_version=score.scorer_version,
+            rubric_version=score.rubric_version,
+            task_family_version=score.task_family_version,
+            model_hash=score.model_hash,
+        ),
+    )
+    audit(user, "read", "report_summary", str(session_id), {"report_available": True})
+    return summary
 
 
 @router.post("/{session_id}/interpret", response_model=JobAccepted, status_code=status.HTTP_202_ACCEPTED)

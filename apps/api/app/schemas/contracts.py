@@ -244,6 +244,16 @@ class Report(BaseModel):
     interpretation: Interpretation
 
 
+class ReportSummary(BaseModel):
+    session_id: UUID
+    session_status: str
+    report_available: bool
+    confidence: float | None = None
+    needs_human_review: bool | None = None
+    trigger_codes: list[str] = Field(default_factory=list)
+    scoring_version_lock: ScoringVersionLock | None = None
+
+
 class InterpretationRequest(BaseModel):
     focus_dimensions: list[str] = Field(default_factory=list)
     include_sensitivity: bool = False

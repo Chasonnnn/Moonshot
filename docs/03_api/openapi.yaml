@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moonshot Backend
-  version: 0.3.1
+  version: 0.4.0
 paths:
   /health:
     get:
@@ -1144,6 +1144,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Report'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/reports/{session_id}/summary:
+    get:
+      tags:
+      - reports
+      summary: Get Report Summary
+      operationId: get_report_summary_v1_reports__session_id__summary_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSummary'
         '422':
           description: Validation Error
           content:
@@ -2628,6 +2657,43 @@ components:
       - score_result
       - interpretation
       title: Report
+    ReportSummary:
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        session_status:
+          type: string
+          title: Session Status
+        report_available:
+          type: boolean
+          title: Report Available
+        confidence:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Confidence
+        needs_human_review:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Needs Human Review
+        trigger_codes:
+          items:
+            type: string
+          type: array
+          title: Trigger Codes
+        scoring_version_lock:
+          anyOf:
+          - $ref: '#/components/schemas/ScoringVersionLock'
+          - type: 'null'
+      type: object
+      required:
+      - session_id
+      - session_status
+      - report_available
+      title: ReportSummary
     ReviewQueueItem:
       properties:
         session_id:

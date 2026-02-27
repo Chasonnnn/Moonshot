@@ -506,5 +506,21 @@
       "status": "pending",
       "submitted_at": "2026-02-27T12:12:00Z"
     }
+  },
+  "report_summary_response": {
+    "response": {
+      "session_id": "00000000-0000-0000-0000-000000000100",
+      "session_status": "scored",
+      "report_available": true,
+      "confidence": 0.78,
+      "needs_human_review": false,
+      "trigger_codes": [],
+      "scoring_version_lock": {
+        "scorer_version": "0.1.0",
+        "rubric_version": "0.1.0",
+        "task_family_version": "0.1.0",
+        "model_hash": "local-baseline"
+      }
+    }
   }
 }

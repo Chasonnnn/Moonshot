@@ -1,5 +1,15 @@
 # API Changelog
 
+## 0.4.0 - 2026-02-27
+- Added report summary endpoint for frontend polling cards:
+  - `GET /v1/reports/{session_id}/summary`
+- Bumped runtime and contract version to `0.4.0`.
+- Added frontend contract sync governance check:
+  - `apps/api/scripts/check_frontend_contract_sync.py`
+  - CI now runs `check_frontend_contract_sync.py` in `api-ci`.
+- Added JDA integration playbook with explicit token, polling, and timeout contract:
+  - `docs/08_frontend_contract/jda_integration_playbook.md`.
+
 ## 0.3.1 - 2026-02-27
 - Frozen frontend integration contract at OpenAPI `0.3.1`.
 - Added API examples replay guard:
