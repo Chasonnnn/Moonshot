@@ -1,5 +1,15 @@
 # API Changelog
 
+## 0.1.2 - 2026-02-26
+- Added task family review workflow endpoint:
+  - `POST /v1/task-families/{task_family_id}/review`
+- Enforced publish gating: task families must be `approved` before publish.
+- Added reviewer queue APIs for human-review sessions:
+  - `GET /v1/review-queue`
+  - `GET /v1/review-queue/{session_id}`
+  - `POST /v1/review-queue/{session_id}/resolve`
+- Scoring now enqueues `needs_human_review=true` sessions into tenant-scoped review queue.
+
 ## 0.1.1 - 2026-02-26
 - Added tenant-scoped read endpoints for frontend bootstrap:
   - `GET /v1/business-context/packs`

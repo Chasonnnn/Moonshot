@@ -11,6 +11,7 @@ EXPECTED_PATHS = {
     "/v1/task-families",
     "/v1/task-families/{task_family_id}",
     "/v1/task-families/{task_family_id}/publish",
+    "/v1/task-families/{task_family_id}/review",
     "/v1/sessions",
     "/v1/sessions/{session_id}",
     "/v1/sessions/{session_id}/events",
@@ -21,6 +22,9 @@ EXPECTED_PATHS = {
     "/v1/exports/{run_id}",
     "/v1/redteam/runs",
     "/v1/audit-logs",
+    "/v1/review-queue",
+    "/v1/review-queue/{session_id}",
+    "/v1/review-queue/{session_id}/resolve",
 }
 
 

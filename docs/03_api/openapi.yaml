@@ -216,6 +216,31 @@ paths:
           $ref: '#/components/responses/NotFound'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /v1/task-families/{task_family_id}/review:
+    post:
+      summary: Review a generated task family
+      operationId: reviewTaskFamily
+      parameters:
+        - $ref: '#/components/parameters/TaskFamilyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskFamilyReviewRequest'
+      responses:
+        '200':
+          description: Reviewed task family
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskFamily'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /v1/sessions:
     get:
       summary: List sessions for current tenant
@@ -403,6 +428,66 @@ paths:
                       $ref: '#/components/schemas/AuditLog'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /v1/review-queue:
+    get:
+      summary: List review queue items
+      operationId: listReviewQueue
+      parameters:
+        - in: query
+          name: include_resolved
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Tenant-scoped review queue items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewQueueListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/review-queue/{session_id}:
+    get:
+      summary: Get review queue item by session id
+      operationId: getReviewQueueItem
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Review queue item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewQueueItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/review-queue/{session_id}/resolve:
+    post:
+      summary: Resolve review queue item
+      operationId: resolveReviewQueueItem
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewQueueResolveRequest'
+      responses:
+        '200':
+          description: Resolved review queue item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewQueueItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 components:
   securitySchemes:
     RoleHeaderAuth:
@@ -452,6 +537,12 @@ components:
       schema:
         type: string
   responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     Forbidden:
       description: Forbidden
       content:
@@ -643,6 +734,14 @@ components:
         rubric:
           $ref: '#/components/schemas/Rubric'
       required: [task_family, rubric]
+    TaskFamilyReviewRequest:
+      type: object
+      properties:
+        decision:
+          type: string
+        review_note:
+          type: string
+      required: [decision]
     Session:
       type: object
       properties:
@@ -769,6 +868,41 @@ components:
           type: object
           additionalProperties: true
       required: [run_id, csv, json, tableau_schema]
+    ReviewQueueItem:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        status:
+          type: string
+        reason:
+          type: string
+        created_by:
+          type: string
+        reviewer_note:
+          type: string
+        resolution:
+          type: string
+      required: [session_id, tenant_id, status, reason, created_by]
+    ReviewQueueResolveRequest:
+      type: object
+      properties:
+        decision:
+          type: string
+        reviewer_note:
+          type: string
+      required: [decision]
+    ReviewQueueListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewQueueItem'
+      required: [items]
     RedTeamRun:
       type: object
       properties:

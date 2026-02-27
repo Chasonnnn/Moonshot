@@ -31,6 +31,13 @@
 - `GET /v1/sessions`
 - `GET /v1/sessions/{session_id}`
 
+## Review Workflow Endpoints
+- `POST /v1/task-families/{task_family_id}/review`
+- `POST /v1/task-families/{task_family_id}/publish` (requires `approved` status)
+- `GET /v1/review-queue`
+- `GET /v1/review-queue/{session_id}`
+- `POST /v1/review-queue/{session_id}/resolve`
+
 ## Versioning
 - Semantic version tags for API contract.
 - Changelog entry required for each contract modification, including breaking changes.

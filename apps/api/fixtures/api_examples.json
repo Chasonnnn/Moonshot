@@ -61,11 +61,30 @@
       "rubric": {"version": "0.1.0"}
     }
   },
+  "review_task_family": {
+    "request": {
+      "decision": "approve",
+      "review_note": "ready for publish"
+    },
+    "response": {
+      "id": "00000000-0000-0000-0000-000000000050",
+      "status": "approved"
+    }
+  },
   "score_session": {
     "response": {
       "confidence": 0.78,
       "needs_human_review": false,
       "scorer_version": "0.1.0"
+    }
+  },
+  "review_queue_item": {
+    "response": {
+      "session_id": "00000000-0000-0000-0000-000000000100",
+      "tenant_id": "tenant_a",
+      "status": "open",
+      "reason": "score_flagged_for_human_review",
+      "created_by": "reviewer_1"
     }
   },
   "list_sessions": {
