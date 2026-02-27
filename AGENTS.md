@@ -23,3 +23,8 @@ These rules are mandatory for all implementation work in this repository.
   2. Implement minimal code to pass tests.
   3. Refactor while keeping tests green.
 - No feature is complete without automated tests that cover expected behavior and key failure modes.
+
+## 4) No Fallback Routes
+- No fallback routes. Expose issues so we can fix them.
+- Do not hide integration or runtime errors behind silent/default route behavior.
+- Return explicit failure responses with actionable error details.

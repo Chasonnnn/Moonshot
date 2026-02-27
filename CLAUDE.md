@@ -36,3 +36,8 @@ These rules are mandatory for all implementation work in this repository.
 
 ## 6) No Dark Mode (MVP)
 - Dark mode is out of scope for MVP. Do not implement `.dark` theme variants.
+
+## 7) No Fallback Routes
+- No fallback routes. Expose issues so we can fix them.
+- Do not hide integration or runtime errors behind silent/default route behavior.
+- Return explicit failure responses with actionable error details.
