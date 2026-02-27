@@ -35,6 +35,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetaVersion'
+  /v1/admin/policies:
+    get:
+      summary: Get admin policy for current tenant
+      operationId: getAdminPolicy
+      responses:
+        '200':
+          description: Admin policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPolicy'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    patch:
+      summary: Update admin policy for current tenant
+      operationId: patchAdminPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPolicyUpdateRequest'
+      responses:
+        '200':
+          description: Updated admin policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/admin/policies/purge-expired:
+    post:
+      summary: Purge expired raw session content by tenant policy
+      operationId: purgeExpiredRawContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurgeExpiredRequest'
+      responses:
+        '200':
+          description: Purge result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurgeExpiredResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /v1/business-context/packs:
     get:
       summary: List business context packs for current tenant
@@ -296,6 +348,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventIngestResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}/sql/run:
+    post:
+      summary: Run SQL query in guided simulator
+      operationId: runSqlQuery
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SQLRunRequest'
+      responses:
+        '200':
+          description: SQL run result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SQLRunResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}/sql/history:
+    get:
+      summary: List SQL run history for a session
+      operationId: listSqlHistory
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: SQL history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SQLHistoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}/dashboard/state:
+    get:
+      summary: Get simulated dashboard state for a session
+      operationId: getDashboardState
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Dashboard state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/sessions/{session_id}/dashboard/action:
+    post:
+      summary: Apply action in simulated dashboard workspace
+      operationId: applyDashboardAction
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardActionRequest'
+      responses:
+        '200':
+          description: Updated dashboard state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
         '403':
@@ -760,6 +896,8 @@ components:
         policy:
           type: object
           additionalProperties: true
+        final_response:
+          type: string
       required: [id, tenant_id, task_family_id, candidate_id, status, policy]
     SessionListResponse:
       type: object
@@ -784,6 +922,55 @@ components:
         accepted:
           type: integer
       required: [accepted]
+    SQLRunRequest:
+      type: object
+      properties:
+        query:
+          type: string
+      required: [query]
+    SQLHistoryItem:
+      type: object
+      properties:
+        query:
+          type: string
+        ok:
+          type: boolean
+        row_count:
+          type: integer
+        columns:
+          type: array
+          items:
+            type: string
+        error:
+          type: string
+      required: [query, ok, columns]
+    SQLRunResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        row_count:
+          type: integer
+        columns:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        runtime_ms:
+          type: integer
+      required: [ok, row_count, columns, rows, runtime_ms]
+    SQLHistoryResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SQLHistoryItem'
+      required: [items]
     CoachResponse:
       type: object
       properties:
@@ -895,6 +1082,66 @@ components:
         reviewer_note:
           type: string
       required: [decision]
+    AdminPolicy:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        raw_content_default_opt_in:
+          type: boolean
+        default_retention_ttl_days:
+          type: integer
+        max_retention_ttl_days:
+          type: integer
+      required:
+        - tenant_id
+        - raw_content_default_opt_in
+        - default_retention_ttl_days
+        - max_retention_ttl_days
+    AdminPolicyUpdateRequest:
+      type: object
+      properties:
+        raw_content_default_opt_in:
+          type: boolean
+        default_retention_ttl_days:
+          type: integer
+        max_retention_ttl_days:
+          type: integer
+    PurgeExpiredRequest:
+      type: object
+      properties:
+        dry_run:
+          type: boolean
+    PurgeExpiredResponse:
+      type: object
+      properties:
+        purged_sessions:
+          type: integer
+        dry_run:
+          type: boolean
+      required: [purged_sessions, dry_run]
+    DashboardState:
+      type: object
+      properties:
+        filters:
+          type: object
+          additionalProperties: true
+        view:
+          type: string
+        annotations:
+          type: array
+          items:
+            type: string
+      required: [filters, view, annotations]
+    DashboardActionRequest:
+      type: object
+      properties:
+        action_type:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+      required: [action_type, payload]
     ReviewQueueListResponse:
       type: object
       properties:

@@ -38,6 +38,17 @@
 - `GET /v1/review-queue/{session_id}`
 - `POST /v1/review-queue/{session_id}/resolve`
 
+## Admin Policy Endpoints
+- `GET /v1/admin/policies`
+- `PATCH /v1/admin/policies`
+- `POST /v1/admin/policies/purge-expired`
+
+## Simulator Runtime Endpoints
+- `POST /v1/sessions/{session_id}/sql/run`
+- `GET /v1/sessions/{session_id}/sql/history`
+- `GET /v1/sessions/{session_id}/dashboard/state`
+- `POST /v1/sessions/{session_id}/dashboard/action`
+
 ## Versioning
 - Semantic version tags for API contract.
 - Changelog entry required for each contract modification, including breaking changes.

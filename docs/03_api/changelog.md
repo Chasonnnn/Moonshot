@@ -1,5 +1,23 @@
 # API Changelog
 
+## 0.1.4 - 2026-02-26
+- Added simulator runtime endpoints:
+  - `POST /v1/sessions/{session_id}/sql/run`
+  - `GET /v1/sessions/{session_id}/sql/history`
+  - `GET /v1/sessions/{session_id}/dashboard/state`
+  - `POST /v1/sessions/{session_id}/dashboard/action`
+- Added explicit SQL safety validation for disallowed query operations.
+- Added dashboard state/action event capture for process evidence.
+
+## 0.1.3 - 2026-02-26
+- Added admin policy endpoints:
+  - `GET /v1/admin/policies`
+  - `PATCH /v1/admin/policies`
+  - `POST /v1/admin/policies/purge-expired`
+- Session creation now enforces tenant policy defaults for retention settings.
+- Added TTL purge flow for raw candidate responses with optional dry-run mode.
+- Session schema now includes optional `final_response`.
+
 ## 0.1.2 - 2026-02-26
 - Added task family review workflow endpoint:
   - `POST /v1/task-families/{task_family_id}/review`

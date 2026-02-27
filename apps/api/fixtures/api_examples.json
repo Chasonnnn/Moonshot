@@ -87,6 +87,49 @@
       "created_by": "reviewer_1"
     }
   },
+  "admin_policy": {
+    "response": {
+      "tenant_id": "tenant_a",
+      "raw_content_default_opt_in": false,
+      "default_retention_ttl_days": 30,
+      "max_retention_ttl_days": 90
+    }
+  },
+  "purge_expired": {
+    "request": {
+      "dry_run": false
+    },
+    "response": {
+      "purged_sessions": 1,
+      "dry_run": false
+    }
+  },
+  "sql_run": {
+    "request": {
+      "query": "SELECT * FROM funnel_metrics LIMIT 5;"
+    },
+    "response": {
+      "ok": true,
+      "row_count": 2,
+      "columns": ["metric", "value"],
+      "rows": [
+        {"metric": "conversion_rate", "value": 0.42},
+        {"metric": "activation_rate", "value": 0.57}
+      ],
+      "runtime_ms": 42
+    }
+  },
+  "dashboard_action": {
+    "request": {
+      "action_type": "apply_filter",
+      "payload": {"region": "NA"}
+    },
+    "response": {
+      "filters": {"region": "NA"},
+      "view": "default",
+      "annotations": []
+    }
+  },
   "list_sessions": {
     "response": {
       "items": [
