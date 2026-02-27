@@ -28,3 +28,8 @@ These rules are mandatory for all implementation work in this repository.
 - No fallback routes. Expose issues so we can fix them.
 - Do not hide integration or runtime errors behind silent/default route behavior.
 - Return explicit failure responses with actionable error details.
+
+## 5) Official Documentation First (Planning)
+- When making plans, implementation decisions, or technical recommendations, check official documentation first.
+- Prefer primary sources (official docs/specs/repos) over memory or third-party summaries.
+- If documentation is missing or ambiguous, call it out explicitly and list assumptions.
