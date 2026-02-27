@@ -43,13 +43,20 @@ def _assert_variant_diversity(prompts: Iterable[str]) -> None:
                 raise RuntimeError("variant_diversity_threshold_not_met")
 
 
-def _assert_no_rubric_leakage(rubric: Rubric) -> None:
+def _rubric_leakage_hits(rubric: Rubric) -> list[str]:
     text_blob = " ".join(
         [*(d.anchor for d in rubric.dimensions), *rubric.failure_modes]
     ).lower()
+    hits: list[str] = []
     for phrase in RUBRIC_LEAKAGE_PHRASES:
         if phrase in text_blob:
-            raise RuntimeError("rubric_leakage_detected")
+            hits.append(phrase)
+    return sorted(hits)
+
+
+def _assert_no_rubric_leakage(rubric: Rubric) -> None:
+    if _rubric_leakage_hits(rubric):
+        raise RuntimeError("rubric_leakage_detected")
 
 
 def _artifact_summary(case: CaseSpec) -> str:
@@ -57,6 +64,23 @@ def _artifact_summary(case: CaseSpec) -> str:
     if not artifact_types:
         return "artifacts:none"
     return ", ".join(f"{artifact}:{count}" for artifact, count in sorted(artifact_types.items()))
+
+
+def _grounding_coverage_score(case: CaseSpec, prompts: list[str]) -> float:
+    checks: list[bool] = []
+    lower_prompts = " ".join(prompts).lower()
+    for artifact in case.artifacts:
+        artifact_type = str(artifact.get("type", "")).strip().lower()
+        if artifact_type:
+            checks.append(artifact_type in lower_prompts)
+    for tool in case.allowed_tools:
+        raw = str(tool).strip().lower()
+        spaced = raw.replace("_", " ")
+        if raw:
+            checks.append(raw in lower_prompts or spaced in lower_prompts)
+    if not checks:
+        return 1.0
+    return round(sum(1 for hit in checks if hit) / len(checks), 3)
 
 
 def generate_from_case(case: CaseSpec) -> GenerationResult:
@@ -75,6 +99,7 @@ def generate_from_case(case: CaseSpec) -> GenerationResult:
             f"Case title: {case.title}\n"
             f"Scenario: {case.scenario}\n"
             f"Artifacts: {artifact_summary}\n"
+            f"Allowed tools: {case.allowed_tools}\n"
             f"Constraints: {case.constraints if hasattr(case, 'constraints') else {}}\n"
             f"Variant objective: {seed}\n"
             f"Return one safe simulation task prompt."
@@ -108,7 +133,21 @@ def generate_from_case(case: CaseSpec) -> GenerationResult:
     _assert_variant_diversity([variant.prompt for variant in variants])
     _assert_no_rubric_leakage(rubric)
 
-    task_family = TaskFamily(case_id=case.id, variants=variants, rubric_id=rubric.id)
+    leakage_rule_hits = _rubric_leakage_hits(rubric)
+    grounding_coverage_score = _grounding_coverage_score(case, [variant.prompt for variant in variants])
+
+    task_family = TaskFamily(
+        case_id=case.id,
+        variants=variants,
+        rubric_id=rubric.id,
+        generation_diagnostics={
+            "diversity_passed": True,
+            "diversity_fail_reason": None,
+            "rubric_leakage_detected": len(leakage_rule_hits) > 0,
+            "leakage_rule_hits": leakage_rule_hits,
+            "grounding_coverage_score": grounding_coverage_score,
+        },
+    )
 
     trace = ModelInvocationTrace(
         provider=rubric_output.provider,

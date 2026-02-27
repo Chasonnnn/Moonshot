@@ -39,6 +39,7 @@ def _metric(events: list[dict]) -> dict:
 def score_session(session_id: UUID, events: list[dict]) -> tuple[ScoreResult, Interpretation]:
     metrics = _metric(events)
     trigger_codes: list[str] = []
+    trigger_impacts: list[dict[str, float | str]] = []
 
     base_score = 0.85
     base_score -= min(metrics["query_error_rate"], 0.4)
@@ -51,10 +52,13 @@ def score_session(session_id: UUID, events: list[dict]) -> tuple[ScoreResult, In
     needs_review = confidence < 0.7 or metrics["policy_violation_count"] > 0
     if confidence < 0.7:
         trigger_codes.append("low_confidence")
+        trigger_impacts.append({"code": "low_confidence", "delta": round(confidence - 0.7, 3)})
     if metrics["policy_violation_count"] > 0:
         trigger_codes.append("policy_violation")
+        trigger_impacts.append({"code": "policy_violation", "delta": -0.25})
     if metrics["verification_steps"] == 0 and metrics["ai_prompt_count"] > 0:
         trigger_codes.append("high_ai_low_verification")
+        trigger_impacts.append({"code": "high_ai_low_verification", "delta": -0.2})
 
     dimension_scores = {
         "problem_framing": max(0.0, round(confidence - 0.03, 3)),
@@ -70,6 +74,7 @@ def score_session(session_id: UUID, events: list[dict]) -> tuple[ScoreResult, In
         confidence=confidence,
         needs_human_review=needs_review,
         trigger_codes=trigger_codes,
+        trigger_impacts=trigger_impacts,
     )
 
     suggestions = [

@@ -50,6 +50,7 @@ def coach_reply(message: str, session_context: str, *, mode: str = "assessment")
                         "Please describe your current approach and I can help validate constraints."
                     ),
                     policy_reason="direct_answer_disallowed",
+                    policy_decision_code="blocked_direct_answer",
                     policy_version=policy["version"],
                     policy_hash=policy["hash"],
                     blocked_rule_id=rule["id"],
@@ -78,6 +79,7 @@ def coach_reply(message: str, session_context: str, *, mode: str = "assessment")
         allowed=True,
         response=output.content,
         policy_reason="practice_guidance_allowed" if mode == "practice" else "context_only_allowed",
+        policy_decision_code="allowed_practice_guidance" if mode == "practice" else "allowed_context_only",
         policy_version=policy["version"],
         policy_hash=policy["hash"],
         blocked_rule_id=None,

@@ -40,11 +40,12 @@ def send_coach_message(
             {
                 "event_type": "coach_message",
                 "payload": {
-                    "allowed": response.allowed,
-                    "policy_reason": response.policy_reason,
-                    "policy_version": response.policy_version,
-                    "policy_hash": response.policy_hash,
-                    "blocked_rule_id": response.blocked_rule_id,
+                "allowed": response.allowed,
+                "policy_reason": response.policy_reason,
+                "policy_decision_code": response.policy_decision_code,
+                "policy_version": response.policy_version,
+                "policy_hash": response.policy_hash,
+                "blocked_rule_id": response.blocked_rule_id,
                 },
             }
         ],
@@ -68,6 +69,7 @@ def send_coach_message(
             "allowed": response.allowed,
             "policy_version": response.policy_version,
             "policy_hash": response.policy_hash,
+            "policy_decision_code": response.policy_decision_code,
             "blocked_rule_id": response.blocked_rule_id,
         },
     )

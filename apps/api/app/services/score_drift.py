@@ -14,6 +14,24 @@ def _normalized_trigger_codes(raw: Any) -> list[str]:
     return sorted({str(item) for item in raw})
 
 
+def _normalized_trigger_impacts(raw: Any) -> list[tuple[str, float]]:
+    if not isinstance(raw, list):
+        return []
+    normalized: list[tuple[str, float]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code", "")).strip()
+        if not code:
+            continue
+        try:
+            delta = round(float(item.get("delta", 0.0)), 3)
+        except (TypeError, ValueError):
+            continue
+        normalized.append((code, delta))
+    return sorted(normalized)
+
+
 def evaluate_drift(
     baseline: dict[str, dict[str, Any]],
     current: dict[str, dict[str, Any]],
@@ -24,6 +42,7 @@ def evaluate_drift(
     drifts: list[dict[str, Any]] = []
     checked_cases = 0
     trigger_mismatch_count = 0
+    trigger_impact_mismatch_count = 0
 
     for case_id, baseline_case in baseline.items():
         current_case = current.get(case_id)
@@ -74,12 +93,26 @@ def evaluate_drift(
                         "current_trigger_codes": current_trigger_codes,
                     }
                 )
+        if "trigger_impacts" in baseline_case:
+            expected_impacts = _normalized_trigger_impacts(baseline_case.get("trigger_impacts"))
+            current_impacts = _normalized_trigger_impacts(current_case.get("trigger_impacts"))
+            if expected_impacts != current_impacts:
+                trigger_impact_mismatch_count += 1
+                drifts.append(
+                    {
+                        "case_id": case_id,
+                        "reason": "trigger_impact_mismatch",
+                        "expected_trigger_impacts": expected_impacts,
+                        "current_trigger_impacts": current_impacts,
+                    }
+                )
 
     return {
         "pass": len(drifts) == 0,
         "checked_cases": checked_cases,
         "drift_count": len(drifts),
         "trigger_mismatch_count": trigger_mismatch_count,
+        "trigger_impact_mismatch_count": trigger_impact_mismatch_count,
         "drifts": drifts,
     }
 
@@ -98,6 +131,7 @@ def run_benchmark_fixture(path: str | Path) -> dict[str, Any]:
             "confidence": score_result.confidence,
             "dimension_scores": score_result.dimension_scores,
             "trigger_codes": score_result.trigger_codes,
+            "trigger_impacts": score_result.trigger_impacts,
         }
 
     return evaluate_drift(

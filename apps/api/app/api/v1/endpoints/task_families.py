@@ -88,6 +88,16 @@ def publish_task_family(
     existing = _get_task_family_for_tenant(task_family_id, user.tenant_id).model_dump(mode="json")
     if existing.get("status") != "approved":
         raise HTTPException(status_code=400, detail="Task family must be approved before publish")
+
+    generation_diagnostics = existing.get("generation_diagnostics") or {}
+    diversity_passed = bool(generation_diagnostics.get("diversity_passed", False))
+    rubric_leakage_detected = bool(generation_diagnostics.get("rubric_leakage_detected", False))
+    if not diversity_passed or rubric_leakage_detected:
+        raise HTTPException(
+            status_code=400,
+            detail="Task family blocked by generation diagnostics; run quality evaluation and regenerate variants.",
+        )
+
     merged = {**existing, "status": "published"}
     task_family = TaskFamily.model_validate(merged)
     case_repository.save_task_family(task_family)

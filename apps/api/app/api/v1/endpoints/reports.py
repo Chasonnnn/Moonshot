@@ -47,6 +47,8 @@ def get_report_summary(
             confidence=None,
             needs_human_review=None,
             trigger_codes=[],
+            trigger_count=0,
+            last_scored_at=None,
             scoring_version_lock=None,
         )
 
@@ -58,6 +60,8 @@ def get_report_summary(
         confidence=score.confidence,
         needs_human_review=score.needs_human_review,
         trigger_codes=score.trigger_codes,
+        trigger_count=len(score.trigger_codes),
+        last_scored_at=score.scored_at,
         scoring_version_lock=ScoringVersionLock(
             scorer_version=score.scorer_version,
             rubric_version=score.rubric_version,

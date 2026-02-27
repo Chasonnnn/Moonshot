@@ -53,6 +53,7 @@ class TaskFamilyModel(Base):
     rubric_id: Mapped[str] = mapped_column(String(36), index=True)
     status: Mapped[str] = mapped_column(String(32))
     version: Mapped[str] = mapped_column(String(32))
+    generation_diagnostics: Mapped[dict] = mapped_column(JSON)
 
 
 class RubricModel(Base):
@@ -101,6 +102,9 @@ class ScoreResultModel(Base):
     rubric_version: Mapped[str] = mapped_column(String(32))
     task_family_version: Mapped[str] = mapped_column(String(32))
     model_hash: Mapped[str] = mapped_column(String(128))
+    trigger_codes: Mapped[list] = mapped_column(JSON)
+    trigger_impacts: Mapped[list] = mapped_column(JSON)
+    scored_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 
 
 class ReportModel(Base):
@@ -248,6 +252,9 @@ class TaskQualitySignalModel(Base):
     admin_acceptance_rate: Mapped[float] = mapped_column(Float)
     mean_edit_distance: Mapped[float] = mapped_column(Float)
     rubric_leakage_detected: Mapped[bool] = mapped_column(Boolean)
+    diversity_fail_reason: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    leakage_rule_hits: Mapped[list] = mapped_column(JSON)
+    grounding_coverage_score: Mapped[float] = mapped_column(Float)
     quality_score: Mapped[float] = mapped_column(Float)
     evaluated_by_role: Mapped[str | None] = mapped_column(String(64), nullable=True)
     evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)

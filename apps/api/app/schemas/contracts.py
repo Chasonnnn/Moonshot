@@ -101,6 +101,7 @@ class TaskFamily(BaseModel):
     rubric_id: UUID
     status: str = "generated"
     version: str = "0.1.0"
+    generation_diagnostics: dict[str, Any] = Field(default_factory=dict)
 
 
 class ModelInvocationTrace(BaseModel):
@@ -189,6 +190,7 @@ class CoachResponse(BaseModel):
     allowed: bool
     response: str
     policy_reason: str
+    policy_decision_code: str | None = None
     policy_version: str | None = None
     policy_hash: str | None = None
     blocked_rule_id: str | None = None
@@ -230,6 +232,8 @@ class ScoreResult(BaseModel):
     task_family_version: str = "0.1.0"
     model_hash: str = "local-baseline"
     trigger_codes: list[str] = Field(default_factory=list)
+    trigger_impacts: list[dict[str, float | str]] = Field(default_factory=list)
+    scored_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Interpretation(BaseModel):
@@ -251,6 +255,8 @@ class ReportSummary(BaseModel):
     confidence: float | None = None
     needs_human_review: bool | None = None
     trigger_codes: list[str] = Field(default_factory=list)
+    trigger_count: int = 0
+    last_scored_at: datetime | None = None
     scoring_version_lock: ScoringVersionLock | None = None
 
 
@@ -293,6 +299,9 @@ class TaskQualitySignal(BaseModel):
     admin_acceptance_rate: float
     mean_edit_distance: float
     rubric_leakage_detected: bool
+    diversity_fail_reason: str | None = None
+    leakage_rule_hits: list[str] = Field(default_factory=list)
+    grounding_coverage_score: float = 0.0
     quality_score: float
     evaluated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     evaluated_by_role: str | None = None

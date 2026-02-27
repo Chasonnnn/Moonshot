@@ -67,12 +67,23 @@ def evaluate_task_quality(task_family_id: UUID, *, evaluated_by_role: str) -> Ta
     prompts = [variant.prompt for variant in task_family.variants]
     variant_count = len(prompts)
     diversity_score = round(max(0.0, min(1.0, _mean_pairwise_distance(prompts))), 3)
+    diversity_fail_reason = None
+    if diversity_score < 0.18:
+        diversity_fail_reason = "variant_diversity_threshold_not_met"
+
     clarity_score = round(max(0.0, min(1.0, 1.0 - abs(120.0 - (sum(len(x) for x in prompts) / max(1, variant_count))) / 240.0)), 3)
     realism_score = round(min(1.0, 0.4 + (0.2 * len(case_payload.artifacts)) + (0.1 * len(case_payload.allowed_tools))), 3)
     variant_stability_score = round(max(0.0, min(1.0, 0.55 + diversity_score * 0.35)), 3)
     admin_acceptance_rate = 1.0 if task_family.status in {"approved", "published"} else 0.0
     mean_edit_distance = 0.0
     rubric_leakage_detected = _has_rubric_leakage(rubric.model_dump(mode="json"))
+
+    generation_diagnostics = task_family.generation_diagnostics or {}
+    leakage_rule_hits = [str(item) for item in generation_diagnostics.get("leakage_rule_hits", [])]
+    if rubric_leakage_detected and not leakage_rule_hits:
+        leakage_rule_hits = ["detected_by_quality_scan"]
+    grounding_coverage_score = float(generation_diagnostics.get("grounding_coverage_score", 0.0))
+    grounding_coverage_score = max(0.0, min(1.0, round(grounding_coverage_score, 3)))
 
     quality_score = round(
         max(
@@ -84,6 +95,7 @@ def evaluate_task_quality(task_family_id: UUID, *, evaluated_by_role: str) -> Ta
                 + (0.2 * realism_score)
                 + (0.2 * variant_stability_score)
                 + (0.15 * admin_acceptance_rate)
+                + (0.1 * grounding_coverage_score)
                 - (0.3 if rubric_leakage_detected else 0.0),
             ),
         ),
@@ -100,6 +112,9 @@ def evaluate_task_quality(task_family_id: UUID, *, evaluated_by_role: str) -> Ta
         admin_acceptance_rate=admin_acceptance_rate,
         mean_edit_distance=mean_edit_distance,
         rubric_leakage_detected=rubric_leakage_detected,
+        diversity_fail_reason=diversity_fail_reason,
+        leakage_rule_hits=leakage_rule_hits,
+        grounding_coverage_score=grounding_coverage_score,
         quality_score=quality_score,
         evaluated_by_role=evaluated_by_role,
     )
