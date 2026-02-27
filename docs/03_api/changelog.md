@@ -7,6 +7,8 @@
   - `GET /v1/jobs`
   - `GET /v1/jobs/{job_id}`
   - `GET /v1/jobs/{job_id}/result`
+- Added SLO probe endpoint:
+  - `GET /v1/slo/probes`
 - Converted heavy operations to async submit with `JobAccepted` response (`202`):
   - `POST /v1/cases/{case_id}/generate`
   - `POST /v1/sessions/{session_id}/score`
@@ -25,6 +27,9 @@
 - Added CI governance checks:
   - OpenAPI/changelog version gate
   - scoring drift benchmark gate
+- Added request ID middleware:
+  - `X-Request-Id` returned on API responses
+  - structured request completion/failure logs include `request_id`.
 
 ## 0.1.4 - 2026-02-26
 - Added simulator runtime endpoints:

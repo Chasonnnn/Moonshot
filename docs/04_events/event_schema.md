@@ -5,6 +5,7 @@
 - `schema_version` is pinned to `0.2.0`.
 - Derived telemetry is default; raw content is opt-in and retention-policy bound.
 - No fallback ingestion paths: invalid event payloads return explicit validation errors.
+- API responses include `X-Request-Id` to correlate client activity, server logs, and event timelines.
 
 ## Required Session Event Types
 - `session_started`

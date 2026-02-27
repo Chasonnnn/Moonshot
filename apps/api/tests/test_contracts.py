@@ -8,6 +8,7 @@ EXPECTED_PATHS = {
     "/v1/jobs",
     "/v1/jobs/{job_id}",
     "/v1/jobs/{job_id}/result",
+    "/v1/slo/probes",
     "/v1/admin/policies",
     "/v1/admin/policies/purge-expired",
     "/v1/business-context/packs",

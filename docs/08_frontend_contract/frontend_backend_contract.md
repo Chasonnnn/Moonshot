@@ -82,3 +82,7 @@
   - `POST /v1/admin/policies/purge-expired`
   - `GET /v1/audit-logs`
   - `GET /v1/audit-logs/verify`
+  - `GET /v1/slo/probes`
+
+## Response Metadata
+- Backend returns `X-Request-Id` on responses for traceability across frontend logs, backend logs, and incident debugging.

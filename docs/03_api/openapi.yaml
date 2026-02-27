@@ -1182,6 +1182,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/slo/probes:
+    get:
+      tags:
+      - slo
+      summary: Slo Probes
+      operationId: slo_probes_v1_slo_probes_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLOProbeResponse'
+      security:
+      - HTTPBearer: []
   /v1/audit-logs:
     get:
       tags:
@@ -2068,6 +2083,37 @@ components:
       required:
       - decision
       title: ReviewQueueResolveRequest
+    SLOProbeResponse:
+      properties:
+        overall_status:
+          type: string
+          title: Overall Status
+        probes:
+          additionalProperties:
+            $ref: '#/components/schemas/SLOProbeResult'
+          type: object
+          title: Probes
+      type: object
+      required:
+      - overall_status
+      title: SLOProbeResponse
+    SLOProbeResult:
+      properties:
+        status:
+          type: string
+          title: Status
+        latency_ms:
+          type: integer
+          title: Latency Ms
+        detail:
+          additionalProperties: true
+          type: object
+          title: Detail
+      type: object
+      required:
+      - status
+      - latency_ms
+      title: SLOProbeResult
     SQLHistoryItem:
       properties:
         query:

@@ -265,5 +265,36 @@
       "valid": true,
       "checked_entries": 5
     }
+  },
+  "slo_probes": {
+    "response": {
+      "overall_status": "ok",
+      "probes": {
+        "database": {
+          "status": "ok",
+          "latency_ms": 3,
+          "detail": {
+            "select_1": 1
+          }
+        },
+        "audit_chain": {
+          "status": "ok",
+          "latency_ms": 2,
+          "detail": {
+            "valid": true,
+            "checked_entries": 5
+          }
+        },
+        "score_drift": {
+          "status": "ok",
+          "latency_ms": 10,
+          "detail": {
+            "pass": true,
+            "checked_cases": 1,
+            "drift_count": 0
+          }
+        }
+      }
+    }
   }
 }
