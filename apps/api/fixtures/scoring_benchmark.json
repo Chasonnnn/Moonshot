@@ -1,0 +1,33 @@
+{
+  "thresholds": {
+    "confidence_delta_max": 0.02,
+    "dimension_delta_max": 0.02
+  },
+  "baseline": {
+    "jda_case_a": {
+      "confidence": 0.85,
+      "dimension_scores": {
+        "problem_framing": 0.82,
+        "sql_quality": 0.85,
+        "evidence_reasoning": 0.83,
+        "communication": 0.85
+      }
+    }
+  },
+  "cases": {
+    "jda_case_a": {
+      "events": [
+        {
+          "event_type": "sql_query_run",
+          "payload": {
+            "time_to_first_action_ms": 900
+          }
+        },
+        {
+          "event_type": "verification_step_completed",
+          "payload": {}
+        }
+      ]
+    }
+  }
+}
