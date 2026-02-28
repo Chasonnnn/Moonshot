@@ -21,6 +21,13 @@
   - `job_status_running`
   - `job_status_retrying`
   - `job_status_completed`
+- Added hybrid LLM scoring pipeline (deterministic + pass-1 dimension + pass-2 holistic + fallback):
+  - `TaskFamily.scoring_config`
+  - `ScoreResult.dimension_evidence`
+  - `ScoreResult.llm_traces`
+  - scorer version default now `0.2.0`.
+- Score jobs now load rubric/task prompt/provider context and run provider-aware evaluation.
+- Added Postgres migration `20260301_0009_hybrid_scoring_fields.py`.
 
 ## 0.4.2 - 2026-02-27
 - Added generation diagnostics persistence on task families:

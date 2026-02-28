@@ -2236,6 +2236,32 @@ components:
           title: Annotations
       type: object
       title: DashboardState
+    DimensionScoreOutput:
+      properties:
+        key:
+          type: string
+          title: Key
+        score:
+          type: number
+          title: Score
+        rationale:
+          type: string
+          title: Rationale
+        failure_modes_matched:
+          items:
+            type: string
+          type: array
+          title: Failure Modes Matched
+        confidence:
+          type: number
+          title: Confidence
+      type: object
+      required:
+      - key
+      - score
+      - rationale
+      - confidence
+      title: DimensionScoreOutput
     EventIngestResponse:
       properties:
         accepted:
@@ -2616,6 +2642,27 @@ components:
       - description
       - formula
       title: MetricSpec
+    ModelInvocationTrace:
+      properties:
+        provider:
+          type: string
+          title: Provider
+        model:
+          type: string
+          title: Model
+        prompt_hash:
+          type: string
+          title: Prompt Hash
+        latency_ms:
+          type: integer
+          title: Latency Ms
+      type: object
+      required:
+      - provider
+      - model
+      - prompt_hash
+      - latency_ms
+      title: ModelInvocationTrace
     PurgeExpiredRequest:
       properties:
         dry_run:
@@ -2900,6 +2947,11 @@ components:
             type: number
           type: object
           title: Dimension Scores
+        dimension_evidence:
+          additionalProperties:
+            $ref: '#/components/schemas/DimensionScoreOutput'
+          type: object
+          title: Dimension Evidence
         confidence:
           type: number
           title: Confidence
@@ -2909,7 +2961,7 @@ components:
         scorer_version:
           type: string
           title: Scorer Version
-          default: 0.1.0
+          default: 0.2.0
         rubric_version:
           type: string
           title: Rubric Version
@@ -2922,6 +2974,11 @@ components:
           type: string
           title: Model Hash
           default: local-baseline
+        llm_traces:
+          items:
+            $ref: '#/components/schemas/ModelInvocationTrace'
+          type: array
+          title: Llm Traces
         trigger_codes:
           items:
             type: string
@@ -2948,6 +3005,39 @@ components:
       - confidence
       - needs_human_review
       title: ScoreResult
+    ScoringConfig:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+        llm_call_budget:
+          type: integer
+          title: Llm Call Budget
+          default: 8
+        min_verification_steps:
+          type: integer
+          title: Min Verification Steps
+          default: 1
+        max_query_error_rate:
+          type: number
+          title: Max Query Error Rate
+          default: 0.5
+        policy_violation_penalty:
+          type: number
+          title: Policy Violation Penalty
+          default: 0.25
+        idle_threshold_ms:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Idle Threshold Ms
+        custom_rules:
+          additionalProperties: true
+          type: object
+          title: Custom Rules
+      type: object
+      title: ScoringConfig
     ScoringVersionLock:
       properties:
         scorer_version:
@@ -3079,6 +3169,8 @@ components:
           additionalProperties: true
           type: object
           title: Generation Diagnostics
+        scoring_config:
+          $ref: '#/components/schemas/ScoringConfig'
       type: object
       required:
       - case_id
