@@ -26,7 +26,9 @@ def test_staging_smoke_script_covers_jda_e2e_flow():
     assert "/submit" in content
     assert "/score" in content
     assert "/v1/reports/" in content
+    assert "/summary" in content
     assert "/v1/exports" in content
     assert "/v1/redteam/runs" in content
     assert "/v1/audit-logs" in content
     assert "/v1/slo/probes" in content
+    assert "current_step" in content

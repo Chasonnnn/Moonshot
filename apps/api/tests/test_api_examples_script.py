@@ -13,5 +13,8 @@ def test_api_examples_script_exists_and_enforces_flow_examples():
     assert "report_summary_response" in content
     assert "policy_decision_code" in content
     assert "trigger_impacts" in content
+    assert "job_status_pending" in content
+    assert "current_step" in content
+    assert "failed_step" in content
     assert "grounding_coverage_score" in content
     assert "error_missing_idempotency_key" in content

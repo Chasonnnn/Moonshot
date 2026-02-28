@@ -43,6 +43,43 @@ from app.services.task_quality import evaluate_task_quality
 
 logger = logging.getLogger("moonshot.jobs")
 
+ERROR_CODE_TIMEOUT = "timeout"
+ERROR_CODE_POLICY_BLOCKED = "policy_blocked"
+ERROR_CODE_PROVIDER_ERROR = "provider_error"
+ERROR_CODE_VALIDATION = "validation_error"
+ERROR_CODE_DEPENDENCY = "dependency_unavailable"
+ERROR_CODE_INTERNAL = "internal_error"
+
+JOB_PIPELINES: dict[str, list[str]] = {
+    "generate": ["load_case", "generate_content", "persist_outputs"],
+    "score": ["load_session", "evaluate_session", "persist_report"],
+    "export": ["load_report", "transform_export_bundle", "persist_export"],
+    "redteam": ["load_target", "run_redteam_checks", "persist_redteam_run"],
+    "quality_evaluate": ["load_task_family", "compute_quality_signal", "persist_quality_signal"],
+    "interpretation_generate": ["load_report", "build_interpretation_view", "persist_interpretation_view"],
+    "fairness_smoke_run": ["load_scope", "run_fairness_checks", "persist_fairness_run"],
+}
+
+RUNNING_PROGRESS_BY_JOB_TYPE: dict[str, int] = {
+    "generate": 35,
+    "score": 45,
+    "export": 55,
+    "redteam": 40,
+    "quality_evaluate": 40,
+    "interpretation_generate": 50,
+    "fairness_smoke_run": 45,
+}
+
+RETRYING_PROGRESS_BY_JOB_TYPE: dict[str, int] = {
+    "generate": 20,
+    "score": 25,
+    "export": 30,
+    "redteam": 25,
+    "quality_evaluate": 25,
+    "interpretation_generate": 30,
+    "fairness_smoke_run": 25,
+}
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -75,15 +112,34 @@ def _log_job_event(
     logger.info(json.dumps(payload))
 
 
-def _status_progress(status: str) -> int:
+def _pipeline_for(job_type: str | None) -> list[str]:
+    if not job_type:
+        return ["queued", "execute", "finalize"]
+    return JOB_PIPELINES.get(job_type, ["queued", "execute", "finalize"])
+
+
+def _current_step(status: str, job_type: str | None) -> str:
+    steps = _pipeline_for(job_type)
+    if status == "pending":
+        return steps[0]
+    if status == "running":
+        return steps[1] if len(steps) > 1 else steps[0]
+    if status == "retrying":
+        return "retry_wait"
+    if status == "failed_permanent":
+        return steps[1] if len(steps) > 1 else steps[0]
+    return steps[-1]
+
+
+def _status_progress(status: str, job_type: str | None = None) -> int:
     if status == "completed":
         return 100
     if status == "running":
-        return 50
+        return RUNNING_PROGRESS_BY_JOB_TYPE.get(job_type or "", 50)
     if status == "failed_permanent":
         return 100
     if status == "retrying":
-        return 25
+        return RETRYING_PROGRESS_BY_JOB_TYPE.get(job_type or "", 25)
     return 0
 
 
@@ -94,7 +150,8 @@ def _job_status_from_row(row: JobRunModel) -> JobStatus:
         job_type=row.job_type,
         target_type=row.target_type,
         target_id=row.target_id,
-        progress=_status_progress(row.status),
+        progress=_status_progress(row.status, row.job_type),
+        current_step=_current_step(row.status, row.job_type),
         error_code=row.error_code,
         error_detail=row.error_detail,
         submitted_at=row.created_at,
@@ -127,18 +184,27 @@ def _ready_job_clause(now: datetime):
 
 def _classify_error(exc: Exception) -> str:
     if isinstance(exc, TimeoutError):
-        return "provider_timeout"
+        return ERROR_CODE_TIMEOUT
     if isinstance(exc, PermissionError):
-        return "policy_violation"
+        return ERROR_CODE_POLICY_BLOCKED
     if isinstance(exc, ValueError):
-        return "validation_error"
+        return ERROR_CODE_VALIDATION
 
     message = str(exc).lower()
     if "not_found" in message or "not_submitted" in message or "unsupported_job_type" in message:
-        return "validation_error"
+        return ERROR_CODE_VALIDATION
+    if "gemini_" in message or "openai_" in message or "provider_" in message:
+        return ERROR_CODE_PROVIDER_ERROR
     if "service unavailable" in message or "connection" in message or "dependency" in message:
-        return "dependency_unavailable"
-    return "internal_error"
+        return ERROR_CODE_DEPENDENCY
+    return ERROR_CODE_INTERNAL
+
+
+def _failed_step_for(job_type: str | None, error_code: str) -> str:
+    if error_code == ERROR_CODE_VALIDATION:
+        return _pipeline_for(job_type)[0]
+    steps = _pipeline_for(job_type)
+    return steps[1] if len(steps) > 1 else steps[0]
 
 
 def submit_job(
@@ -280,11 +346,13 @@ def get_job_result(job_id: UUID, tenant_id: str) -> JobResultResponse | None:
                     "error_detail": "Job result not available yet",
                     "last_error_code": row.error_code,
                     "last_error_detail": row.error_detail,
+                    "current_step": _current_step(row.status, row.job_type),
                 }
             elif row.error_code or row.error_detail:
                 result_payload = {
                     "error_code": row.error_code,
                     "error_detail": row.error_detail,
+                    "failed_step": _failed_step_for(row.job_type, row.error_code or ERROR_CODE_INTERNAL),
                 }
             else:
                 result_payload = {}
@@ -594,11 +662,17 @@ def process_jobs_once(*, worker_id: str = "worker-main") -> bool:
                 job.status = "failed_permanent"
                 job.completed_at = completed
                 job.next_attempt_at = None
+                job.result_payload = {
+                    "error_code": error_code,
+                    "error_detail": error_detail,
+                    "failed_step": _failed_step_for(job.job_type, error_code),
+                }
             else:
                 job.status = "retrying"
                 settings = get_settings()
                 retry_delay_seconds = float(settings.worker_retry_base_seconds) * (2 ** (int(job.attempt_count) - 1))
                 job.next_attempt_at = completed + timedelta(seconds=retry_delay_seconds)
+                job.result_payload = None
 
             job.error_code = error_code
             job.error_detail = error_detail

@@ -209,6 +209,10 @@ def test_job_result_pending_returns_explicit_status(client, admin_headers):
     assert payload["result"]["error_code"] == "job_not_ready"
     assert payload["result"]["error_detail"] == "Job result not available yet"
 
+    job_status = client.get(f"/v1/jobs/{job_id}", headers=admin_headers)
+    assert job_status.status_code == 200
+    assert isinstance(job_status.json().get("current_step"), str)
+
 
 def test_job_retry_backoff_and_dead_letter(client, admin_headers, monkeypatch):
     settings = get_settings()
@@ -272,11 +276,44 @@ def test_job_retry_backoff_and_dead_letter(client, admin_headers, monkeypatch):
     failed_payload = failed_result.json()
     assert failed_payload["status"] == "failed_permanent"
     assert failed_payload["result"]["error_code"] == "internal_error"
+    assert isinstance(failed_payload["result"].get("failed_step"), str)
 
     dead_letter = client.get("/v1/jobs?status=failed_permanent", headers=admin_headers)
     assert dead_letter.status_code == 200
     job_ids = {item["job_id"] for item in dead_letter.json()["items"]}
     assert job_id in job_ids
+
+
+def test_timeout_error_code_is_standardized(client, admin_headers, monkeypatch):
+    case = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Timeout Classification",
+            "scenario": "Scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": [],
+        },
+    )
+    case_id = case.json()["id"]
+
+    def _timeout(_case):
+        raise TimeoutError("provider execution timed out")
+
+    monkeypatch.setattr("app.services.jobs.generate_from_case", _timeout)
+    submit = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "timeout-code-1"},
+    )
+    job_id = submit.json()["job_id"]
+
+    assert process_jobs_once() is True
+
+    retry_status = client.get(f"/v1/jobs/{job_id}", headers=admin_headers)
+    assert retry_status.status_code == 200
+    assert retry_status.json()["status"] == "retrying"
+    assert retry_status.json()["last_error_code"] == "timeout"
 
 
 def test_export_submit_idempotency_returns_same_job(client, admin_headers, reviewer_headers, candidate_headers):

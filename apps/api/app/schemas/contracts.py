@@ -485,6 +485,7 @@ class JobStatus(BaseModel):
     target_type: str | None = None
     target_id: str | None = None
     progress: int = 0
+    current_step: str | None = None
     error_code: str | None = None
     error_detail: str | None = None
     submitted_at: datetime

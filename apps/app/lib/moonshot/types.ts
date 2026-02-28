@@ -13,10 +13,34 @@ export interface JobAccepted {
   submitted_at: string
 }
 
+export interface JobStatus {
+  job_id: string
+  status: string
+  job_type?: string | null
+  target_type?: string | null
+  target_id?: string | null
+  progress: number
+  current_step?: string | null
+  error_code?: string | null
+  error_detail?: string | null
+  submitted_at: string
+  started_at?: string | null
+  completed_at?: string | null
+  next_attempt_at?: string | null
+  lease_owner?: string | null
+  lease_expires_at?: string | null
+  attempt_count: number
+  max_attempts: number
+  last_error_code?: string | null
+}
+
 export interface JobResultResponse {
   job_id: string
   status: string
-  result: Record<string, unknown>
+  result: Record<string, unknown> & {
+    failed_step?: string
+    current_step?: string
+  }
 }
 
 export interface CaseSpec {

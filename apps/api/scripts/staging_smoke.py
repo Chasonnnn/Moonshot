@@ -45,6 +45,8 @@ def _poll_job(base_url: str, token: str, job_id: str, max_polls: int, interval_s
     for _ in range(max_polls):
         status_response = requests.get(f"{base_url}/v1/jobs/{job_id}", headers=headers, timeout=10)
         status_payload = _require_ok(status_response, step="job_status", expected_status=200)
+        if "current_step" not in status_payload:
+            raise RuntimeError("job_status missing current_step")
         status_value = str(status_payload["status"])
         if status_value in {"completed", "failed_permanent"}:
             result_response = requests.get(f"{base_url}/v1/jobs/{job_id}/result", headers=headers, timeout=10)
@@ -261,6 +263,16 @@ def main() -> int:
     )
     if str(score_result.get("status")) != "completed":
         raise RuntimeError("score job did not complete successfully")
+
+    _require_ok(
+        requests.get(
+            f"{base_url}/v1/reports/{session_id}/summary",
+            headers=reviewer_headers,
+            timeout=10,
+        ),
+        step="get_report_summary",
+        expected_status=200,
+    )
 
     _require_ok(
         requests.get(

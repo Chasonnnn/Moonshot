@@ -18,6 +18,10 @@ REQUIRED_EXAMPLES = [
     "fairness_smoke_submit",
     "report_summary_response",
     "job_result_export_completed",
+    "job_status_pending",
+    "job_status_running",
+    "job_status_retrying",
+    "job_status_completed",
 ]
 
 REQUIRED_ERROR_EXAMPLES = [
@@ -96,6 +100,20 @@ def main() -> int:
     for required in ("trigger_impacts", "scored_at"):
         if required not in score_result:
             raise RuntimeError(f"api-examples: score result missing `{required}`")
+
+    for key in ("job_status_pending", "job_status_running", "job_status_retrying", "job_status_completed"):
+        status_example = _expect(payload, key)
+        status_response = _expect(status_example, "response")
+        for required in ("job_id", "status", "job_type", "progress", "current_step", "attempt_count", "max_attempts"):
+            if required not in status_response:
+                raise RuntimeError(f"api-examples: `{key}` missing `{required}`")
+
+    failed_example = _expect(payload, "job_result_failed_permanent")
+    failed_response = _expect(failed_example, "response")
+    failed_result = _expect(failed_response, "result")
+    for required in ("error_code", "error_detail", "failed_step"):
+        if required not in failed_result:
+            raise RuntimeError(f"api-examples: failed result missing `{required}`")
 
     print("api-examples: OK")
     return 0
