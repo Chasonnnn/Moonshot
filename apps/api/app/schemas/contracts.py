@@ -94,6 +94,16 @@ class Rubric(BaseModel):
     version: str = "0.1.0"
 
 
+class ScoringConfig(BaseModel):
+    enabled: bool = True
+    llm_call_budget: int = 8
+    min_verification_steps: int = 1
+    max_query_error_rate: float = 0.5
+    policy_violation_penalty: float = 0.25
+    idle_threshold_ms: int | None = None
+    custom_rules: dict[str, Any] = Field(default_factory=dict)
+
+
 class TaskFamily(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     case_id: UUID
@@ -102,6 +112,7 @@ class TaskFamily(BaseModel):
     status: str = "generated"
     version: str = "0.1.0"
     generation_diagnostics: dict[str, Any] = Field(default_factory=dict)
+    scoring_config: ScoringConfig = Field(default_factory=ScoringConfig)
 
 
 class ModelInvocationTrace(BaseModel):
@@ -220,17 +231,35 @@ class SessionSubmitRequest(BaseModel):
     final_response: str | None = None
 
 
+class DimensionScoreOutput(BaseModel):
+    key: str
+    score: float
+    rationale: str
+    failure_modes_matched: list[str] = Field(default_factory=list)
+    confidence: float
+
+
+class HolisticScoreOutput(BaseModel):
+    overall_score: float
+    overall_confidence: float
+    consistency_flags: list[str] = Field(default_factory=list)
+    narrative_summary: str
+    suggestions: list[str] = Field(default_factory=list)
+
+
 class ScoreResult(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     session_id: UUID
     objective_metrics: dict[str, Any]
     dimension_scores: dict[str, float]
+    dimension_evidence: dict[str, DimensionScoreOutput] = Field(default_factory=dict)
     confidence: float
     needs_human_review: bool
-    scorer_version: str = "0.1.0"
+    scorer_version: str = "0.2.0"
     rubric_version: str = "0.1.0"
     task_family_version: str = "0.1.0"
     model_hash: str = "local-baseline"
+    llm_traces: list[ModelInvocationTrace] = Field(default_factory=list)
     trigger_codes: list[str] = Field(default_factory=list)
     trigger_impacts: list[dict[str, float | str]] = Field(default_factory=list)
     scored_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

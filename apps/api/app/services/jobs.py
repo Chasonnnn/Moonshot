@@ -29,6 +29,7 @@ from app.services.exporting import build_export
 from app.services.generation import generate_from_case
 from app.services.idempotency import get_cached, set_cached
 from app.services.interpretation_views import create_interpretation_view
+from app.providers.registry import get_evaluator_provider
 from app.services.redteam import run_redteam
 from app.services.repositories import (
     case_repository,
@@ -395,7 +396,25 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
         raise RuntimeError("session_not_submitted")
 
     events = session_repository.list_events(session_id)
-    score_result, interpretation = score_session(session_id, events)
+    task_family = case_repository.get_task_family(session.task_family_id)
+    rubric = case_repository.get_rubric(task_family.rubric_id) if task_family is not None else None
+    task_prompt = task_family.variants[0].prompt if task_family is not None and task_family.variants else None
+    scoring_config = task_family.scoring_config if task_family is not None else None
+
+    try:
+        provider = get_evaluator_provider()
+    except RuntimeError:
+        provider = None
+
+    score_result, interpretation = score_session(
+        session_id,
+        events,
+        rubric=rubric,
+        task_prompt=task_prompt,
+        final_response=session.final_response,
+        provider=provider,
+        scoring_config=scoring_config,
+    )
     scoring_repository.save_score(score_result)
     report = Report(session_id=session_id, score_result=score_result, interpretation=interpretation)
     scoring_repository.save_report(report)

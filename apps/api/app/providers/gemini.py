@@ -60,3 +60,6 @@ class GeminiProvider(CoDesignProvider, CoachProvider, EvaluatorProvider):
 
     def score_dimension(self, prompt: str) -> ProviderOutput:
         return self._invoke(prompt)
+
+    def score_holistic(self, prompt: str) -> ProviderOutput:
+        return self._invoke(prompt)
