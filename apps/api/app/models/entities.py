@@ -54,6 +54,7 @@ class TaskFamilyModel(Base):
     status: Mapped[str] = mapped_column(String(32))
     version: Mapped[str] = mapped_column(String(32))
     generation_diagnostics: Mapped[dict] = mapped_column(JSON)
+    scoring_config: Mapped[dict] = mapped_column(JSON)
 
 
 class RubricModel(Base):
@@ -102,6 +103,8 @@ class ScoreResultModel(Base):
     rubric_version: Mapped[str] = mapped_column(String(32))
     task_family_version: Mapped[str] = mapped_column(String(32))
     model_hash: Mapped[str] = mapped_column(String(128))
+    llm_traces: Mapped[list] = mapped_column(JSON)
+    dimension_evidence: Mapped[dict] = mapped_column(JSON)
     trigger_codes: Mapped[list] = mapped_column(JSON)
     trigger_impacts: Mapped[list] = mapped_column(JSON)
     scored_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
