@@ -99,7 +99,7 @@ def test_report_summary_for_scored_session(client, admin_headers, reviewer_heade
     assert isinstance(payload["trigger_codes"], list)
     assert payload["trigger_count"] == len(payload["trigger_codes"])
     assert isinstance(payload["last_scored_at"], str)
-    assert payload["scoring_version_lock"]["scorer_version"] == "0.1.0"
+    assert payload["scoring_version_lock"]["scorer_version"] == "0.2.0"
 
 
 def test_report_summary_for_active_session_without_report(client, admin_headers, reviewer_headers):

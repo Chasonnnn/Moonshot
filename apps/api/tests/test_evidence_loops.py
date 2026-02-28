@@ -175,7 +175,7 @@ def test_report_interpretation_view_keeps_score_stable(client, admin_headers, re
     assert interpret.status_code == 202
     payload = _job_result(client, interpret.json()["job_id"], reviewer_headers)
     assert payload["session_id"] == session_id
-    assert payload["scoring_version_lock"]["scorer_version"] == "0.1.0"
+    assert payload["scoring_version_lock"]["scorer_version"] == "0.2.0"
     assert payload["include_sensitivity"] is True
 
     view_id = payload["view_id"]
