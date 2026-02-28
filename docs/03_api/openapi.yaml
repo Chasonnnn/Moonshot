@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moonshot Backend
-  version: 0.4.2
+  version: 0.5.0
 paths:
   /health:
     get:
@@ -2505,6 +2505,11 @@ components:
           type: integer
           title: Progress
           default: 0
+        current_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Step
         error_code:
           anyOf:
           - type: string

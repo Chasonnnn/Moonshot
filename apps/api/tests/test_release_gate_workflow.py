@@ -13,6 +13,7 @@ def test_api_ci_workflow_has_strict_release_gates():
     assert "load_pilot.py" in content
     assert "check_api_examples.py" in content
     assert "check_export_schema.py" in content
+    assert "check_report_summary_consistency.py" in content
     assert "guard_postgres_migration_target.py" in content
     assert "alembic" in content
     assert "postgres" in content

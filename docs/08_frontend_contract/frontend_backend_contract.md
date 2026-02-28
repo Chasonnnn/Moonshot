@@ -1,7 +1,7 @@
-# Frontend/Backend Contract v0.4.2
+# Frontend/Backend Contract v0.5.0
 
 ## Integration Principles
-- Frontend builds against OpenAPI `0.4.2` and fixture payloads.
+- Frontend builds against OpenAPI `0.5.0` and fixture payloads.
 - Breaking changes allowed during development but must be versioned.
 - Tenant-scoped APIs; explicit `404`/`403` isolation behavior.
 - No fallback routes; explicit backend errors only.
@@ -30,10 +30,17 @@ Job status diagnostics:
 - `attempt_count`
 - `max_attempts`
 - `last_error_code`
+- `current_step`
 
 When a job result is not ready yet, `GET /v1/jobs/{job_id}/result` returns:
 - `status` in `pending|running|retrying`
 - `result.error_code = job_not_ready`
+- `result.current_step`
+
+Failed job results return:
+- `result.error_code`
+- `result.error_detail`
+- `result.failed_step`
 
 Required header for async submit endpoints:
 - `Idempotency-Key`

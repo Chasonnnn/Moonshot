@@ -10,3 +10,5 @@ def test_frontend_contract_sync_script_exists_and_checks_version_lock():
     assert "docs/08_frontend_contract/frontend_backend_contract.md" in content
     assert "docs/00_mvp/mvp_scope.md" in content
     assert "/v1/reports/{session_id}/summary" in content
+    assert "current_step" in content
+    assert "failed_step" in content

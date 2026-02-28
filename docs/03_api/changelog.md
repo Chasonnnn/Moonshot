@@ -1,5 +1,27 @@
 # API Changelog
 
+## 0.5.0 - 2026-02-28
+- Added hybrid-local runtime bootstrap support:
+  - `apps/api/.env.example`
+  - Make targets: `db-up`, `db-down`, `db-reset`, `migrate`, `api-run`, `worker-run`, `dev-stack`, `frontend-smoke`
+  - startup scripts: `start_worker.sh`, `dev_stack.sh`
+- Added runtime environment validation guard:
+  - `apps/api/scripts/validate_runtime_env.py`
+  - API/worker startup now fails fast on missing critical env.
+- Added report-summary consistency governance check:
+  - `apps/api/scripts/check_report_summary_consistency.py`
+  - included in API CI workflow.
+- Expanded async job diagnostics:
+  - `JobStatus.current_step`
+  - `JobResultResponse.result.failed_step` on failed jobs
+  - standardized job error taxonomy: `timeout`, `policy_blocked`, `provider_error`, `validation_error`, `dependency_unavailable`, `internal_error`
+  - job progress semantics now vary by job type for `running` and `retrying`.
+- Updated API examples with explicit async state fixtures:
+  - `job_status_pending`
+  - `job_status_running`
+  - `job_status_retrying`
+  - `job_status_completed`
+
 ## 0.4.2 - 2026-02-27
 - Added generation diagnostics persistence on task families:
   - `TaskFamily.generation_diagnostics`

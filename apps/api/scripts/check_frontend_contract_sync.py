@@ -16,6 +16,8 @@ REQUIRED_FRONTEND_MARKERS = [
     "/v1/reports/{session_id}/summary",
     "policy_decision_code",
     "last_scored_at",
+    "current_step",
+    "failed_step",
 ]
 
 
