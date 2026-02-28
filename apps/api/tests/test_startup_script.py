@@ -6,6 +6,7 @@ def test_startup_script_runs_migrations_before_server_start():
     assert script_path.exists()
 
     content = script_path.read_text(encoding="utf-8")
+    assert "validate_runtime_env.py" in content
     assert "guard_postgres_migration_target.py" in content
     assert "alembic" in content
     assert "upgrade head" in content

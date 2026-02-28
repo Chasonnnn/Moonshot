@@ -7,10 +7,25 @@ Backend-first MVP scaffold for API contracts, documentation, and integration-saf
 ```bash
 cd /Users/chason/Moonshot
 uv sync --extra dev
-cp .env.example .env
+cp apps/api/.env.example apps/api/.env.local
 docker compose up -d postgres
 export MOONSHOT_DATABASE_URL=postgresql+psycopg://moonshot:moonshot@localhost:5432/moonshot
-apps/api/scripts/start_api.sh
+make api-run
+```
+
+## Hybrid local runtime
+
+```bash
+make db-up
+make migrate
+make api-run
+make worker-run
+```
+
+One-command local stack:
+
+```bash
+make dev-stack
 ```
 
 ## Local test run
