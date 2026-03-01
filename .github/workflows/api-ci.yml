@@ -85,6 +85,20 @@ jobs:
           cat /tmp/moonshot-api.log || true
           exit 1
       - name: Staging smoke gate
-        run: uv run python apps/api/scripts/staging_smoke.py --base-url http://127.0.0.1:8000 --tenant-id tenant_ci
+        run: |
+          set -o pipefail
+          uv run python apps/api/scripts/staging_smoke.py --base-url http://127.0.0.1:8000 --tenant-id tenant_ci | tee /tmp/staging-smoke.log
       - name: Load gate
-        run: uv run python apps/api/scripts/load_pilot.py --base-url http://127.0.0.1:8000 --tenant-id tenant_ci_load --samples 240 --concurrency 8 --max-p95-ms 500
+        run: |
+          set -o pipefail
+          uv run python apps/api/scripts/load_pilot.py --base-url http://127.0.0.1:8000 --tenant-id tenant_ci_load --samples 240 --concurrency 8 --max-p95-ms 500 | tee /tmp/load-pilot.log
+      - name: Upload release-gate artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gate-logs
+          path: |
+            /tmp/staging-smoke.log
+            /tmp/load-pilot.log
+            /tmp/moonshot-api.log
+            /tmp/moonshot-worker.log

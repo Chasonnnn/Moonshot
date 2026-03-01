@@ -97,11 +97,20 @@ pnpm dev
 ```
 
 Integration page: `http://localhost:3000/pilots`
+Guided demo page: `http://localhost:3000/demo`
 
 Frontend smoke against backend:
 
 ```bash
 make frontend-smoke
+make demo-gate
+```
+
+Scenario packaging + governance bundle:
+
+```bash
+uv run python apps/api/scripts/seed_demo.py --mode both --tenant-id tenant_demo --output /tmp/moonshot_seed_manifest.json
+uv run python apps/api/scripts/build_governance_bundle.py --tenant-id tenant_demo --session-id <session-id>
 ```
 
 ## API Lifecycle

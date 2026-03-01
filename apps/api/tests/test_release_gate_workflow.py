@@ -17,3 +17,6 @@ def test_api_ci_workflow_has_strict_release_gates():
     assert "guard_postgres_migration_target.py" in content
     assert "alembic" in content
     assert "postgres" in content
+    assert "upload-artifact@v4" in content
+    assert "staging-smoke.log" in content
+    assert "load-pilot.log" in content

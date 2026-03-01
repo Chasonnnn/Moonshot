@@ -28,6 +28,15 @@
   - scorer version default now `0.2.0`.
 - Score jobs now load rubric/task prompt/provider context and run provider-aware evaluation.
 - Added Postgres migration `20260301_0009_hybrid_scoring_fields.py`.
+- Added red-team read APIs for demo/review flows:
+  - `GET /v1/redteam/runs`
+  - `GET /v1/redteam/runs/{run_id}`
+- Added demo operational scripts:
+  - `apps/api/scripts/seed_demo.py` (`--mode fixture|fresh|both`, manifest + replay outputs)
+  - `apps/api/scripts/build_governance_bundle.py`
+- Added local demo reliability gate target:
+  - `make demo-gate`
+- CI release gate now uploads smoke/load/api/worker logs as artifacts.
 
 ## 0.4.2 - 2026-02-27
 - Added generation diagnostics persistence on task families:
