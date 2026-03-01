@@ -140,7 +140,7 @@ class TaskFamilyReviewRequest(BaseModel):
 class SessionCreate(BaseModel):
     task_family_id: UUID
     candidate_id: str
-    policy: dict[str, Any] = Field(default_factory=lambda: {"raw_content_opt_in": False, "retention_ttl_days": 90})
+    policy: dict[str, Any] = Field(default_factory=lambda: {"raw_content_opt_in": False, "retention_ttl_days": 90, "time_limit_minutes": None})
 
 
 class Session(BaseModel):
@@ -153,6 +153,10 @@ class Session(BaseModel):
     final_response: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SessionDetail(Session):
+    task_prompt: str
 
 
 class EventItem(BaseModel):

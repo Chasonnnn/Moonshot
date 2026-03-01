@@ -4,7 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import EventIngestResponse, EventsIngestRequest, Session, SessionCreate, SessionModeRequest, SessionSubmitRequest
+from app.schemas import (
+    EventIngestResponse,
+    EventsIngestRequest,
+    Session,
+    SessionCreate,
+    SessionDetail,
+    SessionModeRequest,
+    SessionSubmitRequest,
+)
 from app.services.admin_policy import get_policy
 from app.services.audit import audit
 from app.services.repositories import case_repository, session_repository
@@ -67,15 +75,20 @@ def list_sessions(
     return {"items": items}
 
 
-@router.get("/{session_id}", response_model=Session)
+@router.get("/{session_id}", response_model=SessionDetail)
 def get_session(
     session_id: UUID,
     user: UserContext = Depends(require_roles("org_admin", "reviewer", "candidate")),
-) -> Session:
+) -> SessionDetail:
     session = _get_session_for_tenant(session_id, user.tenant_id)
     if user.role == "candidate" and session.candidate_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
-    return session
+    task_family = case_repository.get_task_family(session.task_family_id)
+    if task_family is None or not task_family.variants:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Session task prompt unavailable")
+    payload = session.model_dump(mode="json")
+    payload["task_prompt"] = task_family.variants[0].prompt
+    return SessionDetail.model_validate(payload)
 
 
 @router.post("/{session_id}/events", response_model=EventIngestResponse, status_code=status.HTTP_202_ACCEPTED)

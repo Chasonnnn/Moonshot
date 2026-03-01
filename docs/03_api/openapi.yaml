@@ -774,7 +774,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                $ref: '#/components/schemas/SessionDetail'
         '422':
           description: Validation Error
           content:
@@ -3120,6 +3120,53 @@ components:
       - task_family_id
       - candidate_id
       title: SessionCreate
+    SessionDetail:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        tenant_id:
+          type: string
+          title: Tenant Id
+        task_family_id:
+          type: string
+          format: uuid
+          title: Task Family Id
+        candidate_id:
+          type: string
+          title: Candidate Id
+        status:
+          type: string
+          title: Status
+          default: active
+        policy:
+          additionalProperties: true
+          type: object
+          title: Policy
+        final_response:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Final Response
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        task_prompt:
+          type: string
+          title: Task Prompt
+      type: object
+      required:
+      - tenant_id
+      - task_family_id
+      - candidate_id
+      - task_prompt
+      title: SessionDetail
     SessionModeRequest:
       properties:
         mode:
