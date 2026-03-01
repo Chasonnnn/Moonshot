@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moonshot Backend
-  version: 0.5.0
+  version: 0.5.1
 paths:
   /health:
     get:
@@ -1384,6 +1384,23 @@ paths:
             format: uuid
           - type: 'null'
           title: Target Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
       responses:
         '200':
           description: Successful Response
@@ -1661,6 +1678,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobAccepted'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - fairness
+      summary: List Smoke Runs
+      operationId: list_smoke_runs_v1_fairness_smoke_runs_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: scope
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scope
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: target_session_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Target Session Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FairnessSmokeRun'
+                title: Response List Smoke Runs V1 Fairness Smoke Runs Get
         '422':
           description: Validation Error
           content:
@@ -2424,6 +2501,32 @@ components:
           type: string
           title: Status
           default: completed
+        created_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Created By
+        submitted_job_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Submitted Job Id
+        request_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Request Id
+        target_session_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Target Session Id
+        evidence_refs:
+          additionalProperties: true
+          type: object
+          title: Evidence Refs
         summary:
           additionalProperties: true
           type: object
@@ -2447,6 +2550,12 @@ components:
           type: boolean
           title: Include Language Proxy
           default: true
+        target_session_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Target Session Id
       type: object
       title: FairnessSmokeRunCreate
     HTTPValidationError:
@@ -2762,6 +2871,11 @@ components:
           type: string
           format: uuid
           title: Id
+        tenant_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Tenant Id
         target_type:
           type: string
           title: Target Type
@@ -2772,6 +2886,30 @@ components:
         status:
           type: string
           title: Status
+        created_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Created By
+        submitted_job_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Submitted Job Id
+        request_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Request Id
+        evidence_refs:
+          additionalProperties: true
+          type: object
+          title: Evidence Refs
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
         findings:
           items:
             additionalProperties: true

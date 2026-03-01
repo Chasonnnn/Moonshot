@@ -98,6 +98,11 @@ pnpm dev
 
 Integration page: `http://localhost:3000/pilots`
 Guided demo page: `http://localhost:3000/demo`
+Employer ops pages:
+- `http://localhost:3000/cases`
+- `http://localhost:3000/review-queue`
+- `http://localhost:3000/reports/<session-id>`
+- `http://localhost:3000/governance`
 
 Frontend smoke against backend:
 
@@ -129,6 +134,7 @@ Canonical JDA async lifecycle:
 11. `POST /v1/sessions/{session_id}/score` (`Idempotency-Key` required)
 12. `GET /v1/reports/{session_id}/summary` and `GET /v1/reports/{session_id}`
 13. `POST /v1/exports` (`Idempotency-Key` required), then poll job result
+14. `GET /v1/redteam/runs` and `GET /v1/fairness/smoke-runs` for evidence review loops
 
 Async diagnostics contract:
 - Job status exposes `progress`, `current_step`, `attempt_count`, `max_attempts`, `last_error_code`.
@@ -138,13 +144,13 @@ Async diagnostics contract:
 ## Roadmap
 
 Current contract baseline:
-- `v0.5.0` (OpenAPI/docs/frontend contract sync)
+- `v0.5.1` (OpenAPI/docs/frontend contract sync)
 
 MVP near-term focus:
 1. Pilot reliability hardening (SLO/load envelope, worker/runtime stability).
-2. Frontend integration completion on frozen contracts (no ad-hoc API drift).
-3. Governance depth (audit integrity checks, retention/TTL workflows, fairness/red-team operationalization).
-4. Scoring/evidence quality improvements (diagnostic richness, benchmark drift controls).
+2. Governance evidence depth (audit integrity checks, retention/TTL workflows, fairness/red-team provenance).
+3. Scoring/evidence quality improvements (diagnostic richness, benchmark drift controls).
+4. Demo script hardening and regression scenario packaging.
 
 Tracking docs:
 - [MVP scope](docs/00_mvp/mvp_scope.md)

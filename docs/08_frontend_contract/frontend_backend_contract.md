@@ -1,4 +1,4 @@
-# Frontend/Backend Contract v0.5.0
+# Frontend/Backend Contract v0.5.1
 
 ## Integration Principles
 - Frontend builds against OpenAPI `0.5.0` and fixture payloads.
@@ -80,18 +80,46 @@ Export schema lock:
 - `GET /v1/redteam/runs/{run_id}`
 - `GET /v1/context/injection-traces/{session_id}`
 - `POST /v1/fairness/smoke-runs` (async submit)
+- `GET /v1/fairness/smoke-runs`
 - `GET /v1/fairness/smoke-runs/{run_id}`
+
+Run evidence fields exposed in red-team/fairness payloads:
+- `created_by`
+- `submitted_job_id`
+- `request_id`
+- `evidence_refs`
+- `created_at`
+
+Fairness list filters:
+- `scope`
+- `status`
+- `target_session_id`
+- `limit`
+
+Red-team list filters:
+- `target_type`
+- `target_id`
+- `status`
+- `limit`
 
 ## UI Contract Requirements
 - Always display scoring provenance in report views.
 - Show coaching mode state clearly to candidate.
 - Interpretation views must be labeled non-mutating.
 - Expose request IDs for support/debug flows.
+- Expose red-team/fairness run provenance in reviewer/admin evidence views.
 - Show report summary diagnostics:
   - `trigger_count`
   - `last_scored_at`
 - Handle coach decision diagnostics:
   - `policy_decision_code`
+
+Employer ops pages expected in MVP:
+- `/cases`
+- `/cases/{id}`
+- `/review-queue`
+- `/reports/{sessionId}`
+- `/governance`
 
 ## Implementation Playbook
 - JDA integration sequence, polling cadence, and local env config:

@@ -40,7 +40,10 @@ frontend-smoke:
 demo-gate:
 	uv run python apps/api/scripts/staging_smoke.py --base-url $${MOONSHOT_API_BASE_URL:-http://127.0.0.1:8000} --tenant-id $${MOONSHOT_DEV_TENANT_ID:-tenant_local}
 	uv run python apps/api/scripts/load_pilot.py --base-url $${MOONSHOT_API_BASE_URL:-http://127.0.0.1:8000} --tenant-id $${MOONSHOT_DEV_TENANT_ID:-tenant_local} --samples 240 --concurrency 8 --max-p95-ms 500
+	uv run python apps/api/scripts/check_contract_governance.py
 	uv run python apps/api/scripts/check_openapi_sync.py
 	uv run python apps/api/scripts/check_frontend_contract_sync.py
 	uv run python apps/api/scripts/check_api_examples.py
+	uv run python apps/api/scripts/check_report_summary_consistency.py
 	uv run python apps/api/scripts/check_export_schema.py
+	uv run python apps/api/scripts/check_score_drift.py

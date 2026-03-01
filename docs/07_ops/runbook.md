@@ -1,4 +1,4 @@
-# Backend Runbook and SLOs (v0.5.0)
+# Backend Runbook and SLOs (v0.5.1)
 
 ## Service Components
 - API service (FastAPI)
@@ -49,7 +49,7 @@
 13. Report summary contract check (`/v1/reports/{session_id}/summary`).
 14. Interpretation view flow check (`/v1/reports/{session_id}/interpret*`).
 15. Context trace endpoint check (`/v1/context/injection-traces/{session_id}`).
-16. Fairness smoke run check (`/v1/fairness/smoke-runs*`).
+16. Fairness smoke run checks (`POST /v1/fairness/smoke-runs`, `GET /v1/fairness/smoke-runs`, `GET /v1/fairness/smoke-runs/{run_id}`).
 17. CI strict release-gate job must pass:
   - Postgres migration gate
   - staging smoke gate

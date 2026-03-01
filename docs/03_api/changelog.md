@@ -1,5 +1,33 @@
 # API Changelog
 
+## 0.5.1 - 2026-03-01
+- Added governance run provenance persistence for red-team and fairness entities:
+  - `created_by`
+  - `submitted_job_id`
+  - `request_id`
+  - `evidence_refs`
+- Added red-team tenant field and created-at timestamp on persisted runs:
+  - `RedTeamRun.tenant_id`
+  - `RedTeamRun.created_at`
+- Added fairness optional target session linkage:
+  - `FairnessSmokeRunCreate.target_session_id`
+  - `FairnessSmokeRun.target_session_id`
+- Added fairness list endpoint with tenant-scoped filters:
+  - `GET /v1/fairness/smoke-runs`
+  - filters: `scope`, `status`, `target_session_id`, `limit`
+- Expanded red-team list endpoint filters:
+  - `status`
+  - `limit`
+- Added migration:
+  - `20260301_0010_governance_run_provenance.py`
+- Added employer ops routes in frontend for MVP operations:
+  - `/cases`
+  - `/cases/{id}`
+  - `/review-queue`
+  - `/reports/{sessionId}`
+  - `/governance`
+- Demo console now surfaces persisted run identifiers and request IDs for governance evidence review.
+
 ## 0.5.0 - 2026-02-28
 - Added hybrid-local runtime bootstrap support:
   - `apps/api/.env.example`
