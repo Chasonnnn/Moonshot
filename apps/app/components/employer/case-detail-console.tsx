@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState } from "react"
+import { PackageIcon } from "lucide-react"
 
 import {
   generateCaseAction,
@@ -9,7 +10,10 @@ import {
   reviewTaskFamilyAction,
   updateCaseAction,
 } from "@/actions/cases"
+import { useActionStateToast } from "@/components/employer/action-state-toast"
 import type { CaseSpec, TaskFamily } from "@/lib/moonshot/types"
+import { Badge } from "@/components/ui/badge"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 const initialCaseActionState: CaseActionState = {
   ok: false,
@@ -23,6 +27,11 @@ export function CaseDetailConsole({ caseItem, taskFamilies }: { caseItem: CaseSp
   const [generateState, generateAction, isGenerating] = useActionState(generateCaseAction, initialCaseActionState)
   const [reviewState, reviewAction, isReviewing] = useActionState(reviewTaskFamilyAction, initialCaseActionState)
   const [publishState, publishAction, isPublishing] = useActionState(publishTaskFamilyAction, initialCaseActionState)
+
+  useActionStateToast(updateState)
+  useActionStateToast(generateState)
+  useActionStateToast(reviewState)
+  useActionStateToast(publishState)
 
   return (
     <section className="space-y-6">
@@ -50,12 +59,6 @@ export function CaseDetailConsole({ caseItem, taskFamilies }: { caseItem: CaseSp
             >
               {isUpdating ? "Saving..." : "Save Case"}
             </button>
-            {updateState.error ? (
-              <p className="text-[12px] text-[#D70015]">
-                {updateState.error} {updateState.requestId ? `(request_id=${updateState.requestId})` : ""}
-              </p>
-            ) : null}
-            {updateState.ok ? <p className="text-[12px] text-[#34C759]">{updateState.message}</p> : null}
           </div>
         </form>
       </div>
@@ -72,12 +75,6 @@ export function CaseDetailConsole({ caseItem, taskFamilies }: { caseItem: CaseSp
             >
               {isGenerating ? "Submitting..." : "Generate Task Family"}
             </button>
-            {generateState.error ? (
-              <p className="text-[12px] text-[#D70015]">
-                {generateState.error} {generateState.requestId ? `(request_id=${generateState.requestId})` : ""}
-              </p>
-            ) : null}
-            {generateState.ok ? <p className="text-[12px] text-[#34C759]">{generateState.message}</p> : null}
           </div>
         </form>
       </div>
@@ -87,10 +84,15 @@ export function CaseDetailConsole({ caseItem, taskFamilies }: { caseItem: CaseSp
         <div className="mt-4 space-y-3">
           {taskFamilies.map((family) => (
             <div key={family.id} className="rounded-xl border border-[#E5E5EA] px-4 py-3">
-              <p className="text-[13px] font-medium text-[#1D1D1F]">task_family={family.id}</p>
-              <p className="mt-1 text-[12px] text-[#6E6E73]">
-                status={family.status} · variants={family.variants.length} · version={family.version}
+              <p className="text-[13px] font-medium text-[#1D1D1F]">
+                Task Family <code className="font-mono text-[12px]">{family.id.slice(0, 8)}</code>
               </p>
+              <div className="mt-1 flex items-center gap-2">
+                <Badge variant="outline" className="text-[11px]">{family.status}</Badge>
+                <span className="text-[12px] text-[#6E6E73]">
+                  {family.variants.length} {family.variants.length === 1 ? "variant" : "variants"} · v{family.version}
+                </span>
+              </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <form action={reviewAction}>
                   <input type="hidden" name="task_family_id" value={family.id} />
@@ -115,20 +117,16 @@ export function CaseDetailConsole({ caseItem, taskFamilies }: { caseItem: CaseSp
               </div>
             </div>
           ))}
-          {taskFamilies.length === 0 ? <p className="text-[13px] text-[#6E6E73]">No task families yet.</p> : null}
+          {taskFamilies.length === 0 ? (
+            <Empty className="py-8">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><PackageIcon /></EmptyMedia>
+                <EmptyTitle>No task families yet</EmptyTitle>
+                <EmptyDescription>Generate a task family above to populate this section.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : null}
         </div>
-        {reviewState.error ? (
-          <p className="mt-3 text-[12px] text-[#D70015]">
-            {reviewState.error} {reviewState.requestId ? `(request_id=${reviewState.requestId})` : ""}
-          </p>
-        ) : null}
-        {reviewState.ok ? <p className="mt-3 text-[12px] text-[#34C759]">{reviewState.message}</p> : null}
-        {publishState.error ? (
-          <p className="mt-3 text-[12px] text-[#D70015]">
-            {publishState.error} {publishState.requestId ? `(request_id=${publishState.requestId})` : ""}
-          </p>
-        ) : null}
-        {publishState.ok ? <p className="mt-3 text-[12px] text-[#34C759]">{publishState.message}</p> : null}
       </div>
     </section>
   )

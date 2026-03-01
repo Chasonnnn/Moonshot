@@ -2,8 +2,12 @@
 
 import Link from "next/link"
 import { useActionState } from "react"
+import { FolderOpenIcon } from "lucide-react"
 
 import { createCaseAction, type CaseActionState, type CasesSnapshot } from "@/actions/cases"
+import { useActionStateToast } from "@/components/employer/action-state-toast"
+import { Badge } from "@/components/ui/badge"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 const initialCaseActionState: CaseActionState = {
   ok: false,
@@ -14,6 +18,7 @@ const initialCaseActionState: CaseActionState = {
 
 export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
   const [state, formAction, isPending] = useActionState(createCaseAction, initialCaseActionState)
+  useActionStateToast(state)
 
   return (
     <section className="space-y-6">
@@ -40,12 +45,6 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
             >
               {isPending ? "Creating..." : "Create Case"}
             </button>
-            {state.error ? (
-              <p className="text-[12px] text-[#D70015]">
-                {state.error} {state.requestId ? `(request_id=${state.requestId})` : ""}
-              </p>
-            ) : null}
-            {state.ok ? <p className="text-[12px] text-[#34C759]">{state.message}</p> : null}
           </div>
         </form>
       </div>
@@ -69,9 +68,12 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
                 >
                   <div>
                     <p className="text-[13px] font-medium text-[#1D1D1F]">{item.title}</p>
-                    <p className="text-[12px] text-[#6E6E73]">
-                      id={item.id} · status={item.status} · task_families={familyCount}
-                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Badge variant="outline" className="text-[11px]">{item.status}</Badge>
+                      <span className="text-[12px] text-[#6E6E73]">
+                        {familyCount} task {familyCount === 1 ? "family" : "families"}
+                      </span>
+                    </div>
                   </div>
                   <Link
                     href={`/cases/${item.id}`}
@@ -82,7 +84,15 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
                 </div>
               )
             })}
-            {snapshot.cases.length === 0 ? <p className="text-[13px] text-[#6E6E73]">No cases found.</p> : null}
+            {snapshot.cases.length === 0 ? (
+              <Empty className="py-8">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon"><FolderOpenIcon /></EmptyMedia>
+                  <EmptyTitle>No cases yet</EmptyTitle>
+                  <EmptyDescription>Create your first case above to get started.</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : null}
           </div>
         </div>
       )}
