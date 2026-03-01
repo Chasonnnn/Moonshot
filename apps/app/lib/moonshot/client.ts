@@ -1,10 +1,13 @@
 import "server-only"
 
 import {
+  type AdminPolicy,
   type ApiErrorShape,
   type AuthTokenResponse,
   type CaseSpec,
   type FairnessSmokeRun,
+  type InterpretationView,
+  type JobStatus,
   type JobAccepted,
   type JobResultResponse,
   type MetaVersion,
@@ -12,7 +15,10 @@ import {
   type MoonshotRole,
   type RedTeamRun,
   type ReportSummary,
+  type ReviewQueueItem,
   type SessionRecord,
+  type TaskFamily,
+  type AuditLogItem,
 } from "@/lib/moonshot/types"
 
 function requiredEnv(name: string): string {
@@ -124,6 +130,18 @@ export class MoonshotApiClient {
     return this.request<{ items: CaseSpec[] }>("/v1/cases", { token })
   }
 
+  async getCase(token: string, caseId: string): Promise<CaseSpec> {
+    return this.request<CaseSpec>(`/v1/cases/${caseId}`, { token })
+  }
+
+  async updateCase(token: string, caseId: string, payload: Record<string, unknown>): Promise<CaseSpec> {
+    return this.request<CaseSpec>(`/v1/cases/${caseId}`, {
+      method: "PATCH",
+      token,
+      body: payload,
+    })
+  }
+
   async listJobs(token: string, limit = 20): Promise<{ items: Array<{ job_id: string; status: string; job_type?: string }> }> {
     return this.request<{ items: Array<{ job_id: string; status: string; job_type?: string }> }>(
       `/v1/jobs?limit=${limit}`,
@@ -133,6 +151,10 @@ export class MoonshotApiClient {
 
   async listSessions(token: string): Promise<{ items: SessionRecord[] }> {
     return this.request<{ items: SessionRecord[] }>("/v1/sessions", { token })
+  }
+
+  async getSession(token: string, sessionId: string): Promise<SessionRecord> {
+    return this.request<SessionRecord>(`/v1/sessions/${sessionId}`, { token })
   }
 
   async createCase(token: string, payload: Record<string, unknown>): Promise<CaseSpec> {
@@ -149,6 +171,14 @@ export class MoonshotApiClient {
       token,
       idempotencyKey,
     })
+  }
+
+  async listTaskFamilies(token: string): Promise<{ items: TaskFamily[] }> {
+    return this.request<{ items: TaskFamily[] }>("/v1/task-families", { token })
+  }
+
+  async getTaskFamily(token: string, taskFamilyId: string): Promise<TaskFamily> {
+    return this.request<TaskFamily>(`/v1/task-families/${taskFamilyId}`, { token })
   }
 
   async reviewTaskFamily(token: string, taskFamilyId: string): Promise<void> {
@@ -184,6 +214,27 @@ export class MoonshotApiClient {
       method: "POST",
       token,
       body: { mode },
+    })
+  }
+
+  async listReviewQueue(token: string, includeResolved = false): Promise<{ items: ReviewQueueItem[] }> {
+    const include = includeResolved ? "true" : "false"
+    return this.request<{ items: ReviewQueueItem[] }>(`/v1/review-queue?include_resolved=${include}`, { token })
+  }
+
+  async getReviewQueueItem(token: string, sessionId: string): Promise<ReviewQueueItem> {
+    return this.request<ReviewQueueItem>(`/v1/review-queue/${sessionId}`, { token })
+  }
+
+  async resolveReviewQueueItem(
+    token: string,
+    sessionId: string,
+    payload: { decision: "approved" | "rejected"; reviewer_note?: string },
+  ): Promise<ReviewQueueItem> {
+    return this.request<ReviewQueueItem>(`/v1/review-queue/${sessionId}/resolve`, {
+      method: "POST",
+      token,
+      body: payload,
     })
   }
 
@@ -235,6 +286,10 @@ export class MoonshotApiClient {
     return this.request<JobResultResponse>(`/v1/jobs/${jobId}/result`, { token })
   }
 
+  async getJobStatus(token: string, jobId: string): Promise<JobStatus> {
+    return this.request<JobStatus>(`/v1/jobs/${jobId}`, { token })
+  }
+
   async waitForJobTerminalResult(token: string, jobId: string, options: WaitForJobOptions = {}): Promise<JobResultResponse> {
     const timeoutMs = options.timeoutMs ?? 90_000
     let intervalMs = options.initialIntervalMs ?? 750
@@ -261,6 +316,28 @@ export class MoonshotApiClient {
     return this.request<Record<string, unknown>>(`/v1/reports/${sessionId}`, { token })
   }
 
+  async createInterpretation(
+    token: string,
+    sessionId: string,
+    payload: {
+      focus_dimensions?: string[]
+      include_sensitivity?: boolean
+      weight_overrides?: Record<string, number>
+    },
+    idempotencyKey: string,
+  ): Promise<JobAccepted> {
+    return this.request<JobAccepted>(`/v1/reports/${sessionId}/interpret`, {
+      method: "POST",
+      token,
+      idempotencyKey,
+      body: payload,
+    })
+  }
+
+  async getInterpretation(token: string, sessionId: string, viewId: string): Promise<InterpretationView> {
+    return this.request<InterpretationView>(`/v1/reports/${sessionId}/interpretations/${viewId}`, { token })
+  }
+
   async getExport(token: string, runId: string): Promise<Record<string, unknown>> {
     return this.request<Record<string, unknown>>(`/v1/exports/${runId}`, { token })
   }
@@ -280,7 +357,7 @@ export class MoonshotApiClient {
 
   async listRedteamRuns(
     token: string,
-    filters?: { targetType?: string; targetId?: string },
+    filters?: { targetType?: string; targetId?: string; status?: string; limit?: number },
   ): Promise<{ items: RedTeamRun[] }> {
     const params = new URLSearchParams()
     if (filters?.targetType) {
@@ -288,6 +365,12 @@ export class MoonshotApiClient {
     }
     if (filters?.targetId) {
       params.set("target_id", filters.targetId)
+    }
+    if (filters?.status) {
+      params.set("status", filters.status)
+    }
+    if (typeof filters?.limit === "number") {
+      params.set("limit", String(filters.limit))
     }
     const query = params.toString()
     const path = query ? `/v1/redteam/runs?${query}` : "/v1/redteam/runs"
@@ -318,6 +401,28 @@ export class MoonshotApiClient {
     return this.request<FairnessSmokeRun>(`/v1/fairness/smoke-runs/${runId}`, { token })
   }
 
+  async listFairnessSmokeRuns(
+    token: string,
+    filters?: { scope?: string; status?: string; targetSessionId?: string; limit?: number },
+  ): Promise<{ items: FairnessSmokeRun[] }> {
+    const params = new URLSearchParams()
+    if (filters?.scope) {
+      params.set("scope", filters.scope)
+    }
+    if (filters?.status) {
+      params.set("status", filters.status)
+    }
+    if (filters?.targetSessionId) {
+      params.set("target_session_id", filters.targetSessionId)
+    }
+    if (typeof filters?.limit === "number") {
+      params.set("limit", String(filters.limit))
+    }
+    const query = params.toString()
+    const path = query ? `/v1/fairness/smoke-runs?${query}` : "/v1/fairness/smoke-runs"
+    return this.request<{ items: FairnessSmokeRun[] }>(path, { token })
+  }
+
   async getAuditChainVerification(token: string): Promise<{
     valid: boolean
     checked_entries: number
@@ -342,6 +447,26 @@ export class MoonshotApiClient {
       token,
       body: { dry_run: true },
     })
+  }
+
+  async getAdminPolicy(token: string): Promise<AdminPolicy> {
+    return this.request<AdminPolicy>("/v1/admin/policies", { token })
+  }
+
+  async listAuditLogs(
+    token: string,
+    filters?: { action?: string; resourceType?: string },
+  ): Promise<{ items: AuditLogItem[] }> {
+    const params = new URLSearchParams()
+    if (filters?.action) {
+      params.set("action", filters.action)
+    }
+    if (filters?.resourceType) {
+      params.set("resource_type", filters.resourceType)
+    }
+    const query = params.toString()
+    const path = query ? `/v1/audit-logs?${query}` : "/v1/audit-logs"
+    return this.request<{ items: AuditLogItem[] }>(path, { token })
   }
 }
 

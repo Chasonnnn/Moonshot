@@ -48,8 +48,28 @@ export interface CaseSpec {
   tenant_id: string
   title: string
   scenario: string
+  artifacts?: Array<Record<string, unknown>>
+  metrics?: Array<Record<string, unknown>>
+  allowed_tools?: string[]
   status: string
   version: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface TaskVariant {
+  id: string
+  prompt: string
+}
+
+export interface TaskFamily {
+  id: string
+  case_id: string
+  rubric_id: string
+  status: string
+  version: string
+  variants: TaskVariant[]
+  generation_diagnostics?: Record<string, unknown>
 }
 
 export interface SessionRecord {
@@ -88,9 +108,15 @@ export interface MetaVersion {
 
 export interface RedTeamRun {
   id: string
+  tenant_id: string | null
   target_type: string
   target_id: string
   status: string
+  created_by: string | null
+  submitted_job_id: string | null
+  request_id: string | null
+  evidence_refs: Record<string, unknown>
+  created_at: string
   findings: Array<Record<string, unknown>>
 }
 
@@ -99,7 +125,61 @@ export interface FairnessSmokeRun {
   tenant_id: string
   scope: string
   status: string
+  created_by: string | null
+  submitted_job_id: string | null
+  request_id: string | null
+  target_session_id: string | null
+  evidence_refs: Record<string, unknown>
   summary: Record<string, unknown>
+  created_at: string
+}
+
+export interface ReviewQueueItem {
+  session_id: string
+  tenant_id: string
+  status: string
+  reason: string
+  created_by: string
+  reviewer_note: string | null
+  resolution: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InterpretationView {
+  view_id: string
+  session_id: string
+  created_at: string
+  focus_dimensions: string[]
+  include_sensitivity: boolean
+  weight_overrides: Record<string, number>
+  breakdown: Record<string, unknown>
+  caveats: string[]
+  scoring_version_lock: {
+    scorer_version: string
+    rubric_version: string
+    task_family_version: string
+    model_hash: string
+  }
+}
+
+export interface AdminPolicy {
+  tenant_id: string
+  raw_content_default_opt_in: boolean
+  default_retention_ttl_days: number
+  max_retention_ttl_days: number
+}
+
+export interface AuditLogItem {
+  id: string
+  tenant_id: string
+  actor_role: string
+  action: string
+  resource_type: string
+  resource_id: string
+  metadata: Record<string, unknown>
+  prev_hash: string
+  entry_hash: string
   created_at: string
 }
 
