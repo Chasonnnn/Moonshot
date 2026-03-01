@@ -127,15 +127,29 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
             </div>
             <div className="rounded-xl border border-[#E5E5EA] p-4">
               <p className="mb-2 text-[12px] text-[#6E6E73]">Safety Runs</p>
+              <p className="text-[12px] text-[#1D1D1F]">Red-team job: {state.redteamJobId ?? "n/a"}</p>
               <p className="text-[12px] text-[#1D1D1F]">Red-team run: {state.redteamRunId ?? "n/a"}</p>
+              <p className="text-[12px] text-[#1D1D1F]">Red-team request_id: {state.redteamRequestId ?? "n/a"}</p>
               <p className="text-[12px] text-[#1D1D1F]">Red-team findings: {state.redteamFindings ?? "n/a"}</p>
+              <p className="text-[12px] text-[#1D1D1F]">Fairness job: {state.fairnessJobId ?? "n/a"}</p>
               <p className="text-[12px] text-[#1D1D1F]">Fairness run: {state.fairnessRunId ?? "n/a"}</p>
+              <p className="text-[12px] text-[#1D1D1F]">Fairness request_id: {state.fairnessRequestId ?? "n/a"}</p>
               <p className="text-[12px] text-[#1D1D1F]">Fairness sample size: {state.fairnessSampleSize ?? "n/a"}</p>
               {state.redteamRunId ? (
-                <p className="text-[12px] text-[#6E6E73]">evidence: /v1/redteam/runs/{state.redteamRunId}</p>
+                <div className="text-[12px] text-[#6E6E73]">
+                  <p>evidence: /v1/redteam/runs/{state.redteamRunId}</p>
+                  <Link href={`/reports/${state.sessionId}`} className="text-[#0071E3] underline">
+                    Open Report Review
+                  </Link>
+                </div>
               ) : null}
               {state.fairnessRunId ? (
-                <p className="text-[12px] text-[#6E6E73]">evidence: /v1/fairness/smoke-runs/{state.fairnessRunId}</p>
+                <div className="text-[12px] text-[#6E6E73]">
+                  <p>evidence: /v1/fairness/smoke-runs/{state.fairnessRunId}</p>
+                  <Link href="/governance" className="text-[#0071E3] underline">
+                    Open Governance
+                  </Link>
+                </div>
               ) : null}
             </div>
           </div>

@@ -41,8 +41,12 @@ export interface GovernanceBundleReference {
 
 export interface DemoRunState extends PilotFlowState {
   mode: DemoSeedMode
+  redteamJobId: string | null
   redteamRunId: string | null
+  redteamRequestId: string | null
+  fairnessJobId: string | null
   fairnessRunId: string | null
+  fairnessRequestId: string | null
   redteamFindings: number | null
   fairnessSampleSize: number | null
   seedManifest: ScenarioSeedManifest | null
@@ -75,8 +79,12 @@ export const initialPilotFlowState: PilotFlowState = {
 export const initialDemoRunState: DemoRunState = {
   ...initialPilotFlowState,
   mode: "both",
+  redteamJobId: null,
   redteamRunId: null,
+  redteamRequestId: null,
+  fairnessJobId: null,
   fairnessRunId: null,
+  fairnessRequestId: null,
   redteamFindings: null,
   fairnessSampleSize: null,
   seedManifest: null,
