@@ -8,13 +8,10 @@ import { usePathname } from "next/navigation"
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Demo Console", href: "/demo" },
+  { label: "Cases", href: "/cases" },
+  { label: "Review Queue", href: "/review-queue" },
+  { label: "Governance", href: "/governance" },
   { label: "Pilot Runs", href: "/pilots" },
-]
-
-const comingSoonItems = [
-  { label: "Case Builder" },
-  { label: "Task Families" },
-  { label: "Exports & Governance" },
 ]
 
 export function EmployerShell({ children }: { children: ReactNode }) {
@@ -50,15 +47,6 @@ export function EmployerShell({ children }: { children: ReactNode }) {
               >
                 {item.label}
               </Link>
-            ))}
-            {comingSoonItems.map((item) => (
-              <span
-                key={item.label}
-                className="cursor-not-allowed rounded-md px-3 py-1.5 text-[13px] text-[#6E6E73]"
-                title="Coming soon"
-              >
-                {item.label}
-              </span>
             ))}
           </nav>
 

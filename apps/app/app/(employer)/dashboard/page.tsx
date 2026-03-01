@@ -83,14 +83,22 @@ export default async function DashboardPage() {
                       {item.needsHumanReview === null ? "n/a" : item.needsHumanReview ? "required" : "clear"}
                     </p>
                   </div>
-                  <Link
-                    href={`/session/${item.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F]"
-                  >
-                    Open Candidate Session
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/reports/${item.id}`}
+                      className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F]"
+                    >
+                      Open Report
+                    </Link>
+                    <Link
+                      href={`/session/${item.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F]"
+                    >
+                      Open Candidate Session
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
