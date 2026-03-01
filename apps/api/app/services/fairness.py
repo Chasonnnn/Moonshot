@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from statistics import fmean
 from uuid import UUID
 
@@ -21,7 +22,14 @@ def _tenant_confidences(tenant_id: str) -> list[float]:
     return values
 
 
-def create_fairness_smoke_run(tenant_id: str, payload: FairnessSmokeRunCreate) -> FairnessSmokeRun:
+def create_fairness_smoke_run(
+    tenant_id: str,
+    payload: FairnessSmokeRunCreate,
+    *,
+    created_by: str | None = None,
+    submitted_job_id: UUID | None = None,
+    request_id: str | None = None,
+) -> FairnessSmokeRun:
     confidences = _tenant_confidences(tenant_id)
     sample_size = len(confidences)
     mean_confidence = round(fmean(confidences), 3) if confidences else 0.0
@@ -48,7 +56,17 @@ def create_fairness_smoke_run(tenant_id: str, payload: FairnessSmokeRunCreate) -
         tenant_id=tenant_id,
         scope=payload.scope,
         status="completed",
+        created_by=created_by,
+        submitted_job_id=submitted_job_id,
+        request_id=request_id,
+        target_session_id=payload.target_session_id,
+        evidence_refs={
+            "scope": payload.scope,
+            "target_session_id": str(payload.target_session_id) if payload.target_session_id is not None else None,
+            "sample_size": sample_size,
+        },
         summary=summary,
+        created_at=datetime.now(timezone.utc),
     )
     store.fairness_smoke_runs[run.id] = run.model_dump(mode="json")
     return run
@@ -59,3 +77,29 @@ def get_fairness_smoke_run(run_id: UUID) -> FairnessSmokeRun | None:
     if payload is None:
         return None
     return FairnessSmokeRun.model_validate(payload)
+
+
+def list_fairness_smoke_runs_for_tenant(
+    tenant_id: str,
+    *,
+    scope: str | None = None,
+    status: str | None = None,
+    target_session_id: UUID | None = None,
+    limit: int = 20,
+) -> list[FairnessSmokeRun]:
+    target_session_id_str = str(target_session_id) if target_session_id is not None else None
+    bounded_limit = min(max(limit, 1), 100)
+    items: list[FairnessSmokeRun] = []
+    for payload in store.fairness_smoke_runs.values():
+        run = FairnessSmokeRun.model_validate(payload)
+        if run.tenant_id != tenant_id:
+            continue
+        if scope is not None and run.scope != scope:
+            continue
+        if status is not None and run.status != status:
+            continue
+        if target_session_id_str is not None and str(run.target_session_id) != target_session_id_str:
+            continue
+        items.append(run)
+    items.sort(key=lambda item: item.created_at, reverse=True)
+    return items[:bounded_limit]

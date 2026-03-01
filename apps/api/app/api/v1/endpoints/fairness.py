@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
 from app.schemas import FairnessSmokeRun, FairnessSmokeRunCreate, JobAccepted
 from app.services.audit import audit
-from app.services.fairness import get_fairness_smoke_run
+from app.services.fairness import get_fairness_smoke_run, list_fairness_smoke_runs_for_tenant
 from app.services.jobs import submit_job
 
 router = APIRouter(prefix="/v1/fairness/smoke-runs", tags=["fairness"])
@@ -36,15 +36,37 @@ def create_smoke_run(
         "submit_job",
         "fairness",
         user.tenant_id,
-        {"job_id": str(accepted.job_id), "scope": payload.scope},
+        {
+            "job_id": str(accepted.job_id),
+            "scope": payload.scope,
+            "target_session_id": str(payload.target_session_id) if payload.target_session_id is not None else None,
+        },
     )
     return accepted
+
+
+@router.get("", response_model=dict[str, list[FairnessSmokeRun]])
+def list_smoke_runs(
+    scope: str | None = Query(default=None),
+    status_filter: str | None = Query(default=None, alias="status"),
+    target_session_id: UUID | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=100),
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> dict[str, list[FairnessSmokeRun]]:
+    items = list_fairness_smoke_runs_for_tenant(
+        user.tenant_id,
+        scope=scope,
+        status=status_filter,
+        target_session_id=target_session_id,
+        limit=limit,
+    )
+    return {"items": items}
 
 
 @router.get("/{run_id}", response_model=FairnessSmokeRun)
 def get_smoke_run(
     run_id: UUID,
-    user: UserContext = Depends(require_roles("org_admin")),
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
 ) -> FairnessSmokeRun:
     run = get_fairness_smoke_run(run_id)
     if run is None or run.tenant_id != user.tenant_id:

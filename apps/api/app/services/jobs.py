@@ -226,6 +226,11 @@ def submit_job(
     job_id = uuid4()
     max_attempts = get_settings().worker_max_attempts_default
 
+    request_id = get_request_id()
+    normalized_payload = dict(request_payload)
+    if request_id:
+        normalized_payload.setdefault("request_id", request_id)
+
     with SessionLocal() as db:
         db.add(
             JobRunModel(
@@ -236,7 +241,7 @@ def submit_job(
                 target_type=target_type,
                 target_id=str(target_id),
                 status="pending",
-                request_payload=request_payload,
+                request_payload=normalized_payload,
                 result_payload=None,
                 error_code=None,
                 error_detail=None,
@@ -474,7 +479,14 @@ def _handle_export_session(job: JobRunModel) -> dict[str, Any]:
 def _handle_redteam(job: JobRunModel) -> dict[str, Any]:
     target_type = str(job.request_payload["target_type"])
     target_id = UUID(job.request_payload["target_id"])
-    result = run_redteam(target_type, target_id)
+    result = run_redteam(
+        tenant_id=job.tenant_id,
+        target_type=target_type,
+        target_id=target_id,
+        created_by=job.created_by,
+        submitted_job_id=UUID(job.id),
+        request_id=job.request_payload.get("request_id"),
+    )
     store.redteam_runs[result.id] = result.model_dump(mode="json")
     _audit_system(job.tenant_id, "run", "redteam", str(result.id), {"target_type": target_type, "target_id": str(target_id)})
     return result.model_dump(mode="json")
@@ -519,7 +531,13 @@ def _handle_interpretation_generate(job: JobRunModel) -> dict[str, Any]:
 
 def _handle_fairness_smoke_run(job: JobRunModel) -> dict[str, Any]:
     payload = FairnessSmokeRunCreate.model_validate(job.request_payload)
-    run = create_fairness_smoke_run(job.tenant_id, payload)
+    run = create_fairness_smoke_run(
+        job.tenant_id,
+        payload,
+        created_by=job.created_by,
+        submitted_job_id=UUID(job.id),
+        request_id=job.request_payload.get("request_id"),
+    )
     _audit_system(
         job.tenant_id,
         "fairness_smoke_run",

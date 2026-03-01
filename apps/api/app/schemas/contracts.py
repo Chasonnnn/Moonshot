@@ -369,6 +369,7 @@ class ContextInjectionTraceListResponse(BaseModel):
 class FairnessSmokeRunCreate(BaseModel):
     scope: str = "tenant_recent"
     include_language_proxy: bool = True
+    target_session_id: UUID | None = None
 
 
 class FairnessSmokeRun(BaseModel):
@@ -376,6 +377,11 @@ class FairnessSmokeRun(BaseModel):
     tenant_id: str
     scope: str
     status: str = "completed"
+    created_by: str | None = None
+    submitted_job_id: UUID | None = None
+    request_id: str | None = None
+    target_session_id: UUID | None = None
+    evidence_refs: dict[str, Any] = Field(default_factory=dict)
     summary: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -402,9 +408,15 @@ class RedTeamRunCreate(BaseModel):
 
 class RedTeamRun(BaseModel):
     id: UUID = Field(default_factory=uuid4)
+    tenant_id: str | None = None
     target_type: str
     target_id: UUID
     status: str
+    created_by: str | None = None
+    submitted_job_id: UUID | None = None
+    request_id: str | None = None
+    evidence_refs: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     findings: list[dict[str, Any]] = Field(default_factory=list)
 
 

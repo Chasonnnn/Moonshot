@@ -24,12 +24,23 @@ def test_redteam_run_list_and_get_scoped_to_tenant(client, admin_headers):
 
     list_resp = client.get("/v1/redteam/runs", headers=admin_headers)
     assert list_resp.status_code == 200
-    listed_ids = {item["id"] for item in list_resp.json()["items"]}
+    list_items = list_resp.json()["items"]
+    listed_ids = {item["id"] for item in list_items}
     assert run_id in listed_ids
+    listed_run = next(item for item in list_items if item["id"] == run_id)
+    assert listed_run["created_by"] == "admin_1"
+    assert listed_run["submitted_job_id"] == submit.json()["job_id"]
+    assert listed_run["request_id"] is not None
+    assert listed_run["created_at"] is not None
+    assert listed_run["evidence_refs"]["target_type"] == "session"
 
     get_resp = client.get(f"/v1/redteam/runs/{run_id}", headers=admin_headers)
     assert get_resp.status_code == 200
     assert get_resp.json()["id"] == run_id
+    assert get_resp.json()["created_by"] == "admin_1"
+    assert get_resp.json()["submitted_job_id"] == submit.json()["job_id"]
+    assert get_resp.json()["request_id"] is not None
+    assert get_resp.json()["created_at"] is not None
 
     other_tenant_headers = {
         "Authorization": f"Bearer {issue_access_token(role='org_admin', user_id='admin_other', tenant_id='tenant_b').access_token}"

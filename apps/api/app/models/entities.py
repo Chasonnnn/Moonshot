@@ -131,9 +131,15 @@ class RedTeamRunModel(Base):
     __tablename__ = "redteam_runs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
     target_type: Mapped[str] = mapped_column(String(64))
     target_id: Mapped[str] = mapped_column(String(36))
     status: Mapped[str] = mapped_column(String(32))
+    created_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    submitted_job_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    evidence_refs: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
     findings: Mapped[list] = mapped_column(JSON)
 
 
@@ -309,6 +315,11 @@ class FairnessSmokeRunModel(Base):
     tenant_id: Mapped[str] = mapped_column(String(100), index=True)
     scope: Mapped[str] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(32), index=True)
+    created_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    submitted_job_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    target_session_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    evidence_refs: Mapped[dict] = mapped_column(JSON, default=dict)
     summary: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 

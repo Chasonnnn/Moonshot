@@ -43,6 +43,8 @@ def create_redteam_run(
 def list_redteam_runs(
     target_type: str | None = Query(default=None),
     target_id: UUID | None = Query(default=None),
+    status_filter: str | None = Query(default=None, alias="status"),
+    limit: int = Query(default=20, ge=1, le=100),
     user: UserContext = Depends(require_roles("org_admin", "reviewer")),
 ) -> dict[str, list[RedTeamRun]]:
     items = list_redteam_runs_for_tenant(
@@ -50,6 +52,9 @@ def list_redteam_runs(
         target_type=target_type,
         target_id=target_id,
     )
+    if status_filter is not None:
+        items = [item for item in items if item.status == status_filter]
+    items = items[:limit]
     return {"items": items}
 
 
