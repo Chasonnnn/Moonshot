@@ -40,6 +40,7 @@ export interface GovernanceBundleReference {
 }
 
 export interface DemoRunState extends PilotFlowState {
+  apiBaseUrl: string | null
   mode: DemoSeedMode
   redteamJobId: string | null
   redteamRunId: string | null
@@ -78,6 +79,7 @@ export const initialPilotFlowState: PilotFlowState = {
 
 export const initialDemoRunState: DemoRunState = {
   ...initialPilotFlowState,
+  apiBaseUrl: null,
   mode: "both",
   redteamJobId: null,
   redteamRunId: null,

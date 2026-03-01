@@ -353,10 +353,12 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
   const steps: PilotFlowStep[] = []
   const seedEntries: ScenarioSeedEntry[] = []
   let tenantId: string | null = null
+  let apiBaseUrl: string | null = null
 
   try {
     const client = createMoonshotClientFromEnv()
     tenantId = client.config.tenantId
+    apiBaseUrl = client.config.baseUrl
     const [adminToken, reviewerToken, candidateToken, meta] = await Promise.all([
       client.issueToken("org_admin", client.config.adminUserId),
       client.issueToken("reviewer", client.config.reviewerUserId),
@@ -479,6 +481,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
       startedAt,
       completedAt: new Date().toISOString(),
       tenantId,
+      apiBaseUrl,
       caseId: caseIdForRun,
       taskFamilyId: flow.taskFamilyId,
       sessionId: flow.sessionId,
@@ -512,6 +515,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
       ...initialDemoRunState,
       status: "error",
       mode,
+      apiBaseUrl,
       startedAt,
       completedAt: new Date().toISOString(),
       tenantId,

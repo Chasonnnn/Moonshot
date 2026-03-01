@@ -21,6 +21,20 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
     return `/session/${state.sessionId}`
   }, [state.sessionId])
 
+  const redteamEvidenceUrl = useMemo(() => {
+    if (!state.apiBaseUrl || !state.redteamRunId) {
+      return null
+    }
+    return `${state.apiBaseUrl}/v1/redteam/runs/${state.redteamRunId}`
+  }, [state.apiBaseUrl, state.redteamRunId])
+
+  const fairnessEvidenceUrl = useMemo(() => {
+    if (!state.apiBaseUrl || !state.fairnessRunId) {
+      return null
+    }
+    return `${state.apiBaseUrl}/v1/fairness/smoke-runs/${state.fairnessRunId}`
+  }, [state.apiBaseUrl, state.fairnessRunId])
+
   return (
     <section className="rounded-2xl bg-white p-8 shadow-sm">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -137,7 +151,18 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
               <p className="text-[12px] text-[#1D1D1F]">Fairness sample size: {state.fairnessSampleSize ?? "n/a"}</p>
               {state.redteamRunId ? (
                 <div className="text-[12px] text-[#6E6E73]">
-                  <p>evidence: /v1/redteam/runs/{state.redteamRunId}</p>
+                  {redteamEvidenceUrl ? (
+                    <a
+                      href={redteamEvidenceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#0071E3] underline"
+                    >
+                      evidence: /v1/redteam/runs/{state.redteamRunId}
+                    </a>
+                  ) : (
+                    <p>evidence: /v1/redteam/runs/{state.redteamRunId}</p>
+                  )}
                   <Link href={`/reports/${state.sessionId}`} className="text-[#0071E3] underline">
                     Open Report Review
                   </Link>
@@ -145,7 +170,18 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
               ) : null}
               {state.fairnessRunId ? (
                 <div className="text-[12px] text-[#6E6E73]">
-                  <p>evidence: /v1/fairness/smoke-runs/{state.fairnessRunId}</p>
+                  {fairnessEvidenceUrl ? (
+                    <a
+                      href={fairnessEvidenceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#0071E3] underline"
+                    >
+                      evidence: /v1/fairness/smoke-runs/{state.fairnessRunId}
+                    </a>
+                  ) : (
+                    <p>evidence: /v1/fairness/smoke-runs/{state.fairnessRunId}</p>
+                  )}
                   <Link href="/governance" className="text-[#0071E3] underline">
                     Open Governance
                   </Link>
