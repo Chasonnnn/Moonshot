@@ -105,3 +105,63 @@ export class MoonshotApiError extends Error {
     this.requestId = options.requestId ?? null
   }
 }
+
+export interface CandidateSession {
+  id: string
+  tenant_id: string
+  task_family_id: string
+  candidate_id: string
+  status: string
+  policy: {
+    raw_content_opt_in: boolean
+    retention_ttl_days: number
+    time_limit_minutes: number | null
+  }
+  final_response: string | null
+  created_at: string
+  updated_at: string
+  task_prompt: string
+}
+
+export interface SqlRunResponse {
+  ok: boolean
+  row_count: number
+  columns: string[]
+  rows: Record<string, unknown>[]
+  runtime_ms: number
+}
+
+export interface SqlHistoryItem {
+  query: string
+  ok: boolean
+  row_count: number | null
+  columns: string[]
+  error: string | null
+  executed_at: string
+}
+
+export interface DashboardState {
+  filters: Record<string, unknown>
+  view: string
+  annotations: string[]
+}
+
+export interface CoachResponse {
+  allowed: boolean
+  response: string
+  policy_reason: string
+  policy_decision_code: string | null
+  policy_version: string | null
+  policy_hash: string | null
+  blocked_rule_id: string | null
+}
+
+export interface CoachFeedback {
+  id: string
+  session_id: string
+  candidate_id: string
+  helpful: boolean
+  confusion_tags: string[]
+  notes: string | null
+  created_at: string
+}
