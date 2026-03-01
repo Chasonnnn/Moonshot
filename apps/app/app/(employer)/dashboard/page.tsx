@@ -1,134 +1,101 @@
-import { TriangleAlertIcon, ArrowUpRightIcon, PlusIcon, Loader2Icon } from "lucide-react"
+import Link from "next/link"
+import { ArrowUpRightIcon } from "lucide-react"
 
-export default function DashboardPage() {
+import { loadDashboardSnapshot } from "@/actions/pilot"
+
+export const dynamic = "force-dynamic"
+
+function formatConfidence(value: number | null): string {
+  if (value === null) {
+    return "n/a"
+  }
+  return `${Math.round(value * 100)}%`
+}
+
+export default async function DashboardPage() {
+  const snapshot = await loadDashboardSnapshot()
+
+  if (snapshot.error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F7] px-8">
+        <div className="w-full max-w-xl rounded-2xl border border-[#FF9F0A] bg-white p-8 text-left shadow-sm">
+          <h1 className="text-[22px] font-semibold text-[#1D1D1F]">Dashboard Unavailable</h1>
+          <p className="mt-2 text-[14px] text-[#6E6E73]">{snapshot.error}</p>
+          <p className="mt-4 text-[12px] text-[#6E6E73]">
+            This is an explicit failure state by design so integration issues are visible.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F7]">
-      {/* Job running banner */}
-      <div className="bg-[#0071E3] px-8 py-2.5 flex items-center gap-2.5 text-[13px] text-white">
-        <Loader2Icon className="size-3.5 shrink-0 animate-spin opacity-80" />
-        <span>
-          Job #4812 is generating task family variants — you can navigate away safely.
-        </span>
-      </div>
-
-      {/* Page content */}
-      <div className="max-w-screen-lg mx-auto px-8 py-14">
-
-        {/* Page header */}
-        <div className="flex items-end justify-between mb-14">
+      <div className="mx-auto max-w-screen-xl px-8 py-14">
+        <div className="mb-14 flex items-end justify-between">
           <div>
-            <p className="text-[13px] text-[#6E6E73] mb-1.5 tracking-tight">
-              Acme Corp · Thu 26 Feb 2026
-            </p>
-            <h1 className="text-[40px] font-semibold text-[#1D1D1F] leading-none tracking-tight">
-              Dashboard
-            </h1>
+            <p className="mb-1.5 text-[13px] tracking-tight text-[#6E6E73]">Moonshot MVP · Live Tenant View</p>
+            <h1 className="text-[40px] font-semibold leading-none tracking-tight text-[#1D1D1F]">Dashboard</h1>
           </div>
-          <button className="flex items-center gap-1.5 bg-[#0071E3] hover:bg-[#0077ED] active:bg-[#006EDB] text-white text-[13px] font-medium px-4 py-2 rounded-full transition-colors">
-            <PlusIcon className="size-3.5" />
-            New Case
-          </button>
-        </div>
-
-        {/* Stats — large numbers, no card borders */}
-        <div className="grid grid-cols-3 gap-px bg-[#D2D2D7] rounded-2xl overflow-hidden mb-8 shadow-sm">
-          <div className="bg-white px-8 py-7">
-            <div className="text-[52px] font-semibold text-[#1D1D1F] leading-none mb-2">
-              2
-            </div>
-            <div className="text-[15px] text-[#6E6E73]">Active Cases</div>
-          </div>
-          <div className="bg-white px-8 py-7">
-            <div className="text-[52px] font-semibold text-[#1D1D1F] leading-none mb-2">
-              1
-            </div>
-            <div className="text-[15px] text-[#6E6E73]">Awaiting Review</div>
-          </div>
-          <div className="bg-white px-8 py-7">
-            <div className="text-[52px] font-semibold text-[#34C759] leading-none mb-2">
-              87%
-            </div>
-            <div className="text-[15px] text-[#6E6E73]">Scoring Agreement</div>
-          </div>
-        </div>
-
-        {/* Active Pilots */}
-        <section className="mb-6">
-          <h2 className="text-[22px] font-semibold text-[#1D1D1F] mb-4 tracking-tight">
-            Active Pilots
-          </h2>
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-8 py-6">
-              <div className="flex items-start justify-between gap-6">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2.5 mb-1">
-                    <span className="text-[17px] font-medium text-[#1D1D1F]">
-                      Customer Support Cohort A
-                    </span>
-                    <span className="text-[11px] font-medium text-[#6E6E73] bg-[#F5F5F7] px-2 py-0.5 rounded-full">
-                      In Progress
-                    </span>
-                  </div>
-                  <p className="text-[13px] text-[#6E6E73] mb-5">
-                    Role: Customer Support · 3 task variants · Started Feb 12
-                  </p>
-                  {/* Progress */}
-                  <div className="flex items-center justify-between text-[12px] text-[#6E6E73] mb-2">
-                    <span>Scoring progress</span>
-                    <span>12 / 30 scored</span>
-                  </div>
-                  <div className="h-1.5 bg-[#F5F5F7] rounded-full overflow-hidden">
-                    <div className="h-full w-[40%] bg-[#0071E3] rounded-full" />
-                  </div>
-                </div>
-                <button className="flex items-center gap-1 text-[#0071E3] text-[13px] font-medium hover:underline underline-offset-2 shrink-0 mt-1">
-                  Open Report
-                  <ArrowUpRightIcon className="size-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Red-team alert */}
-        <div className="bg-white rounded-2xl shadow-sm px-8 py-6 mb-10 flex items-start gap-4">
-          <div className="mt-0.5 size-8 rounded-full bg-[#FF9F0A]/10 flex items-center justify-center shrink-0">
-            <TriangleAlertIcon className="size-4 text-[#FF9F0A]" />
-          </div>
-          <div>
-            <div className="text-[15px] font-medium text-[#1D1D1F] mb-0.5">
-              Red-team findings require review
-            </div>
-            <div className="text-[13px] text-[#6E6E73]">
-              3 findings are pending before &ldquo;Customer Support v1&rdquo; can be published.
-            </div>
-          </div>
-          <span
-            className="ml-auto shrink-0 size-5 rounded-full border border-[#D2D2D7] text-[#6E6E73] text-[10px] font-medium flex items-center justify-center cursor-help self-center"
-            title="Whether red-team review gates publish is not yet decided"
+          <Link
+            href="/demo"
+            className="flex items-center gap-1.5 rounded-full bg-[#0071E3] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#0077ED] active:bg-[#006EDB]"
           >
-            ?
-          </span>
+            Open Demo Console
+            <ArrowUpRightIcon className="size-3.5" />
+          </Link>
         </div>
 
-        {/* Undecided features footer */}
-        <div className="flex flex-wrap gap-6 text-[12px] text-[#6E6E73]">
-          {[
-            { label: "AI copilot allowed", tip: "Policy not yet finalized" },
-            { label: "Time limit", tip: "Per-task time limits not yet decided" },
-            { label: "Tableau export", tip: "Integration under consideration" },
-          ].map(({ label, tip }) => (
-            <span key={label} className="flex items-center gap-1.5">
-              {label}
-              <span
-                className="size-4 rounded-full border border-[#D2D2D7] text-[9px] font-semibold flex items-center justify-center cursor-help text-[#6E6E73]"
-                title={tip}
-              >
-                ?
-              </span>
-            </span>
-          ))}
+        <div className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-[#D2D2D7] shadow-sm md:grid-cols-4">
+          <div className="bg-white px-6 py-7">
+            <div className="mb-2 text-[42px] font-semibold leading-none text-[#1D1D1F]">{snapshot.activeCases}</div>
+            <div className="text-[14px] text-[#6E6E73]">Active Cases</div>
+          </div>
+          <div className="bg-white px-6 py-7">
+            <div className="mb-2 text-[42px] font-semibold leading-none text-[#1D1D1F]">{snapshot.awaitingReview}</div>
+            <div className="text-[14px] text-[#6E6E73]">Awaiting Review</div>
+          </div>
+          <div className="bg-white px-6 py-7">
+            <div className="mb-2 text-[42px] font-semibold leading-none text-[#34C759]">{formatConfidence(snapshot.meanConfidence)}</div>
+            <div className="text-[14px] text-[#6E6E73]">Mean Confidence</div>
+          </div>
+          <div className="bg-white px-6 py-7">
+            <div className="mb-2 text-[42px] font-semibold leading-none text-[#1D1D1F]">{snapshot.inFlightJobs}</div>
+            <div className="text-[14px] text-[#6E6E73]">In-Flight Jobs</div>
+          </div>
         </div>
+
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-[22px] font-semibold tracking-tight text-[#1D1D1F]">Recent Sessions</h2>
+            <p className="text-[12px] text-[#6E6E73]">Confidence sample size: {snapshot.confidenceSampleSize}</p>
+          </div>
+          {snapshot.recentSessions.length === 0 ? (
+            <p className="text-[13px] text-[#6E6E73]">No sessions available yet for this tenant.</p>
+          ) : (
+            <div className="space-y-3">
+              {snapshot.recentSessions.map((item) => (
+                <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E5E5EA] px-4 py-3">
+                  <div>
+                    <p className="text-[13px] font-medium text-[#1D1D1F]">{item.id}</p>
+                    <p className="text-[12px] text-[#6E6E73]">
+                      status={item.status} · confidence={formatConfidence(item.confidence)} · review=
+                      {item.needsHumanReview === null ? "n/a" : item.needsHumanReview ? "required" : "clear"}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/session/${item.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F]"
+                  >
+                    Open Candidate Session
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   )

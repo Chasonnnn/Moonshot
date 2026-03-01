@@ -4,11 +4,13 @@ import {
   type ApiErrorShape,
   type AuthTokenResponse,
   type CaseSpec,
+  type FairnessSmokeRun,
   type JobAccepted,
   type JobResultResponse,
   type MetaVersion,
   MoonshotApiError,
   type MoonshotRole,
+  type RedTeamRun,
   type ReportSummary,
   type SessionRecord,
 } from "@/lib/moonshot/types"
@@ -127,6 +129,10 @@ export class MoonshotApiClient {
       `/v1/jobs?limit=${limit}`,
       { token },
     )
+  }
+
+  async listSessions(token: string): Promise<{ items: SessionRecord[] }> {
+    return this.request<{ items: SessionRecord[] }>("/v1/sessions", { token })
   }
 
   async createCase(token: string, payload: Record<string, unknown>): Promise<CaseSpec> {
@@ -257,6 +263,85 @@ export class MoonshotApiClient {
 
   async getExport(token: string, runId: string): Promise<Record<string, unknown>> {
     return this.request<Record<string, unknown>>(`/v1/exports/${runId}`, { token })
+  }
+
+  async createRedteamRun(
+    token: string,
+    payload: { targetType: "case" | "task_family" | "session"; targetId: string },
+    idempotencyKey: string,
+  ): Promise<JobAccepted> {
+    return this.request<JobAccepted>("/v1/redteam/runs", {
+      method: "POST",
+      token,
+      idempotencyKey,
+      body: { target_type: payload.targetType, target_id: payload.targetId },
+    })
+  }
+
+  async listRedteamRuns(
+    token: string,
+    filters?: { targetType?: string; targetId?: string },
+  ): Promise<{ items: RedTeamRun[] }> {
+    const params = new URLSearchParams()
+    if (filters?.targetType) {
+      params.set("target_type", filters.targetType)
+    }
+    if (filters?.targetId) {
+      params.set("target_id", filters.targetId)
+    }
+    const query = params.toString()
+    const path = query ? `/v1/redteam/runs?${query}` : "/v1/redteam/runs"
+    return this.request<{ items: RedTeamRun[] }>(path, { token })
+  }
+
+  async getRedteamRun(token: string, runId: string): Promise<RedTeamRun> {
+    return this.request<RedTeamRun>(`/v1/redteam/runs/${runId}`, { token })
+  }
+
+  async createFairnessSmokeRun(
+    token: string,
+    payload: { scope: string; includeLanguageProxy?: boolean },
+    idempotencyKey: string,
+  ): Promise<JobAccepted> {
+    return this.request<JobAccepted>("/v1/fairness/smoke-runs", {
+      method: "POST",
+      token,
+      idempotencyKey,
+      body: {
+        scope: payload.scope,
+        include_language_proxy: payload.includeLanguageProxy ?? true,
+      },
+    })
+  }
+
+  async getFairnessSmokeRun(token: string, runId: string): Promise<FairnessSmokeRun> {
+    return this.request<FairnessSmokeRun>(`/v1/fairness/smoke-runs/${runId}`, { token })
+  }
+
+  async getAuditChainVerification(token: string): Promise<{
+    valid: boolean
+    checked_entries: number
+    error_code?: string | null
+    error_detail?: string | null
+  }> {
+    return this.request<{
+      valid: boolean
+      checked_entries: number
+      error_code?: string | null
+      error_detail?: string | null
+    }>("/v1/audit-logs/verify", { token })
+  }
+
+  async getContextInjectionTraces(token: string, sessionId: string): Promise<{ items: Array<Record<string, unknown>> }> {
+    return this.request<{ items: Array<Record<string, unknown>> }>(`/v1/context/injection-traces/${sessionId}`, { token })
+  }
+
+  async purgeExpiredRawContentDryRun(token: string): Promise<{ purged_sessions: number; dry_run: boolean }> {
+    return this.request<{ purged_sessions: number; dry_run: boolean }>("/v1/admin/policies/purge-expired", {
+      method: "POST",
+      token,
+      body: { dry_run: true },
+    })
   }
 }
 

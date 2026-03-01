@@ -3,16 +3,23 @@
 import { type ReactNode } from "react"
 import Link from "next/link"
 import { Loader2Icon } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", active: true },
-  { label: "Case Builder", href: "/cases" },
-  { label: "Task Families", href: "/task-families" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Demo Console", href: "/demo" },
   { label: "Pilot Runs", href: "/pilots" },
-  { label: "Exports & Governance", href: "/exports" },
+]
+
+const comingSoonItems = [
+  { label: "Case Builder" },
+  { label: "Task Families" },
+  { label: "Exports & Governance" },
 ]
 
 export function EmployerShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname()
+
   return (
     <div className="min-h-screen bg-[#F5F5F7]">
       {/* Top navigation */}
@@ -36,13 +43,22 @@ export function EmployerShell({ children }: { children: ReactNode }) {
                 href={item.href}
                 className={[
                   "px-3 py-1.5 text-[13px] rounded-md transition-colors",
-                  item.active
+                  pathname === item.href
                     ? "bg-[#1D1D1F] text-white font-medium"
                     : "text-[#1D1D1F] hover:bg-[#1D1D1F]/8",
                 ].join(" ")}
               >
                 {item.label}
               </Link>
+            ))}
+            {comingSoonItems.map((item) => (
+              <span
+                key={item.label}
+                className="cursor-not-allowed rounded-md px-3 py-1.5 text-[13px] text-[#6E6E73]"
+                title="Coming soon"
+              >
+                {item.label}
+              </span>
             ))}
           </nav>
 

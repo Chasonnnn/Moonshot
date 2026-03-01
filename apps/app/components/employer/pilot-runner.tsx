@@ -1,12 +1,21 @@
 "use client"
 
 import { useActionState } from "react"
+import Link from "next/link"
 
 import { runJdaPilotFlow } from "@/actions/pilot"
 import { initialPilotFlowState, type PilotSnapshot } from "@/lib/moonshot/pilot-flow"
 
 export function PilotRunner({ snapshot }: { snapshot: PilotSnapshot }) {
   const [state, formAction, isPending] = useActionState(runJdaPilotFlow, initialPilotFlowState)
+  const candidateUrl = state.sessionId ? `/session/${state.sessionId}` : null
+
+  async function copyCandidateLink() {
+    if (!candidateUrl || typeof navigator === "undefined") {
+      return
+    }
+    await navigator.clipboard.writeText(`${window.location.origin}${candidateUrl}`)
+  }
 
   return (
     <section className="bg-white rounded-2xl shadow-sm p-8">
@@ -85,6 +94,34 @@ export function PilotRunner({ snapshot }: { snapshot: PilotSnapshot }) {
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="rounded-xl border border-[#E5E5EA] p-4">
+            <p className="text-[12px] text-[#6E6E73] mb-3">Candidate Handoff</p>
+            {candidateUrl ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={candidateUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-full bg-[#0071E3] text-white text-[12px] font-medium"
+                >
+                  Open Candidate Session
+                </Link>
+                <button
+                  type="button"
+                  onClick={copyCandidateLink}
+                  className="px-3 py-1.5 rounded-full bg-[#F5F5F7] text-[#1D1D1F] text-[12px] font-medium"
+                >
+                  Copy Link
+                </button>
+                <span className="text-[12px] text-[#6E6E73]">{candidateUrl}</span>
+              </div>
+            ) : (
+              <p className="text-[12px] text-[#D70015]">
+                Session ID missing. Candidate handoff is blocked until the session step succeeds.
+              </p>
+            )}
           </div>
         </div>
       ) : null}

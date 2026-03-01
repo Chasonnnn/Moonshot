@@ -59,6 +59,9 @@ export interface SessionRecord {
   candidate_id: string
   status: string
   policy: Record<string, unknown>
+  final_response?: string | null
+  created_at?: string
+  updated_at?: string
 }
 
 export interface ReportSummary {
@@ -81,6 +84,23 @@ export interface ReportSummary {
 export interface MetaVersion {
   api_version: string
   schema_version: string
+}
+
+export interface RedTeamRun {
+  id: string
+  target_type: string
+  target_id: string
+  status: string
+  findings: Array<Record<string, unknown>>
+}
+
+export interface FairnessSmokeRun {
+  id: string
+  tenant_id: string
+  scope: string
+  status: string
+  summary: Record<string, unknown>
+  created_at: string
 }
 
 export interface ApiErrorShape {

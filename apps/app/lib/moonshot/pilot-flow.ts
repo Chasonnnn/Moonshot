@@ -19,6 +19,36 @@ export interface PilotFlowState {
   error: string | null
 }
 
+export type DemoSeedMode = "fixture" | "fresh" | "both"
+
+export interface ScenarioSeedEntry {
+  source: "fixture" | "fresh"
+  scenarioId: string
+  title: string
+  caseId: string
+}
+
+export interface ScenarioSeedManifest {
+  mode: DemoSeedMode
+  generatedAt: string
+  entries: ScenarioSeedEntry[]
+}
+
+export interface GovernanceBundleReference {
+  generatedAt: string
+  checks: string[]
+}
+
+export interface DemoRunState extends PilotFlowState {
+  mode: DemoSeedMode
+  redteamRunId: string | null
+  fairnessRunId: string | null
+  redteamFindings: number | null
+  fairnessSampleSize: number | null
+  seedManifest: ScenarioSeedManifest | null
+  governanceBundle: GovernanceBundleReference | null
+}
+
 export interface PilotSnapshot {
   ok: boolean
   apiVersion: string | null
@@ -40,4 +70,15 @@ export const initialPilotFlowState: PilotFlowState = {
   confidence: null,
   steps: [],
   error: null,
+}
+
+export const initialDemoRunState: DemoRunState = {
+  ...initialPilotFlowState,
+  mode: "both",
+  redteamRunId: null,
+  fairnessRunId: null,
+  redteamFindings: null,
+  fairnessSampleSize: null,
+  seedManifest: null,
+  governanceBundle: null,
 }
