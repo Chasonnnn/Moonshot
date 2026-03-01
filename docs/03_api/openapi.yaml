@@ -1359,6 +1359,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - redteam
+      summary: List Redteam Runs
+      operationId: list_redteam_runs_v1_redteam_runs_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: target_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target Type
+      - name: target_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Target Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RedTeamRun'
+                title: Response List Redteam Runs V1 Redteam Runs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/redteam/runs/{run_id}:
+    get:
+      tags:
+      - redteam
+      summary: Get Redteam Run
+      operationId: get_redteam_run_v1_redteam_runs__run_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedTeamRun'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/review-queue:
     get:
       tags:
@@ -2684,6 +2756,34 @@ components:
       - purged_sessions
       - dry_run
       title: PurgeExpiredResponse
+    RedTeamRun:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        target_type:
+          type: string
+          title: Target Type
+        target_id:
+          type: string
+          format: uuid
+          title: Target Id
+        status:
+          type: string
+          title: Status
+        findings:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Findings
+      type: object
+      required:
+      - target_type
+      - target_id
+      - status
+      title: RedTeamRun
     RedTeamRunCreate:
       properties:
         target_type:

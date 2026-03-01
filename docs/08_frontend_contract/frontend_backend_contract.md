@@ -76,6 +76,8 @@ Export schema lock:
 - `GET /v1/reports/{session_id}/interpretations/{view_id}`
 
 ### Governance/fairness loop
+- `GET /v1/redteam/runs`
+- `GET /v1/redteam/runs/{run_id}`
 - `GET /v1/context/injection-traces/{session_id}`
 - `POST /v1/fairness/smoke-runs` (async submit)
 - `GET /v1/fairness/smoke-runs/{run_id}`

@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import JobAccepted, RedTeamRunCreate
+from app.schemas import JobAccepted, RedTeamRun, RedTeamRunCreate
 from app.services.audit import audit
 from app.services.jobs import submit_job
+from app.services.redteam import get_redteam_run_for_tenant, list_redteam_runs_for_tenant
 
 router = APIRouter(prefix="/v1/redteam/runs", tags=["redteam"])
 
@@ -34,3 +37,28 @@ def create_redteam_run(
         {"job_id": str(accepted.job_id), "target_type": payload.target_type},
     )
     return accepted
+
+
+@router.get("", response_model=dict[str, list[RedTeamRun]])
+def list_redteam_runs(
+    target_type: str | None = Query(default=None),
+    target_id: UUID | None = Query(default=None),
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> dict[str, list[RedTeamRun]]:
+    items = list_redteam_runs_for_tenant(
+        user.tenant_id,
+        target_type=target_type,
+        target_id=target_id,
+    )
+    return {"items": items}
+
+
+@router.get("/{run_id}", response_model=RedTeamRun)
+def get_redteam_run(
+    run_id: UUID,
+    user: UserContext = Depends(require_roles("org_admin", "reviewer")),
+) -> RedTeamRun:
+    run = get_redteam_run_for_tenant(user.tenant_id, run_id)
+    if run is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Red-team run not found")
+    return run

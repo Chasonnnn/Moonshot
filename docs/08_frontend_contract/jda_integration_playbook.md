@@ -42,6 +42,10 @@ This playbook is the implementation contract for frontend teams integrating the 
 11. Poll and fetch export:
    - `GET /v1/jobs/{job_id}/result`
    - `GET /v1/exports/{run_id}`
+12. Optional demo safety reads:
+   - `GET /v1/redteam/runs`
+   - `GET /v1/redteam/runs/{run_id}`
+   - `GET /v1/fairness/smoke-runs/{run_id}`
 
 ## Polling Cadence and Timeouts
 1. Poll interval:
