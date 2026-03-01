@@ -37,9 +37,11 @@ export function SessionHeader({ onSubmit }: { onSubmit: () => void }) {
           {remainingSeconds !== null && (
             <span
               className={`font-mono text-[13px] tabular-nums ${
-                remainingSeconds <= 300
-                  ? "text-[#FF9F0A] font-medium"
-                  : "text-[#86868B]"
+                remainingSeconds <= 60
+                  ? "text-[#D70015] font-semibold animate-pulse"
+                  : remainingSeconds <= 300
+                    ? "text-[#FF9F0A] font-medium"
+                    : "text-[#86868B]"
               }`}
             >
               {formatTime(remainingSeconds)}

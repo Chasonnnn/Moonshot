@@ -1,7 +1,9 @@
 import Link from "next/link"
-import { ArrowUpRightIcon } from "lucide-react"
+import { ArrowUpRightIcon, InboxIcon } from "lucide-react"
 
 import { loadDashboardSnapshot } from "@/actions/pilot"
+import { Badge } from "@/components/ui/badge"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 export const dynamic = "force-dynamic"
 
@@ -71,17 +73,36 @@ export default async function DashboardPage() {
             <p className="text-[12px] text-[#6E6E73]">Confidence sample size: {snapshot.confidenceSampleSize}</p>
           </div>
           {snapshot.recentSessions.length === 0 ? (
-            <p className="text-[13px] text-[#6E6E73]">No sessions available yet for this tenant.</p>
+            <Empty className="py-8">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><InboxIcon /></EmptyMedia>
+                <EmptyTitle>No sessions yet</EmptyTitle>
+                <EmptyDescription>Sessions will appear here once candidates begin assessments.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="space-y-3">
               {snapshot.recentSessions.map((item) => (
                 <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E5E5EA] px-4 py-3">
-                  <div>
-                    <p className="text-[13px] font-medium text-[#1D1D1F]">{item.id}</p>
-                    <p className="text-[12px] text-[#6E6E73]">
-                      status={item.status} · confidence={formatConfidence(item.confidence)} · review=
-                      {item.needsHumanReview === null ? "n/a" : item.needsHumanReview ? "required" : "clear"}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-[13px] font-medium text-[#1D1D1F]">
+                        Session <code className="font-mono text-[12px]">{item.id.slice(0, 8)}</code>
+                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Badge variant={item.status === "completed" ? "secondary" : "outline"} className="text-[11px]">
+                          {item.status}
+                        </Badge>
+                        <span className="text-[12px] text-[#6E6E73]">
+                          Confidence: {formatConfidence(item.confidence)}
+                        </span>
+                        {item.needsHumanReview !== null && (
+                          <Badge variant={item.needsHumanReview ? "destructive" : "secondary"} className="text-[11px]">
+                            {item.needsHumanReview ? "Review required" : "Clear"}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Link

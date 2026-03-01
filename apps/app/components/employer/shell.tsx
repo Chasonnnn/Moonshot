@@ -2,8 +2,14 @@
 
 import { type ReactNode } from "react"
 import Link from "next/link"
-import { Loader2Icon } from "lucide-react"
+import { CheckCircle2Icon, Loader2Icon } from "lucide-react"
 import { usePathname } from "next/navigation"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
@@ -14,7 +20,17 @@ const navItems = [
   { label: "Pilot Runs", href: "/pilots" },
 ]
 
-export function EmployerShell({ children }: { children: ReactNode }) {
+function isNavActive(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(href + "/")
+}
+
+export function EmployerShell({
+  children,
+  jobCount = 0,
+}: {
+  children: ReactNode
+  jobCount?: number
+}) {
   const pathname = usePathname()
 
   return (
@@ -40,7 +56,7 @@ export function EmployerShell({ children }: { children: ReactNode }) {
                 href={item.href}
                 className={[
                   "px-3 py-1.5 text-[13px] rounded-md transition-colors",
-                  pathname === item.href
+                  isNavActive(pathname, item.href)
                     ? "bg-[#1D1D1F] text-white font-medium"
                     : "text-[#1D1D1F] hover:bg-[#1D1D1F]/8",
                 ].join(" ")}
@@ -52,13 +68,27 @@ export function EmployerShell({ children }: { children: ReactNode }) {
 
           {/* Right: job indicator + avatar */}
           <div className="flex items-center gap-4 shrink-0">
-            <div className="flex items-center gap-1.5 text-[12px] text-[#6E6E73]">
-              <Loader2Icon className="size-3 animate-spin" />
-              <span>Processing</span>
-            </div>
-            <div className="size-7 rounded-full bg-[#1D1D1F] flex items-center justify-center">
-              <span className="text-white text-[11px] font-medium">A</span>
-            </div>
+            {jobCount > 0 ? (
+              <div className="flex items-center gap-1.5 text-[12px] text-[#6E6E73]">
+                <Loader2Icon className="size-3 animate-spin" />
+                <span>Processing {jobCount > 1 ? `(${jobCount})` : ""}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-[12px] text-[#34C759]">
+                <CheckCircle2Icon className="size-3" />
+                <span>Ready</span>
+              </div>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  render={<div className="size-7 rounded-full bg-[#1D1D1F] flex items-center justify-center cursor-default" />}
+                >
+                  <span className="text-white text-[11px] font-medium">A</span>
+                </TooltipTrigger>
+                <TooltipContent>Admin</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </header>

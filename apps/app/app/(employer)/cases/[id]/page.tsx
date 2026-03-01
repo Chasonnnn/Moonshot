@@ -2,6 +2,14 @@ import Link from "next/link"
 
 import { loadCaseDetail } from "@/actions/cases"
 import { CaseDetailConsole } from "@/components/employer/case-detail-console"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 export const dynamic = "force-dynamic"
 
@@ -25,9 +33,20 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="mx-auto max-w-screen-xl px-8 py-14">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/cases" />}>Cases</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{detail.caseItem.title}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="mb-10">
         <p className="mb-1.5 text-[13px] tracking-tight text-[#6E6E73]">Moonshot MVP · Employer Ops</p>
-        <h1 className="text-[40px] font-semibold leading-none tracking-tight text-[#1D1D1F]">Case {detail.caseItem.id}</h1>
+        <h1 className="text-[40px] font-semibold leading-none tracking-tight text-[#1D1D1F]">{detail.caseItem.title}</h1>
       </div>
       <CaseDetailConsole caseItem={detail.caseItem} taskFamilies={detail.taskFamilies} />
     </div>
