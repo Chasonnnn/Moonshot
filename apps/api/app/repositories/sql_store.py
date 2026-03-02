@@ -36,6 +36,7 @@ from app.models.entities import (
     RubricModel,
     ScoreResultModel,
     SessionModel,
+    SessionPythonHistoryModel,
     SessionSQLHistoryModel,
     TaskQualitySignalModel,
     TaskFamilyModel,
@@ -415,6 +416,70 @@ class SQLHistoryMap:
             db.commit()
 
 
+class PythonHistoryListProxy:
+    def __init__(self, parent: "PythonHistoryMap", session_id: Any) -> None:
+        self._parent = parent
+        self._session_id = session_id
+
+    def append(self, item: dict[str, Any]) -> None:
+        self._parent.append(self._session_id, item)
+
+    def __iter__(self) -> Iterator[dict[str, Any]]:
+        return iter(self._parent.get(self._session_id, []))
+
+
+class PythonHistoryMap:
+    def __init__(self, *, session_factory: sessionmaker) -> None:
+        self._session_factory = session_factory
+
+    def _fetch(self, session_id: Any) -> list[dict[str, Any]]:
+        key = _to_storage_key(session_id)
+        with self._session_factory() as db:
+            rows = (
+                db.execute(
+                    select(SessionPythonHistoryModel)
+                    .where(SessionPythonHistoryModel.session_id == key)
+                    .order_by(SessionPythonHistoryModel.created_at.asc(), SessionPythonHistoryModel.id.asc())
+                )
+                .scalars()
+                .all()
+            )
+            return [deepcopy(row.item) for row in rows]
+
+    def get(self, session_id: Any, default: Any | None = None) -> list[dict[str, Any]] | Any:
+        items = self._fetch(session_id)
+        if not items:
+            return default if default is not None else []
+        return items
+
+    def __getitem__(self, session_id: Any) -> PythonHistoryListProxy:
+        return PythonHistoryListProxy(self, session_id)
+
+    def __setitem__(self, session_id: Any, items: list[dict[str, Any]]) -> None:
+        key = _to_storage_key(session_id)
+        with self._session_factory() as db:
+            db.execute(delete(SessionPythonHistoryModel).where(SessionPythonHistoryModel.session_id == key))
+            for item in items:
+                db.add(SessionPythonHistoryModel(session_id=key, item=deepcopy(item), created_at=_now()))
+            db.commit()
+
+    def setdefault(self, session_id: Any, default: list[dict[str, Any]]) -> PythonHistoryListProxy:
+        if self.get(session_id, None) is None:
+            self[session_id] = default
+        return PythonHistoryListProxy(self, session_id)
+
+    def append(self, session_id: Any, item: dict[str, Any]) -> None:
+        key = _to_storage_key(session_id)
+        with self._session_factory() as db:
+            db.add(SessionPythonHistoryModel(session_id=key, item=deepcopy(item), created_at=_now()))
+            db.commit()
+
+    def clear(self) -> None:
+        with self._session_factory() as db:
+            db.execute(delete(SessionPythonHistoryModel))
+            db.commit()
+
+
 class SQLDashboardStateMap:
     def __init__(self, *, session_factory: sessionmaker) -> None:
         self._session_factory = session_factory
@@ -632,6 +697,7 @@ class SQLStore:
             uuid_keys=False,
         )
         self.session_sql_history = SQLHistoryMap(session_factory=session_factory)
+        self.session_python_history = PythonHistoryMap(session_factory=session_factory)
         self.dashboard_state = SQLDashboardStateMap(session_factory=session_factory)
         self.job_runs = SQLRowMap(
             session_factory=session_factory,

@@ -98,3 +98,78 @@ def test_dashboard_state_and_action(client, admin_headers, candidate_headers, re
     reviewer_state = client.get(f"/v1/sessions/{session_id}/dashboard/state", headers=reviewer_headers)
     assert reviewer_state.status_code == 200
     assert reviewer_state.json()["filters"]["region"] == "NA"
+
+
+# ── Python simulator tests ────────────────────────────────────────────
+
+
+def test_python_run_valid_code(client, admin_headers, candidate_headers):
+    session_id = _create_live_session(client, admin_headers)
+    run = client.post(
+        f"/v1/sessions/{session_id}/python/run",
+        headers=candidate_headers,
+        json={"code": "import pandas as pd\ndf = pd.DataFrame({'a': [1,2,3]})\nprint(df)"},
+    )
+    assert run.status_code == 200
+    payload = run.json()
+    assert payload["ok"] is True
+    assert payload["stdout"] is not None
+    assert payload["runtime_ms"] >= 0
+
+
+def test_python_run_blocks_destructive_code(client, admin_headers, candidate_headers):
+    session_id = _create_live_session(client, admin_headers)
+    for dangerous_code in [
+        "import os",
+        "import subprocess",
+        "open('file.txt')",
+        "exec('code')",
+        "eval('1+1')",
+        "__import__('os')",
+    ]:
+        run = client.post(
+            f"/v1/sessions/{session_id}/python/run",
+            headers=candidate_headers,
+            json={"code": dangerous_code},
+        )
+        assert run.status_code == 400, f"Expected 400 for: {dangerous_code}"
+        assert "disallowed" in run.json()["detail"].lower()
+
+
+def test_python_run_empty_code(client, admin_headers, candidate_headers):
+    session_id = _create_live_session(client, admin_headers)
+    run = client.post(
+        f"/v1/sessions/{session_id}/python/run",
+        headers=candidate_headers,
+        json={"code": ""},
+    )
+    assert run.status_code == 400
+
+
+def test_python_run_with_plot(client, admin_headers, candidate_headers):
+    session_id = _create_live_session(client, admin_headers)
+    run = client.post(
+        f"/v1/sessions/{session_id}/python/run",
+        headers=candidate_headers,
+        json={"code": "import matplotlib.pyplot as plt\nplt.plot([1,2,3])\nplt.show()"},
+    )
+    assert run.status_code == 200
+    payload = run.json()
+    assert payload["ok"] is True
+    assert payload["plot_url"] is not None
+
+
+def test_python_history(client, admin_headers, candidate_headers, reviewer_headers):
+    session_id = _create_live_session(client, admin_headers)
+    client.post(
+        f"/v1/sessions/{session_id}/python/run",
+        headers=candidate_headers,
+        json={"code": "print('hello')"},
+    )
+    history = client.get(f"/v1/sessions/{session_id}/python/history", headers=candidate_headers)
+    assert history.status_code == 200
+    assert len(history.json()["items"]) == 1
+
+    reviewer_history = client.get(f"/v1/sessions/{session_id}/python/history", headers=reviewer_headers)
+    assert reviewer_history.status_code == 200
+    assert len(reviewer_history.json()["items"]) == 1

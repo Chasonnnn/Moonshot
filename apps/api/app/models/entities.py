@@ -185,6 +185,15 @@ class SessionSQLHistoryModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 
 
+class SessionPythonHistoryModel(Base):
+    __tablename__ = "session_python_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    session_id: Mapped[str] = mapped_column(String(36), index=True)
+    item: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
 class DashboardStateModel(Base):
     __tablename__ = "dashboard_states"
 

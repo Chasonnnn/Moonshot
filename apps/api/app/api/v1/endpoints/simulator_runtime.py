@@ -11,6 +11,10 @@ from app.core.security import UserContext
 from app.schemas import (
     DashboardActionRequest,
     DashboardState,
+    PythonHistoryItem,
+    PythonHistoryResponse,
+    PythonRunRequest,
+    PythonRunResponse,
     SQLHistoryItem,
     SQLHistoryResponse,
     SQLRunRequest,
@@ -23,6 +27,9 @@ from app.services.store import store
 router = APIRouter(prefix="/v1/sessions", tags=["simulator-runtime"])
 
 DISALLOWED_SQL_PATTERN = re.compile(r"\b(drop|delete|truncate|update|insert|alter|create)\b", re.IGNORECASE)
+DISALLOWED_PYTHON_PATTERN = re.compile(
+    r"\b(import\s+os|import\s+subprocess|open\s*\(|exec\s*\(|eval\s*\(|__import__\s*\()", re.IGNORECASE
+)
 
 
 def _get_session_for_access(session_id: UUID, user: UserContext, allow_reviewer: bool = True) -> dict:
@@ -42,6 +49,10 @@ def _get_session_for_access(session_id: UUID, user: UserContext, allow_reviewer:
 
 def _sql_history(session_id: UUID) -> list[dict]:
     return store.session_sql_history.setdefault(session_id, [])
+
+
+def _python_history(session_id: UUID) -> list[dict]:
+    return store.session_python_history.setdefault(session_id, [])
 
 
 def _dashboard_state(session_id: UUID) -> dict:
@@ -96,6 +107,51 @@ def list_sql_history(
     _get_session_for_access(session_id, user, allow_reviewer=True)
     items = [SQLHistoryItem.model_validate(item) for item in _sql_history(session_id)]
     return SQLHistoryResponse(items=items)
+
+
+@router.post("/{session_id}/python/run", response_model=PythonRunResponse)
+def run_python_code(
+    session_id: UUID,
+    payload: PythonRunRequest,
+    user: UserContext = Depends(require_roles("candidate")),
+) -> PythonRunResponse:
+    _get_session_for_access(session_id, user, allow_reviewer=False)
+    code = payload.code.strip()
+    if not code:
+        raise HTTPException(status_code=400, detail="code cannot be empty")
+
+    if DISALLOWED_PYTHON_PATTERN.search(code):
+        error_item = PythonHistoryItem(code=code, ok=False, error="disallowed_python_operation")
+        _python_history(session_id).append(error_item.model_dump(mode="json"))
+        session_repository.append_events(
+            session_id,
+            [{"event_type": "python_code_error", "payload": {"reason": "disallowed_python_operation"}}],
+        )
+        raise HTTPException(status_code=400, detail="disallowed python operation")
+
+    stdout = "   a\n0  1\n1  2\n2  3" if any(kw in code for kw in ["pandas", "DataFrame", "pd."]) else "hello"
+    plot_url = "/mock/plot.png" if any(kw in code for kw in ["matplotlib", "plt.", "plt.show"]) else None
+
+    response = PythonRunResponse(ok=True, stdout=stdout, stderr=None, plot_url=plot_url, runtime_ms=38)
+
+    history_item = PythonHistoryItem(code=code, ok=True, stdout=stdout, plot_url=plot_url, runtime_ms=response.runtime_ms)
+    _python_history(session_id).append(history_item.model_dump(mode="json"))
+    session_repository.append_events(
+        session_id,
+        [{"event_type": "python_code_run", "payload": {"runtime_ms": response.runtime_ms, "has_plot": plot_url is not None}}],
+    )
+    audit(user, "run_python", "session", str(session_id), {"runtime_ms": response.runtime_ms})
+    return response
+
+
+@router.get("/{session_id}/python/history", response_model=PythonHistoryResponse)
+def list_python_history(
+    session_id: UUID,
+    user: UserContext = Depends(require_roles("candidate", "reviewer", "org_admin")),
+) -> PythonHistoryResponse:
+    _get_session_for_access(session_id, user, allow_reviewer=True)
+    items = [PythonHistoryItem.model_validate(item) for item in _python_history(session_id)]
+    return PythonHistoryResponse(items=items)
 
 
 @router.get("/{session_id}/dashboard/state", response_model=DashboardState)
