@@ -11,5 +11,6 @@ describe("demo console evidence links", () => {
     expect(source).toContain("fairnessEvidenceUrl")
     expect(source).toContain("href={redteamEvidenceUrl}")
     expect(source).toContain("href={fairnessEvidenceUrl}")
+    expect(source).toContain("/start")
   })
 })

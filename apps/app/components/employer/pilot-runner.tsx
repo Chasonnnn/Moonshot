@@ -8,7 +8,7 @@ import { initialPilotFlowState, type PilotSnapshot } from "@/lib/moonshot/pilot-
 
 export function PilotRunner({ snapshot }: { snapshot: PilotSnapshot }) {
   const [state, formAction, isPending] = useActionState(runJdaPilotFlow, initialPilotFlowState)
-  const candidateUrl = state.sessionId ? `/session/${state.sessionId}` : null
+  const candidateUrl = state.sessionId ? `/session/${state.sessionId}/start` : null
 
   async function copyCandidateLink() {
     if (!candidateUrl || typeof navigator === "undefined") {

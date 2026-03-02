@@ -11,5 +11,6 @@ describe("pilot runner handoff", () => {
     expect(source).toContain("target=\"_blank\"")
     expect(source).toContain("Copy Link")
     expect(source).toContain("Session ID missing")
+    expect(source).toContain("/start")
   })
 })

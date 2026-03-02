@@ -150,7 +150,7 @@ export default async function DashboardPage() {
                       Open Report
                     </Link>
                     <Link
-                      href={`/session/${item.id}`}
+                      href={`/session/${item.id}/start`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F]"

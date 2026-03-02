@@ -11,6 +11,7 @@ describe("dashboard page data integration", () => {
     expect(source).toContain("Active Cases")
     expect(source).toContain("Awaiting Review")
     expect(source).toContain("In-Flight Jobs")
+    expect(source).toContain("/start")
     expect(source).not.toContain("Job #4812")
     expect(source).not.toContain("Customer Support Cohort A")
   })

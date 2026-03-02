@@ -21,7 +21,7 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
     if (!state.sessionId) {
       return null
     }
-    return `/session/${state.sessionId}`
+    return `/session/${state.sessionId}/start`
   }, [state.sessionId])
 
   const redteamEvidenceUrl = useMemo(() => {

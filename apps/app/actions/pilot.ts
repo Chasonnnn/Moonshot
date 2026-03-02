@@ -171,7 +171,7 @@ async function runCaseToReportExportFlow(args: {
     "I would segment retention by cohort and verify data quality before escalating with concrete caveats.",
   )
   args.steps.push(
-    toStep("candidate_handoff", `Candidate session ready at /session/${session.id} (mode=${args.assessmentMode})`),
+    toStep("candidate_handoff", `Candidate session ready at /session/${session.id}/start (mode=${args.assessmentMode})`),
   )
 
   const scoreJob = await client.scoreSession(args.reviewerToken, session.id, `score-${randomUUID()}`)

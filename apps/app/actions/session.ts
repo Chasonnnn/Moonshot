@@ -2,8 +2,7 @@
 
 import { cookies } from "next/headers"
 import { createMoonshotClientFromEnv } from "@/lib/moonshot/client"
-import { generateCsrfToken } from "@/lib/moonshot/csrf"
-import { signSessionBinding, verifySessionBinding } from "@/lib/moonshot/session-binding"
+import { verifySessionBinding } from "@/lib/moonshot/session-binding"
 import type { CandidateSession } from "@/lib/moonshot/types"
 
 export interface LoadSessionResult {
@@ -13,15 +12,27 @@ export interface LoadSessionResult {
 
 export async function loadSessionForCandidate(sessionId: string): Promise<LoadSessionResult> {
   try {
-    const client = createMoonshotClientFromEnv()
-    const tokenResp = await client.issueToken("candidate", client.config.candidateUserId)
+    const cookieStore = await cookies()
+    const boundSessionId = cookieStore.get("moonshot-session-id")?.value
+    const boundSignature = cookieStore.get("moonshot-session-sig")?.value
+    if (!boundSessionId || !boundSignature || !verifySessionBinding(boundSessionId, boundSignature)) {
+      return { error: "Session bootstrap missing or invalid. Open the candidate handoff link again." }
+    }
+    if (boundSessionId !== sessionId) {
+      return { error: "Session mismatch. Open the candidate handoff link for this session." }
+    }
 
-    // Fetch the session
+    const jwt = cookieStore.get("moonshot-session")?.value
+    if (!jwt) {
+      return { error: "Session token missing. Open the candidate handoff link again." }
+    }
+
+    const client = createMoonshotClientFromEnv()
     const response = await fetch(
       `${client.config.baseUrl}/v1/sessions/${sessionId}`,
       {
         headers: {
-          Authorization: `Bearer ${tokenResp.access_token}`,
+          Authorization: `Bearer ${jwt}`,
           "Content-Type": "application/json",
         },
         cache: "no-store",
@@ -37,39 +48,6 @@ export async function loadSessionForCandidate(sessionId: string): Promise<LoadSe
     if (!session.task_prompt || !session.task_prompt.trim()) {
       return { error: "Session task prompt unavailable." }
     }
-
-    // Set HttpOnly session cookie
-    const cookieStore = await cookies()
-    cookieStore.set("moonshot-session", tokenResp.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600,
-    })
-    cookieStore.set("moonshot-session-id", session.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600,
-    })
-    cookieStore.set("moonshot-session-sig", signSessionBinding(session.id), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600,
-    })
-
-    // Set CSRF cookie (non-HttpOnly so client JS can read it)
-    cookieStore.set("moonshot-csrf", generateCsrfToken(), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 3600,
-    })
 
     return { session }
   } catch (err) {
