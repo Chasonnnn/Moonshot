@@ -36,7 +36,8 @@ describe("DemoConsole assessment mode wiring", () => {
     expect(hidden).not.toBeNull()
     expect(hidden?.value).toBe("assessment")
 
-    await user.click(screen.getByRole("combobox"))
+    const modeCombobox = screen.getAllByRole("combobox")[1]
+    await user.click(modeCombobox)
     await user.click(screen.getByText("No AI"))
 
     expect(hidden?.value).toBe("assessment_no_ai")
