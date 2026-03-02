@@ -39,6 +39,7 @@ ERROR_CODE_BY_STATUS: dict[int, str] = {
 }
 ERROR_CODE_BY_DETAIL: dict[str, str] = {
     "Missing Idempotency-Key header": "missing_idempotency_key",
+    "coach is disabled in assessment_no_ai mode": "coach_disabled_for_mode",
 }
 
 

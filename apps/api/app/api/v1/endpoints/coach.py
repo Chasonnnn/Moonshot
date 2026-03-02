@@ -14,6 +14,14 @@ from app.services.store import store
 router = APIRouter(prefix="/v1/sessions", tags=["coach"])
 
 
+ALLOWED_COACH_MODES = {
+    "practice",
+    "assessment",
+    "assessment_no_ai",
+    "assessment_ai_assisted",
+}
+
+
 @router.post("/{session_id}/coach/message", response_model=CoachResponse)
 def send_coach_message(
     session_id: UUID,
@@ -30,10 +38,53 @@ def send_coach_message(
     case = case_repository.get_case(task_family.case_id) if task_family else None
     context = case.scenario if case else "Follow the scenario constraints and business context."
     coach_mode = str(session.policy.get("coach_mode", "assessment")).strip().lower()
-    if coach_mode not in {"assessment", "practice"}:
-        coach_mode = "assessment"
+    if coach_mode not in ALLOWED_COACH_MODES:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Invalid session coach_mode policy")
 
-    response = coach_reply(payload.message, context, mode=coach_mode)
+    if coach_mode == "assessment_no_ai":
+        blocked_payload = {
+            "allowed": False,
+            "policy_reason": "coach_disabled_for_mode",
+            "policy_decision_code": "blocked_mode_disabled",
+            "policy_version": None,
+            "policy_hash": None,
+            "blocked_rule_id": "assessment_no_ai",
+            "coach_mode": coach_mode,
+        }
+        session_repository.append_events(
+            session_id,
+            [
+                {
+                    "event_type": "coach_message",
+                    "payload": blocked_payload,
+                }
+            ],
+        )
+        append_context_trace(
+            session_id=session_id,
+            tenant_id=user.tenant_id,
+            agent_type="coach",
+            actor_role=user.role,
+            mode=coach_mode,
+            context_keys=["case_scenario", "policy_constraints", "coach_policy"],
+            policy_version=None,
+            policy_hash=None,
+        )
+        audit(
+            user,
+            "coach_message",
+            "session",
+            str(session_id),
+            blocked_payload,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="coach is disabled in assessment_no_ai mode",
+        )
+
+    coach_engine_mode = "practice" if coach_mode == "practice" else "assessment"
+
+    response = coach_reply(payload.message, context, mode=coach_engine_mode)
     session_repository.append_events(
         session_id,
         [

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -140,7 +140,14 @@ class TaskFamilyReviewRequest(BaseModel):
 class SessionCreate(BaseModel):
     task_family_id: UUID
     candidate_id: str
-    policy: dict[str, Any] = Field(default_factory=lambda: {"raw_content_opt_in": False, "retention_ttl_days": 90, "time_limit_minutes": None})
+    policy: dict[str, Any] = Field(
+        default_factory=lambda: {
+            "raw_content_opt_in": False,
+            "retention_ttl_days": 90,
+            "time_limit_minutes": None,
+            "coach_mode": "assessment",
+        }
+    )
 
 
 class Session(BaseModel):
@@ -170,6 +177,19 @@ class EventsIngestRequest(BaseModel):
 
 class EventIngestResponse(BaseModel):
     accepted: int
+
+
+class SessionEvent(BaseModel):
+    event_type: str
+    payload: dict[str, Any] = Field(default_factory=dict)
+    timestamp: datetime
+
+
+class SessionEventListResponse(BaseModel):
+    items: list[SessionEvent] = Field(default_factory=list)
+    next_cursor: int | None = None
+    limit: int
+    total: int
 
 
 class SQLRunRequest(BaseModel):
@@ -211,8 +231,11 @@ class CoachResponse(BaseModel):
     blocked_rule_id: str | None = None
 
 
+SessionMode = Literal["practice", "assessment", "assessment_no_ai", "assessment_ai_assisted"]
+
+
 class SessionModeRequest(BaseModel):
-    mode: str
+    mode: SessionMode
 
 
 class CoachFeedbackRequest(BaseModel):

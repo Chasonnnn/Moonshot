@@ -1,11 +1,14 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
 from app.schemas import (
     EventIngestResponse,
+    SessionEvent,
+    SessionEventListResponse,
     EventsIngestRequest,
     Session,
     SessionCreate,
@@ -46,6 +49,7 @@ def create_session(
     resolved_policy = dict(payload.policy)
     resolved_policy.setdefault("raw_content_opt_in", tenant_policy.raw_content_default_opt_in)
     resolved_policy.setdefault("retention_ttl_days", tenant_policy.default_retention_ttl_days)
+    resolved_policy.setdefault("coach_mode", "assessment")
 
     ttl = int(resolved_policy["retention_ttl_days"])
     if ttl <= 0:
@@ -106,6 +110,37 @@ def ingest_events(
     return EventIngestResponse(accepted=accepted)
 
 
+@router.get("/{session_id}/events", response_model=SessionEventListResponse)
+def list_session_events(
+    session_id: UUID,
+    limit: int = Query(100, ge=1, le=500),
+    cursor: int = Query(0, ge=0),
+    event_type: str | None = Query(None),
+    user: UserContext = Depends(require_roles("org_admin", "reviewer", "candidate")),
+) -> SessionEventListResponse:
+    session = _get_session_for_tenant(session_id, user.tenant_id)
+    if user.role == "candidate" and session.candidate_id != user.user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    events = session_repository.list_events(session_id)
+    if event_type:
+        events = [event for event in events if str(event.get("event_type", "")) == event_type]
+
+    total = len(events)
+    page = events[cursor : cursor + limit]
+    next_cursor = cursor + limit if cursor + limit < total else None
+
+    items = [
+        SessionEvent(
+            event_type=str(event.get("event_type", "")),
+            payload=event.get("payload", {}) if isinstance(event.get("payload"), dict) else {},
+            timestamp=event.get("created_at") or datetime.now(timezone.utc).isoformat(),
+        )
+        for event in page
+    ]
+    return SessionEventListResponse(items=items, next_cursor=next_cursor, limit=limit, total=total)
+
+
 @router.post("/{session_id}/submit", response_model=Session)
 def submit_session(
     session_id: UUID,
@@ -137,9 +172,7 @@ def set_session_coaching_mode(
     user: UserContext = Depends(require_roles("org_admin", "reviewer")),
 ) -> Session:
     existing = _get_session_for_tenant(session_id, user.tenant_id)
-    requested_mode = payload.mode.strip().lower()
-    if requested_mode not in {"practice", "assessment"}:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="mode must be one of: practice, assessment")
+    requested_mode = payload.mode
 
     merged = existing.model_dump(mode="json")
     merged_policy = dict(merged.get("policy", {}))
