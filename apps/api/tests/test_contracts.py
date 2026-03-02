@@ -59,6 +59,21 @@ def test_openapi_contains_required_paths(client):
     assert EXPECTED_PATHS.issubset(set(schema["paths"].keys()))
 
 
+def test_openapi_session_events_has_read_and_write_operations(client):
+    schema = client.get("/openapi.json").json()
+    operations = schema["paths"]["/v1/sessions/{session_id}/events"]
+    assert "get" in operations
+    assert "post" in operations
+
+
+def test_openapi_session_mode_enum_is_four_modes(client):
+    schema = client.get("/openapi.json").json()
+    mode_enum = schema["components"]["schemas"]["SessionModeRequest"]["properties"]["mode"]["enum"]
+    assert sorted(mode_enum) == sorted(
+        ["practice", "assessment", "assessment_no_ai", "assessment_ai_assisted"]
+    )
+
+
 def test_docs_openapi_file_tracks_required_paths():
     spec_path = Path("/Users/chason/Moonshot/docs/03_api/openapi.yaml")
     text = spec_path.read_text(encoding="utf-8")

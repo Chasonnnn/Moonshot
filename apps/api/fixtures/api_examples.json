@@ -331,6 +331,12 @@
     "error_detail": "Case not found",
     "request_id": "f8f0a7a8-1ea9-4fde-a3ee-313d83a64c47"
   },
+  "error_coach_disabled_for_mode": {
+    "detail": "coach is disabled in assessment_no_ai mode",
+    "error_code": "coach_disabled_for_mode",
+    "error_detail": "coach is disabled in assessment_no_ai mode",
+    "request_id": "d126f9e1-5b7f-4d8f-a8a9-4a5f8f8a8142"
+  },
   "audit_verify_ok": {
     "response": {
       "valid": true,
@@ -426,14 +432,14 @@
   },
   "session_mode_update": {
     "request": {
-      "mode": "practice"
+      "mode": "assessment_no_ai"
     },
     "response": {
       "id": "00000000-0000-0000-0000-000000000100",
       "policy": {
         "raw_content_opt_in": false,
         "retention_ttl_days": 90,
-        "coach_mode": "practice"
+        "coach_mode": "assessment_no_ai"
       }
     }
   },
@@ -540,6 +546,36 @@
       },
       "trigger_count": 0,
       "last_scored_at": "2026-02-27T12:06:00Z"
+    }
+  },
+  "session_events_list_response": {
+    "response": {
+      "items": [
+        {
+          "event_type": "session_started",
+          "payload": {
+            "time_to_first_action_ms": 920
+          },
+          "timestamp": "2026-02-27T12:01:00Z"
+        },
+        {
+          "event_type": "sql_query_run",
+          "payload": {
+            "row_count": 3,
+            "runtime_ms": 44
+          },
+          "timestamp": "2026-02-27T12:02:00Z"
+        }
+      ],
+      "next_cursor": 2,
+      "limit": 2,
+      "total": 5
+    }
+  },
+  "report_timeline_fixture_warning": {
+    "response": {
+      "timeline_source": "fixture",
+      "timeline_warning": "Using fixture timeline because real event retrieval failed: not_found: Session not found (request_id=req-42)"
     }
   },
   "job_status_pending": {

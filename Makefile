@@ -43,6 +43,7 @@ demo-gate:
 	uv run python apps/api/scripts/check_contract_governance.py
 	uv run python apps/api/scripts/check_openapi_sync.py
 	uv run python apps/api/scripts/check_frontend_contract_sync.py
+	uv run python apps/api/scripts/check_timeline_source_contract.py
 	uv run python apps/api/scripts/check_api_examples.py
 	uv run python apps/api/scripts/check_report_summary_consistency.py
 	uv run python apps/api/scripts/check_export_schema.py

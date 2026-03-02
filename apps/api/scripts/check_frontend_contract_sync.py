@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import re
 from pathlib import Path
 
 import yaml
@@ -9,12 +10,26 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 OPENAPI_PATH = REPO_ROOT / "docs/03_api/openapi.yaml"
 FRONTEND_CONTRACT_PATH = REPO_ROOT / "docs/08_frontend_contract/frontend_backend_contract.md"
 MVP_SCOPE_PATH = REPO_ROOT / "docs/00_mvp/mvp_scope.md"
+FRONTEND_TYPES_PATH = REPO_ROOT / "apps/app/lib/moonshot/types.ts"
+
+REQUIRED_SESSION_MODES = [
+    "practice",
+    "assessment",
+    "assessment_no_ai",
+    "assessment_ai_assisted",
+]
 
 REQUIRED_FRONTEND_MARKERS = [
     "Idempotency-Key",
     "job_not_ready",
     "/v1/reports/{session_id}/summary",
     "policy_decision_code",
+    "coach_disabled_for_mode",
+    "/v1/sessions/{session_id}/events",
+    "assessment_no_ai",
+    "assessment_ai_assisted",
+    "timeline_source",
+    "timeline_warning",
     "last_scored_at",
     "current_step",
     "failed_step",
@@ -35,12 +50,54 @@ def _openapi_version() -> str:
     return version
 
 
+def _load_openapi() -> dict:
+    payload = yaml.safe_load(_read(OPENAPI_PATH))
+    if not isinstance(payload, dict):
+        raise RuntimeError("frontend-contract-sync: OpenAPI doc did not parse as an object")
+    return payload
+
+
+def _session_mode_enum(openapi_payload: dict) -> list[str]:
+    schemas = openapi_payload.get("components", {}).get("schemas", {})
+    mode_schema = schemas.get("SessionModeRequest", {}).get("properties", {}).get("mode", {})
+    enum_values = mode_schema.get("enum")
+    if not isinstance(enum_values, list) or not enum_values:
+        raise RuntimeError("frontend-contract-sync: SessionModeRequest.mode enum missing in OpenAPI")
+    return [str(item) for item in enum_values]
+
+
+def _assert_events_get_present(openapi_payload: dict) -> None:
+    events_path = openapi_payload.get("paths", {}).get("/v1/sessions/{session_id}/events", {})
+    if "get" not in events_path:
+        raise RuntimeError("frontend-contract-sync: missing GET /v1/sessions/{session_id}/events in OpenAPI")
+
+
+def _assert_frontend_mode_union() -> None:
+    frontend_types = _read(FRONTEND_TYPES_PATH)
+    match = re.search(r"export type SessionMode = (?P<body>.+)", frontend_types)
+    if match is None:
+        raise RuntimeError("frontend-contract-sync: missing `export type SessionMode = ...` in frontend types")
+    union_body = match.group("body")
+    for mode in REQUIRED_SESSION_MODES:
+        if f"\"{mode}\"" not in union_body:
+            raise RuntimeError(f"frontend-contract-sync: frontend SessionMode missing `{mode}`")
+
+
 def main() -> int:
+    openapi_payload = _load_openapi()
     version = _openapi_version()
     expected_tag = f"v{version}"
 
     frontend_contract = _read(FRONTEND_CONTRACT_PATH)
     mvp_scope = _read(MVP_SCOPE_PATH)
+    mode_enum = _session_mode_enum(openapi_payload)
+    if sorted(mode_enum) != sorted(REQUIRED_SESSION_MODES):
+        raise RuntimeError(
+            "frontend-contract-sync: SessionModeRequest enum mismatch "
+            f"(expected={REQUIRED_SESSION_MODES}, got={mode_enum})"
+        )
+    _assert_events_get_present(openapi_payload)
+    _assert_frontend_mode_union()
 
     if expected_tag not in frontend_contract:
         raise RuntimeError(

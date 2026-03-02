@@ -17,6 +17,8 @@ REQUIRED_EXAMPLES = [
     "interpretation_submit",
     "fairness_smoke_submit",
     "report_summary_response",
+    "session_events_list_response",
+    "report_timeline_fixture_warning",
     "job_result_export_completed",
     "job_status_pending",
     "job_status_running",
@@ -29,6 +31,7 @@ REQUIRED_ERROR_EXAMPLES = [
     "error_invalid_bootstrap_token",
     "error_forbidden",
     "error_not_found",
+    "error_coach_disabled_for_mode",
 ]
 
 
@@ -82,6 +85,21 @@ def main() -> int:
     ):
         if required not in summary_response:
             raise RuntimeError(f"api-examples: report summary missing `{required}`")
+
+    events_list = _expect(payload, "session_events_list_response")
+    events_response = _expect(events_list, "response")
+    for required in ("items", "next_cursor", "limit", "total"):
+        if required not in events_response:
+            raise RuntimeError(f"api-examples: session events list missing `{required}`")
+    if not isinstance(events_response["items"], list):
+        raise RuntimeError("api-examples: session events list `items` must be a list")
+
+    timeline_fixture = _expect(payload, "report_timeline_fixture_warning")
+    timeline_response = _expect(timeline_fixture, "response")
+    if timeline_response.get("timeline_source") != "fixture":
+        raise RuntimeError("api-examples: timeline fixture warning must set `timeline_source=fixture`")
+    if "request_id=" not in str(timeline_response.get("timeline_warning", "")):
+        raise RuntimeError("api-examples: timeline fixture warning must include request_id")
 
     quality_signal = _expect(payload, "task_quality_signal")
     quality_response = _expect(quality_signal, "response")
