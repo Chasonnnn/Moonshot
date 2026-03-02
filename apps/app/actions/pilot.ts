@@ -13,7 +13,7 @@ import {
   type ScenarioSeedEntry,
   type ScenarioSeedManifest,
 } from "@/lib/moonshot/pilot-flow"
-import { MoonshotApiError, type SessionRecord } from "@/lib/moonshot/types"
+import { MoonshotApiError, type SessionMode, type SessionRecord } from "@/lib/moonshot/types"
 
 interface FixtureScenario {
   scenarioId: string
@@ -91,12 +91,21 @@ function parseDemoMode(formData: FormData | undefined): DemoSeedMode {
   return initialDemoRunState.mode
 }
 
+function parseAssessmentMode(formData: FormData | undefined): SessionMode {
+  const raw = String(formData?.get("assessment_mode") ?? "").trim()
+  if (raw === "practice" || raw === "assessment" || raw === "assessment_no_ai" || raw === "assessment_ai_assisted") {
+    return raw
+  }
+  return initialDemoRunState.assessmentMode
+}
+
 async function runCaseToReportExportFlow(args: {
   caseId: string
   adminToken: string
   reviewerToken: string
   candidateToken: string
   candidateUserId: string
+  assessmentMode: SessionMode
   steps: PilotFlowStep[]
 }) {
   const client = createMoonshotClientFromEnv()
@@ -122,24 +131,48 @@ async function runCaseToReportExportFlow(args: {
   const session = await client.createSession(args.reviewerToken, taskFamilyId, args.candidateUserId)
   args.steps.push(toStep("create_session", `Session created (${session.id})`))
 
-  await client.setSessionMode(args.reviewerToken, session.id, "assessment")
+  await client.setSessionMode(args.reviewerToken, session.id, args.assessmentMode)
   await client.ingestEvents(args.candidateToken, session.id, [
     { event_type: "session_started", payload: { time_to_first_action_ms: 920 } },
     { event_type: "sql_query_run", payload: { row_count: 3, runtime_ms: 44 } },
     { event_type: "copilot_invoked", payload: { source: "coach" } },
     { event_type: "verification_step_completed", payload: { step: "sanity_check" } },
   ])
-  await client.coachMessage(
-    args.candidateToken,
-    session.id,
-    "Can you clarify what validation evidence I should include before escalation?",
-  )
+  if (args.assessmentMode === "assessment_no_ai") {
+    try {
+      await client.coachMessage(
+        args.candidateToken,
+        session.id,
+        "Can you clarify what validation evidence I should include before escalation?",
+      )
+      throw new Error("Expected coach API to be disabled for assessment_no_ai mode")
+    } catch (error) {
+      if (!(error instanceof MoonshotApiError) || error.errorCode !== "coach_disabled_for_mode") {
+        throw error
+      }
+      args.steps.push(
+        toStep(
+          "candidate_handoff",
+          `Coach API block verified for assessment_no_ai (request_id=${error.requestId ?? "n/a"})`,
+          error.requestId,
+        ),
+      )
+    }
+  } else {
+    await client.coachMessage(
+      args.candidateToken,
+      session.id,
+      "Can you clarify what validation evidence I should include before escalation?",
+    )
+  }
   await client.submitSession(
     args.candidateToken,
     session.id,
     "I would segment retention by cohort and verify data quality before escalating with concrete caveats.",
   )
-  args.steps.push(toStep("candidate_handoff", `Candidate session ready at /session/${session.id}`))
+  args.steps.push(
+    toStep("candidate_handoff", `Candidate session ready at /session/${session.id} (mode=${args.assessmentMode})`),
+  )
 
   const scoreJob = await client.scoreSession(args.reviewerToken, session.id, `score-${randomUUID()}`)
   args.steps.push(toStep("score", `Score job submitted (${scoreJob.job_id})`))
@@ -307,6 +340,7 @@ export async function runJdaPilotFlow(_previous: PilotFlowState): Promise<PilotF
       reviewerToken: reviewerToken.access_token,
       candidateToken: candidateToken.access_token,
       candidateUserId: client.config.candidateUserId,
+      assessmentMode: "assessment",
       steps,
     })
 
@@ -350,6 +384,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
   void previous
   const startedAt = new Date().toISOString()
   const mode = parseDemoMode(formData)
+  const assessmentMode = parseAssessmentMode(formData)
   const steps: PilotFlowStep[] = []
   const seedEntries: ScenarioSeedEntry[] = []
   let tenantId: string | null = null
@@ -419,6 +454,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
       reviewerToken: reviewerToken.access_token,
       candidateToken: candidateToken.access_token,
       candidateUserId: client.config.candidateUserId,
+      assessmentMode,
       steps,
     })
 
@@ -490,6 +526,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
       steps,
       error: null,
       mode,
+      assessmentMode,
       redteamJobId: redteamJob.job_id,
       redteamRunId,
       redteamRequestId: redteamRun.request_id ?? null,
@@ -515,6 +552,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
       ...initialDemoRunState,
       status: "error",
       mode,
+      assessmentMode,
       apiBaseUrl,
       startedAt,
       completedAt: new Date().toISOString(),

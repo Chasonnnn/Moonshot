@@ -1,5 +1,7 @@
 export type MoonshotRole = "org_admin" | "reviewer" | "candidate"
 
+export type SessionMode = "practice" | "assessment" | "assessment_no_ai" | "assessment_ai_assisted"
+
 export interface AuthTokenResponse {
   access_token: string
   token_type: "bearer"
@@ -216,6 +218,7 @@ export interface CandidateSession {
     raw_content_opt_in: boolean
     retention_ttl_days: number
     time_limit_minutes: number | null
+    coach_mode?: SessionMode
   }
   final_response: string | null
   created_at: string
@@ -264,4 +267,17 @@ export interface CoachFeedback {
   confusion_tags: string[]
   notes: string | null
   created_at: string
+}
+
+export interface SessionEvent {
+  event_type: string
+  payload: Record<string, unknown>
+  timestamp: string
+}
+
+export interface SessionEventsListResponse {
+  items: SessionEvent[]
+  next_cursor: number | null
+  limit: number
+  total: number
 }

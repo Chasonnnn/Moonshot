@@ -59,6 +59,15 @@ const mockSession = {
   task_prompt: "Analyze the sales data and write a summary of your findings.",
 }
 
+async function completePreflight() {
+  // Check all 3 preflight checkboxes and click Begin
+  const checkboxes = screen.getAllByRole("checkbox")
+  for (const cb of checkboxes) {
+    await userEvent.click(cb)
+  }
+  fireEvent.click(screen.getByRole("button", { name: /begin assessment/i }))
+}
+
 describe("Session Smoke Test", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -67,8 +76,9 @@ describe("Session Smoke Test", () => {
     mockApi.ingestEvents.mockResolvedValue({ accepted: 0 })
   })
 
-  it("renders the full workspace layout", () => {
+  it("renders the full workspace layout", async () => {
     render(<SessionWorkspace session={mockSession} />)
+    await completePreflight()
 
     expect(screen.getByText("Moonshot")).toBeInTheDocument()
     expect(screen.getByText("Active")).toBeInTheDocument()
@@ -92,6 +102,7 @@ describe("Session Smoke Test", () => {
     })
 
     render(<SessionWorkspace session={mockSession} />)
+    await completePreflight()
 
     // Use fireEvent.change for faster state update in integration test
     const sqlTextarea = screen.getByPlaceholderText(/write your sql/i)
@@ -122,6 +133,7 @@ describe("Session Smoke Test", () => {
     })
 
     render(<SessionWorkspace session={mockSession} />)
+    await completePreflight()
 
     const coachInput = screen.getByPlaceholderText(/ask the coach/i)
     fireEvent.change(coachInput, { target: { value: "What should I look for?" } })
@@ -138,6 +150,7 @@ describe("Session Smoke Test", () => {
 
   it("writes final response and opens submit dialog", async () => {
     render(<SessionWorkspace session={mockSession} />)
+    await completePreflight()
 
     const responseTextarea = screen.getByPlaceholderText(/write your final response/i)
     await userEvent.type(
@@ -163,6 +176,7 @@ describe("Session Smoke Test", () => {
       },
     }
     render(<SessionWorkspace session={expiredSession} />)
+    await completePreflight()
 
     await waitFor(() => {
       expect(screen.getByText("Session time limit reached")).toBeInTheDocument()

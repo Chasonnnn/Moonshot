@@ -11,8 +11,10 @@ import {
   type InterpretationView,
   type RedTeamRun,
   type ReportSummary,
+  type SessionEvent,
   type SessionRecord,
 } from "@/lib/moonshot/types"
+import { getMockSessionEvents } from "@/lib/mock-events"
 
 export interface ReportDetailSnapshot {
   session: SessionRecord | null
@@ -20,6 +22,9 @@ export interface ReportDetailSnapshot {
   report: Record<string, unknown> | null
   redteamRuns: RedTeamRun[]
   fairnessRuns: FairnessSmokeRun[]
+  events: SessionEvent[]
+  timeline_source: "real" | "fixture"
+  timeline_warning: string | null
   interpretation: InterpretationView | null
   error: string | null
 }
@@ -41,6 +46,10 @@ function parseActionError(error: unknown): { error: string; requestId: string | 
   return { error: "Unknown error", requestId: null }
 }
 
+function fixtureTimelineEnabled(): boolean {
+  return String(process.env.MOONSHOT_ALLOW_FIXTURE_TIMELINE ?? "").toLowerCase() === "true"
+}
+
 export async function loadReportDetailSnapshot(sessionId: string): Promise<ReportDetailSnapshot> {
   try {
     const client = createMoonshotClientFromEnv()
@@ -57,12 +66,35 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       report = await client.getReport(reviewer.access_token, sessionId)
     }
 
+    let events: SessionEvent[] = []
+    let timelineSource: "real" | "fixture" = "real"
+    let timelineWarning: string | null = null
+    try {
+      const eventsPage = await client.listSessionEvents(reviewer.access_token, sessionId, { limit: 250 })
+      events = eventsPage.items.map((item) => ({
+        event_type: item.event_type,
+        payload: item.payload,
+        timestamp: item.timestamp,
+      }))
+    } catch (eventError) {
+      if (!fixtureTimelineEnabled()) {
+        throw eventError
+      }
+      const parsed = parseActionError(eventError)
+      timelineSource = "fixture"
+      timelineWarning = `Using fixture timeline because real event retrieval failed: ${parsed.error} (request_id=${parsed.requestId ?? "n/a"})`
+      events = getMockSessionEvents(sessionId)
+    }
+
     return {
       session,
       summary,
       report,
       redteamRuns: redteamRuns.items,
       fairnessRuns: fairnessRuns.items,
+      events,
+      timeline_source: timelineSource,
+      timeline_warning: timelineWarning,
       interpretation: null,
       error: null,
     }
@@ -74,6 +106,9 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       report: null,
       redteamRuns: [],
       fairnessRuns: [],
+      events: [],
+      timeline_source: "real",
+      timeline_warning: null,
       interpretation: null,
       error: `${parsed.error} (request_id=${parsed.requestId ?? "n/a"})`,
     }

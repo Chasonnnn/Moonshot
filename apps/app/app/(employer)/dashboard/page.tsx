@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowUpRightIcon, InboxIcon } from "lucide-react"
+import { ArrowUpRightIcon, ChevronRightIcon, InboxIcon } from "lucide-react"
 
 import { loadDashboardSnapshot } from "@/actions/pilot"
 import { Badge } from "@/components/ui/badge"
@@ -67,6 +67,39 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {(() => {
+          const totalSessions = snapshot.recentSessions.length
+          const scored = snapshot.recentSessions.filter((s) => s.confidence !== null).length
+          const reviewed = snapshot.recentSessions.filter((s) => s.needsHumanReview !== null).length
+          const clear = snapshot.recentSessions.filter((s) => s.needsHumanReview === false).length
+          const stages = [
+            { label: "Sessions", count: totalSessions },
+            { label: "Scored", count: scored },
+            { label: "Reviewed", count: reviewed },
+            { label: "Clear", count: clear },
+          ]
+          return (
+            <div className="mb-8 flex items-center gap-1 rounded-2xl bg-white px-6 py-4 shadow-sm">
+              {stages.map((stage, i) => (
+                <div key={stage.label} className="flex items-center gap-1">
+                  <div
+                    className={`rounded-full px-4 py-1.5 text-[13px] font-medium ${
+                      stage.count > 0
+                        ? "bg-[#0071E3]/10 text-[#0071E3]"
+                        : "bg-[#F5F5F7] text-[#6E6E73]"
+                    }`}
+                  >
+                    {stage.label} <span className="font-semibold">{stage.count}</span>
+                  </div>
+                  {i < stages.length - 1 && (
+                    <ChevronRightIcon className="size-4 text-[#D2D2D7]" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        })()}
+
         <section className="rounded-2xl bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-[22px] font-semibold tracking-tight text-[#1D1D1F]">Recent Sessions</h2>
@@ -97,7 +130,12 @@ export default async function DashboardPage() {
                           Confidence: {formatConfidence(item.confidence)}
                         </span>
                         {item.needsHumanReview !== null && (
-                          <Badge variant={item.needsHumanReview ? "destructive" : "secondary"} className="text-[11px]">
+                          <Badge
+                            variant="outline"
+                            className={item.needsHumanReview
+                              ? "border-[#FF9F0A]/40 bg-[#FF9F0A]/10 text-[#FF9F0A] text-[11px]"
+                              : "text-[11px]"}
+                          >
                             {item.needsHumanReview ? "Review required" : "Clear"}
                           </Badge>
                         )}

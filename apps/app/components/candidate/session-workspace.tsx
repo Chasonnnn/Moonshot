@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { SessionPreflight } from "@/components/candidate/session-preflight"
 import type { CandidateSession } from "@/lib/moonshot/types"
 
 export function SessionWorkspace({ session }: { session: CandidateSession }) {
@@ -34,8 +35,20 @@ export function SessionWorkspace({ session }: { session: CandidateSession }) {
 }
 
 function SessionWorkspaceContent() {
-  const { isExpired, isSubmitted } = useSession()
+  const { isExpired, isSubmitted, session, track } = useSession()
   const [submitOpen, setSubmitOpen] = useState(false)
+  const [preflightComplete, setPreflightComplete] = useState(false)
+
+  if (!preflightComplete && session.status !== "submitted") {
+    return (
+      <SessionPreflight
+        onReady={() => {
+          setPreflightComplete(true)
+          track("preflight_completed")
+        }}
+      />
+    )
+  }
 
   return (
     <div className="flex h-screen flex-col bg-[#F5F5F7]">

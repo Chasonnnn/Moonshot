@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, ThumbsUp, ThumbsDown } from "lucide-react"
+import { Send, ThumbsUp, ThumbsDown, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -24,7 +24,7 @@ interface ChatMessage {
 }
 
 export function CoachPanel() {
-  const { api, isSubmitted, isExpired, track } = useSession()
+  const { api, isSubmitted, isExpired, isAiDisabled, track } = useSession()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
@@ -104,7 +104,15 @@ export function CoachPanel() {
 
       <ScrollArea className="flex-1 p-3">
         <div className="space-y-3">
-          {messages.length === 0 && (
+          {isAiDisabled && (
+            <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+              <Lock className="h-6 w-6 text-[#86868B]" />
+              <p className="text-[13px] text-[#86868B]">
+                AI assistance is disabled for this assessment
+              </p>
+            </div>
+          )}
+          {!isAiDisabled && messages.length === 0 && (
             <p className="text-center text-[12px] text-[#86868B]">
               Ask the coach for guidance
             </p>
@@ -173,13 +181,13 @@ export function CoachPanel() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask the coach..."
-            disabled={isSubmitted || isExpired || isSending}
+            disabled={isSubmitted || isExpired || isSending || isAiDisabled}
             className="h-8 text-[13px]"
           />
           <Button
             size="sm"
             onClick={sendMessage}
-            disabled={isSubmitted || isExpired || isSending || !input.trim()}
+            disabled={isSubmitted || isExpired || isSending || isAiDisabled || !input.trim()}
             className="h-8 w-8 p-0 bg-[#0071E3] hover:bg-[#0077ED]"
             aria-label="Send"
           >

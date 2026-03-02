@@ -19,6 +19,8 @@ import {
   type SessionRecord,
   type TaskFamily,
   type AuditLogItem,
+  type SessionMode,
+  type SessionEventsListResponse,
 } from "@/lib/moonshot/types"
 
 function requiredEnv(name: string): string {
@@ -209,7 +211,7 @@ export class MoonshotApiClient {
     })
   }
 
-  async setSessionMode(token: string, sessionId: string, mode: "practice" | "assessment"): Promise<SessionRecord> {
+  async setSessionMode(token: string, sessionId: string, mode: SessionMode): Promise<SessionRecord> {
     return this.request<SessionRecord>(`/v1/sessions/${sessionId}/mode`, {
       method: "POST",
       token,
@@ -244,6 +246,30 @@ export class MoonshotApiClient {
       token,
       body: { events },
     })
+  }
+
+  async listSessionEvents(
+    token: string,
+    sessionId: string,
+    options?: {
+      limit?: number
+      cursor?: number
+      eventType?: string
+    },
+  ): Promise<SessionEventsListResponse> {
+    const params = new URLSearchParams()
+    if (typeof options?.limit === "number") {
+      params.set("limit", String(options.limit))
+    }
+    if (typeof options?.cursor === "number") {
+      params.set("cursor", String(options.cursor))
+    }
+    if (options?.eventType) {
+      params.set("event_type", options.eventType)
+    }
+    const query = params.toString()
+    const path = query ? `/v1/sessions/${sessionId}/events?${query}` : `/v1/sessions/${sessionId}/events`
+    return this.request<SessionEventsListResponse>(path, { token })
   }
 
   async coachMessage(token: string, sessionId: string, message: string): Promise<{ allowed: boolean; policy_reason: string; response: string }> {

@@ -3,6 +3,14 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useSession } from "@/components/candidate/session-context"
+import type { SessionMode } from "@/lib/moonshot/types"
+
+const modeBadgeConfig: Record<SessionMode, { label: string; className: string }> = {
+  practice: { label: "Practice", className: "bg-[#86868B]/10 text-[#86868B] border-[#86868B]/20" },
+  assessment: { label: "Assessment", className: "bg-[#0071E3]/10 text-[#0071E3] border-[#0071E3]/20" },
+  assessment_no_ai: { label: "No AI", className: "bg-[#FF9F0A]/10 text-[#FF9F0A] border-[#FF9F0A]/20" },
+  assessment_ai_assisted: { label: "AI-Assisted", className: "bg-[#AF52DE]/10 text-[#AF52DE] border-[#AF52DE]/20" },
+}
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -11,7 +19,8 @@ function formatTime(seconds: number): string {
 }
 
 export function SessionHeader({ onSubmit }: { onSubmit: () => void }) {
-  const { isSubmitted, remainingSeconds, isExpired } = useSession()
+  const { isSubmitted, remainingSeconds, isExpired, mode } = useSession()
+  const badgeConfig = modeBadgeConfig[mode]
 
   return (
     <>
@@ -33,6 +42,10 @@ export function SessionHeader({ onSubmit }: { onSubmit: () => void }) {
               Active
             </Badge>
           )}
+
+          <Badge className={badgeConfig.className}>
+            {badgeConfig.label}
+          </Badge>
 
           {remainingSeconds !== null && (
             <span

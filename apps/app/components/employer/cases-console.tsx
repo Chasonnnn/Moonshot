@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useActionState } from "react"
+import { useActionState, useState } from "react"
 import { FolderOpenIcon } from "lucide-react"
 
 import { createCaseAction, type CaseActionState, type CasesSnapshot } from "@/actions/cases"
 import { useActionStateToast } from "@/components/employer/action-state-toast"
+import { CaseTemplates } from "@/components/employer/case-templates"
 import { Badge } from "@/components/ui/badge"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
@@ -20,20 +21,29 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
   const [state, formAction, isPending] = useActionState(createCaseAction, initialCaseActionState)
   useActionStateToast(state)
 
+  const [title, setTitle] = useState("")
+  const [scenario, setScenario] = useState("")
+
   return (
     <section className="space-y-6">
+      <CaseTemplates onSelect={(tpl) => { setTitle(tpl.title); setScenario(tpl.scenario) }} />
+
       <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
         <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Create Case</h2>
         <form action={formAction} className="mt-4 grid gap-3">
           <input
             name="title"
             placeholder="Case title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="rounded-lg border border-[#D2D2D7] px-3 py-2 text-[13px]"
             required
           />
           <textarea
             name="scenario"
             placeholder="Scenario description"
+            value={scenario}
+            onChange={(e) => setScenario(e.target.value)}
             className="min-h-24 rounded-lg border border-[#D2D2D7] px-3 py-2 text-[13px]"
             required
           />

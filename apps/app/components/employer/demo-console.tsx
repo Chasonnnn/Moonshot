@@ -4,7 +4,9 @@ import Link from "next/link"
 import { useActionState, useMemo, useState } from "react"
 
 import { runJdaDemoFlow } from "@/actions/pilot"
+import { AssessmentModeSelect } from "@/components/employer/assessment-mode-select"
 import { initialDemoRunState, type DemoSeedMode, type DemoRunState, type PilotSnapshot } from "@/lib/moonshot/pilot-flow"
+import type { SessionMode } from "@/lib/moonshot/types"
 
 function statusColor(ok: boolean): string {
   return ok ? "text-[#34C759]" : "text-[#D70015]"
@@ -12,6 +14,7 @@ function statusColor(ok: boolean): string {
 
 export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
   const [mode, setMode] = useState<DemoSeedMode>("both")
+  const [assessmentMode, setAssessmentMode] = useState<SessionMode>(initialDemoRunState.assessmentMode)
   const [state, formAction, isPending] = useActionState<DemoRunState, FormData>(runJdaDemoFlow, initialDemoRunState)
 
   const candidateUrl = useMemo(() => {
@@ -46,6 +49,7 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
         </div>
         <form action={formAction} className="flex items-center gap-3">
           <input type="hidden" name="mode" value={mode} />
+          <input type="hidden" name="assessment_mode" value={assessmentMode} />
           <button
             type="submit"
             disabled={isPending}
@@ -94,6 +98,13 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
         </div>
       </div>
 
+      <div className="mb-6 rounded-xl border border-[#E5E5EA] p-4">
+        <p className="mb-2 text-[12px] text-[#6E6E73]">Assessment Mode</p>
+        <div className="max-w-[240px]">
+          <AssessmentModeSelect value={assessmentMode} onChange={setAssessmentMode} />
+        </div>
+      </div>
+
       {state.status !== "idle" ? (
         <div className="space-y-4">
           <div className="rounded-xl border border-[#E5E5EA] p-4">
@@ -102,6 +113,7 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
             <p className="mt-2 text-[12px] text-[#6E6E73]">
               Tenant: {state.tenantId ?? "n/a"} · Session: {state.sessionId ?? "n/a"} · Export: {state.exportRunId ?? "n/a"}
             </p>
+            <p className="mt-1 text-[12px] text-[#6E6E73]">Assessment mode: {state.assessmentMode}</p>
             {state.error ? <p className="mt-2 text-[12px] text-[#D70015]">{state.error}</p> : null}
           </div>
 

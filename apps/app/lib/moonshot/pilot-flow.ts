@@ -1,3 +1,5 @@
+import type { SessionMode } from "@/lib/moonshot/types"
+
 export interface PilotFlowStep {
   name: string
   ok: boolean
@@ -42,6 +44,7 @@ export interface GovernanceBundleReference {
 export interface DemoRunState extends PilotFlowState {
   apiBaseUrl: string | null
   mode: DemoSeedMode
+  assessmentMode: SessionMode
   redteamJobId: string | null
   redteamRunId: string | null
   redteamRequestId: string | null
@@ -81,6 +84,7 @@ export const initialDemoRunState: DemoRunState = {
   ...initialPilotFlowState,
   apiBaseUrl: null,
   mode: "both",
+  assessmentMode: "assessment",
   redteamJobId: null,
   redteamRunId: null,
   redteamRequestId: null,

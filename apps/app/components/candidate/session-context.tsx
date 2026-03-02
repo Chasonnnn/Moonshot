@@ -10,7 +10,7 @@ import {
 import { CandidateApiClient } from "@/lib/moonshot/candidate-client"
 import { useCountdown } from "@/hooks/use-countdown"
 import { useTelemetry } from "@/hooks/use-telemetry"
-import type { CandidateSession } from "@/lib/moonshot/types"
+import type { CandidateSession, SessionMode } from "@/lib/moonshot/types"
 
 interface SessionContextValue {
   session: CandidateSession
@@ -22,6 +22,8 @@ interface SessionContextValue {
   remainingSeconds: number | null
   isExpired: boolean
   track: (eventType: string, payload?: Record<string, unknown>) => void
+  mode: SessionMode
+  isAiDisabled: boolean
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
@@ -47,6 +49,9 @@ export function SessionProvider({
   )
   const { track } = useTelemetry(api)
 
+  const mode: SessionMode = session.policy.coach_mode ?? "practice"
+  const isAiDisabled = mode === "assessment_no_ai"
+
   const value = useMemo(
     () => ({
       session,
@@ -58,8 +63,10 @@ export function SessionProvider({
       remainingSeconds,
       isExpired,
       track,
+      mode,
+      isAiDisabled,
     }),
-    [session, api, isSubmitted, finalResponse, remainingSeconds, isExpired, track]
+    [session, api, isSubmitted, finalResponse, remainingSeconds, isExpired, track, mode, isAiDisabled]
   )
 
   return (
