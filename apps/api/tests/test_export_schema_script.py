@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_export_schema_script_exists_and_checks_contract():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/check_export_schema.py")
+    script_path = ROOT / "apps" / "api" / "scripts" / "check_export_schema.py"
     assert script_path.exists()
 
     content = script_path.read_text(encoding="utf-8")

@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_load_pilot_script_exists_with_p95_gate():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/load_pilot.py")
+    script_path = ROOT / "apps" / "api" / "scripts" / "load_pilot.py"
     assert script_path.exists()
 
     content = script_path.read_text(encoding="utf-8")

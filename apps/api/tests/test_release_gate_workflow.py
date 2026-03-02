@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_api_ci_workflow_has_strict_release_gates():
-    workflow_path = Path("/Users/chason/Moonshot/.github/workflows/api-ci.yml")
+    workflow_path = ROOT / ".github" / "workflows" / "api-ci.yml"
     content = workflow_path.read_text(encoding="utf-8")
 
     assert "check_contract_governance.py" in content

@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_seed_demo_script_supports_modes_and_outputs():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/seed_demo.py")
+    script_path = ROOT / "apps" / "api" / "scripts" / "seed_demo.py"
     assert script_path.exists()
 
     content = script_path.read_text(encoding="utf-8")
@@ -16,7 +18,7 @@ def test_seed_demo_script_supports_modes_and_outputs():
 
 
 def test_seed_demo_script_reads_jda_fixture():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/seed_demo.py")
+    script_path = ROOT / "apps" / "api" / "scripts" / "seed_demo.py"
     content = script_path.read_text(encoding="utf-8")
 
     assert "jda_seed_scenarios.json" in content

@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_governance_bundle_script_exists_with_required_artifacts():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/build_governance_bundle.py")
+    script_path = ROOT / "apps" / "api" / "scripts" / "build_governance_bundle.py"
     assert script_path.exists()
 
     content = script_path.read_text(encoding="utf-8")
@@ -13,7 +15,7 @@ def test_governance_bundle_script_exists_with_required_artifacts():
 
 
 def test_governance_bundle_script_collects_required_evidence_endpoints():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/build_governance_bundle.py")
+    script_path = ROOT / "apps" / "api" / "scripts" / "build_governance_bundle.py"
     content = script_path.read_text(encoding="utf-8")
 
     assert "/v1/sessions/" in content

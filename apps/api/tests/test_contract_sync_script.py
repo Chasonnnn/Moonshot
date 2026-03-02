@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_contract_sync_script_exists_and_checks_openapi_docs_alignment():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/check_openapi_sync.py")
+    script_path = ROOT / "apps" / "api" / "scripts" / "check_openapi_sync.py"
     assert script_path.exists()
 
     content = script_path.read_text(encoding="utf-8")

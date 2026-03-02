@@ -10,7 +10,7 @@ import yaml
 from app.providers import get_coach_provider
 from app.schemas import CoachResponse
 
-POLICY_PATH = Path("/Users/chason/Moonshot/apps/api/app/policies/coach_policy.yaml")
+POLICY_PATH = Path(__file__).resolve().parents[1] / "policies" / "coach_policy.yaml"
 
 
 @lru_cache(maxsize=1)

@@ -1,6 +1,8 @@
 from pathlib import Path
 import yaml
 
+ROOT = Path(__file__).resolve().parents[3]
+
 EXPECTED_PATHS = {
     "/health",
     "/v1/meta/version",
@@ -75,15 +77,15 @@ def test_openapi_session_mode_enum_is_four_modes(client):
 
 
 def test_docs_openapi_file_tracks_required_paths():
-    spec_path = Path("/Users/chason/Moonshot/docs/03_api/openapi.yaml")
+    spec_path = ROOT / "docs" / "03_api" / "openapi.yaml"
     text = spec_path.read_text(encoding="utf-8")
     for path in EXPECTED_PATHS:
         assert path in text
 
 
 def test_changelog_contains_openapi_version():
-    spec_path = Path("/Users/chason/Moonshot/docs/03_api/openapi.yaml")
-    changelog_path = Path("/Users/chason/Moonshot/docs/03_api/changelog.md")
+    spec_path = ROOT / "docs" / "03_api" / "openapi.yaml"
+    changelog_path = ROOT / "docs" / "03_api" / "changelog.md"
 
     payload = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
     version = payload["info"]["version"]

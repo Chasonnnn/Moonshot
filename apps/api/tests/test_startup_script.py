@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_startup_script_runs_migrations_before_server_start():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/start_api.sh")
+    script_path = ROOT / "apps" / "api" / "scripts" / "start_api.sh"
     assert script_path.exists()
 
     content = script_path.read_text(encoding="utf-8")

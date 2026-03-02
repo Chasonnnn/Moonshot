@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_makefile_contains_hybrid_local_targets():
-    path = Path("/Users/chason/Moonshot/Makefile")
+    path = ROOT / "Makefile"
     content = path.read_text(encoding="utf-8")
 
     for target in (
@@ -26,7 +28,7 @@ def test_makefile_contains_hybrid_local_targets():
 
 
 def test_api_env_example_has_required_local_keys():
-    path = Path("/Users/chason/Moonshot/apps/api/.env.example")
+    path = ROOT / "apps" / "api" / ".env.example"
     assert path.exists()
     content = path.read_text(encoding="utf-8")
 
@@ -41,7 +43,7 @@ def test_api_env_example_has_required_local_keys():
 
 
 def test_runtime_env_validation_script_enforces_required_keys():
-    path = Path("/Users/chason/Moonshot/apps/api/scripts/validate_runtime_env.py")
+    path = ROOT / "apps" / "api" / "scripts" / "validate_runtime_env.py"
     assert path.exists()
     content = path.read_text(encoding="utf-8")
     assert "MOONSHOT_DATABASE_URL" in content

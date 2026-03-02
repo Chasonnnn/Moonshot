@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_makefile_has_demo_gate_target():
-    makefile = Path("/Users/chason/Moonshot/Makefile").read_text(encoding="utf-8")
+    makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
     assert "demo-gate" in makefile
     assert "staging_smoke.py" in makefile
     assert "load_pilot.py" in makefile

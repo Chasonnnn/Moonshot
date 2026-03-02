@@ -1,8 +1,10 @@
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[3]
+
 
 def test_api_examples_script_exists_and_enforces_flow_examples():
-    script_path = Path("/Users/chason/Moonshot/apps/api/scripts/check_api_examples.py")
+    script_path = ROOT / "apps" / "api" / "scripts" / "check_api_examples.py"
     assert script_path.exists()
 
     content = script_path.read_text(encoding="utf-8")
