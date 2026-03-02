@@ -15,6 +15,7 @@ import { TaskPanel } from "@/components/candidate/task-panel"
 import { WorkspacePanel } from "@/components/candidate/workspace-panel"
 import { CoachPanel } from "@/components/candidate/coach-panel"
 import { SubmitDialog } from "@/components/candidate/submit-dialog"
+import { AutoPlayController } from "@/components/candidate/auto-play-controller"
 import {
   Dialog,
   DialogContent,
@@ -25,21 +26,30 @@ import {
 import { Button } from "@/components/ui/button"
 import { SessionPreflight } from "@/components/candidate/session-preflight"
 import type { CandidateSession } from "@/lib/moonshot/types"
+import type { DemoFixtureData } from "@/lib/moonshot/demo-fixtures"
 
-export function SessionWorkspace({ session }: { session: CandidateSession }) {
+export function SessionWorkspace({
+  session,
+  autoPlay = false,
+  fixtureData = null,
+}: {
+  session: CandidateSession
+  autoPlay?: boolean
+  fixtureData?: DemoFixtureData | null
+}) {
   return (
-    <SessionProvider session={session}>
+    <SessionProvider session={session} autoPlay={autoPlay} fixtureData={fixtureData}>
       <SessionWorkspaceContent />
     </SessionProvider>
   )
 }
 
 function SessionWorkspaceContent() {
-  const { isExpired, isSubmitted, session, track } = useSession()
+  const { isExpired, isSubmitted, session, track, autoPlay, fixtureData } = useSession()
   const [submitOpen, setSubmitOpen] = useState(false)
   const [preflightComplete, setPreflightComplete] = useState(false)
 
-  if (!preflightComplete && session.status !== "submitted") {
+  if (!preflightComplete && session.status !== "submitted" && !autoPlay) {
     return (
       <SessionPreflight
         onReady={() => {
@@ -99,6 +109,10 @@ function SessionWorkspaceContent() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {autoPlay && fixtureData && (
+        <AutoPlayController fixture={fixtureData} />
+      )}
     </div>
   )
 }

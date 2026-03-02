@@ -2,6 +2,8 @@ import { getCsrfToken } from "@/lib/moonshot/csrf"
 import type {
   SqlRunResponse,
   SqlHistoryItem,
+  PythonRunResponse,
+  PythonHistoryItem,
   DashboardState,
   CoachResponse,
   CoachFeedback,
@@ -128,6 +130,17 @@ export class CandidateApiClient {
       method: "POST",
       body: { helpful, confusion_tags: confusionTags, notes: notes ?? null },
     })
+  }
+
+  async runPython(code: string): Promise<PythonRunResponse> {
+    return this.request<PythonRunResponse>("python/run", {
+      method: "POST",
+      body: { code },
+    })
+  }
+
+  async getPythonHistory(): Promise<{ items: PythonHistoryItem[] }> {
+    return this.request<{ items: PythonHistoryItem[] }>("python/history")
   }
 
   async ingestEvents(

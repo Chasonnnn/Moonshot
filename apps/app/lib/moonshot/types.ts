@@ -80,7 +80,10 @@ export interface SessionRecord {
   task_family_id: string
   candidate_id: string
   status: string
-  policy: Record<string, unknown>
+  policy: Record<string, unknown> & {
+    demo_template_id?: string
+    sample_script_version?: string
+  }
   final_response?: string | null
   created_at?: string
   updated_at?: string
@@ -219,6 +222,8 @@ export interface CandidateSession {
     retention_ttl_days: number
     time_limit_minutes: number | null
     coach_mode?: SessionMode
+    demo_template_id?: string
+    sample_script_version?: string
   }
   final_response: string | null
   created_at: string
@@ -280,4 +285,43 @@ export interface SessionEventsListResponse {
   next_cursor: number | null
   limit: number
   total: number
+}
+
+export interface PythonRunResponse {
+  ok: boolean
+  stdout: string | null
+  stderr: string | null
+  plot_url: string | null
+  runtime_ms: number
+}
+
+export interface PythonHistoryItem {
+  code: string
+  ok: boolean
+  stdout: string | null
+  stderr: string | null
+  plot_url: string | null
+  error: string | null
+  runtime_ms: number
+  executed_at: string
+}
+
+export interface RRunResponse {
+  ok: boolean
+  stdout: string | null
+  stderr: string | null
+  plot_url: string | null
+  runtime_ms: number
+  mock: true
+}
+
+export interface RHistoryItem {
+  code: string
+  ok: boolean
+  stdout: string | null
+  stderr: string | null
+  plot_url: string | null
+  error: string | null
+  runtime_ms: number
+  executed_at: string
 }

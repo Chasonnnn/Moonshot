@@ -16,6 +16,10 @@ const baseSessionContext = {
   remainingSeconds: 600,
   mode: "practice" as const,
   isAiDisabled: false,
+  autoPlay: false,
+  fixtureData: null,
+  coachMessages: [] as unknown[],
+  pushCoachMessage: vi.fn(),
 }
 
 vi.mock("@/components/candidate/session-context", () => ({

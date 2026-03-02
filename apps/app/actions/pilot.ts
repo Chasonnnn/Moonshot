@@ -15,6 +15,7 @@ import {
 } from "@/lib/moonshot/pilot-flow"
 import { MoonshotApiError, type SessionMode, type SessionRecord } from "@/lib/moonshot/types"
 import { DEMO_CASE_TEMPLATES } from "@/lib/moonshot/demo-case-templates"
+import { DEMO_FIXTURES } from "@/lib/moonshot/demo-fixtures"
 
 export interface DashboardSnapshot {
   activeCases: number
@@ -669,5 +670,122 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
       error: toErrorMessage(error),
       seedManifest: seedEntries.length > 0 ? summarizeSeedManifest(mode, seedEntries) : previous.seedManifest,
     }
+  }
+}
+
+export interface FastPathResult {
+  sessionId: string | null
+  candidateUrl: string | null
+  error: string | null
+}
+
+export async function runDemoFastPath(templateId: string): Promise<FastPathResult> {
+  try {
+    const client = createMoonshotClientFromEnv()
+
+    const template = DEMO_CASE_TEMPLATES.find((item) => item.id === templateId)
+    if (!template) {
+      return { sessionId: null, candidateUrl: null, error: `Unknown template: ${templateId}` }
+    }
+
+    const adminToken = await client.issueToken("org_admin", client.config.adminUserId)
+    const reviewerToken = await client.issueToken("reviewer", client.config.reviewerUserId)
+
+    const createdCase = await client.createCase(adminToken.access_token, {
+      title: `[Demo] ${template.title}`,
+      scenario: template.scenario,
+      artifacts: template.artifacts,
+      metrics: [],
+      allowed_tools: ["sql_workspace", "python_workspace", "dashboard_workspace", "copilot"],
+    })
+
+    const generateJob = await client.generateCase(
+      adminToken.access_token,
+      createdCase.id,
+      `demo-fp-gen-${randomUUID()}`,
+      { mode: "fixture", template_id: templateId },
+    )
+    const generated = await client.waitForJobTerminalResult(adminToken.access_token, generateJob.job_id)
+    if (generated.status !== "completed") {
+      return { sessionId: null, candidateUrl: null, error: `Generate job failed: ${generated.status}` }
+    }
+
+    const taskFamily = generated.result["task_family"] as Record<string, unknown> | undefined
+    const taskFamilyId = String(taskFamily?.["id"] ?? "")
+    if (!taskFamilyId) {
+      return { sessionId: null, candidateUrl: null, error: "Generate result missing task_family.id" }
+    }
+
+    await client.reviewTaskFamily(reviewerToken.access_token, taskFamilyId)
+    await client.publishTaskFamily(reviewerToken.access_token, taskFamilyId)
+
+    const session = await client.createSession(reviewerToken.access_token, taskFamilyId, client.config.candidateUserId, {
+      demo_template_id: templateId,
+      sample_script_version: "fixture-v1",
+    })
+    await client.setSessionMode(reviewerToken.access_token, session.id, "assessment")
+
+    return {
+      sessionId: session.id,
+      candidateUrl: `/session/${session.id}/start`,
+      error: null,
+    }
+  } catch (error) {
+    return {
+      sessionId: null,
+      candidateUrl: null,
+      error: toErrorMessage(error),
+    }
+  }
+}
+
+export interface AutoCompleteResult {
+  sessionId: string
+  reportReady: boolean
+  error: string | null
+}
+
+export async function runDemoAutoComplete(
+  sessionId: string,
+  templateId: string,
+): Promise<AutoCompleteResult> {
+  try {
+    const client = createMoonshotClientFromEnv()
+    const reviewerToken = await client.issueToken("reviewer", client.config.reviewerUserId)
+    const candidateToken = await client.issueToken("candidate", client.config.candidateUserId)
+
+    const fixture = DEMO_FIXTURES[templateId]
+    if (!fixture) {
+      return { sessionId, reportReady: false, error: `No fixture data for template: ${templateId}` }
+    }
+
+    await client.ingestEvents(candidateToken.access_token, sessionId, fixture.sampleEvents)
+
+    await client.submitSession(candidateToken.access_token, sessionId, fixture.finalResponse)
+
+    const scoreJob = await client.scoreSession(
+      reviewerToken.access_token,
+      sessionId,
+      `demo-score-${randomUUID()}`,
+      { mode: "fixture", template_id: templateId },
+    )
+    const scored = await client.waitForJobTerminalResult(reviewerToken.access_token, scoreJob.job_id)
+    if (scored.status !== "completed") {
+      return { sessionId, reportReady: false, error: `Score job failed: ${scored.status}` }
+    }
+
+    const exportJob = await client.exportSession(
+      reviewerToken.access_token,
+      sessionId,
+      `demo-export-${randomUUID()}`,
+    )
+    const exported = await client.waitForJobTerminalResult(reviewerToken.access_token, exportJob.job_id)
+    if (exported.status !== "completed") {
+      return { sessionId, reportReady: false, error: `Export job failed: ${exported.status}` }
+    }
+
+    return { sessionId, reportReady: true, error: null }
+  } catch (error) {
+    return { sessionId, reportReady: false, error: toErrorMessage(error) }
   }
 }

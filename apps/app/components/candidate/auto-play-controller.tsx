@@ -1,0 +1,179 @@
+"use client"
+
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Spinner } from "@/components/ui/spinner"
+import { useSession } from "@/components/candidate/session-context"
+import type { DemoFixtureData } from "@/lib/moonshot/demo-fixtures"
+
+interface AutoPlayStep {
+  label: string
+  action: () => Promise<void>
+}
+
+const AUTOPLAY_COMPLETE_MESSAGE = "moonshot.autoplay_complete"
+
+export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
+  const { api, isAiDisabled, session, setFinalResponse, track, pushCoachMessage } = useSession()
+  const [currentStep, setCurrentStep] = useState(0)
+  const [stepLabel, setStepLabel] = useState("Starting auto-play...")
+  const [isComplete, setIsComplete] = useState(false)
+  const [failure, setFailure] = useState<{ stepIndex: number; label: string; message: string } | null>(null)
+  const [runToken, setRunToken] = useState(0)
+  const runningRef = useRef(false)
+
+  const buildSteps = useCallback((): AutoPlayStep[] => {
+    const steps: AutoPlayStep[] = []
+
+    for (const sqlQuery of fixture.sqlQueries) {
+      steps.push({
+        label: `Running SQL: ${sqlQuery.query.slice(0, 50)}...`,
+        action: async () => {
+          await api.runSql(sqlQuery.query)
+        },
+      })
+    }
+
+    for (const script of fixture.pythonScripts) {
+      steps.push({
+        label: `Running Python: ${script.code.split("\n")[0].slice(0, 50)}...`,
+        action: async () => {
+          await api.runPython(script.code)
+        },
+      })
+    }
+
+    const scriptedCoachTurns = fixture.coachScript.filter((t) => t.role === "user" && !isAiDisabled)
+    for (const turn of scriptedCoachTurns) {
+      steps.push({
+        label: `Coach: "${turn.content.slice(0, 50)}..."`,
+        action: async () => {
+          pushCoachMessage({ role: "user", content: turn.content })
+          track("copilot_invoked", { source: "autoplay", message_length: turn.content.length })
+          const turnIndex = fixture.coachScript.findIndex((candidate) => candidate === turn)
+          const response = turnIndex >= 0 ? fixture.coachScript[turnIndex + 1] : undefined
+          if (response && response.role === "coach") {
+            pushCoachMessage({
+              role: "coach",
+              content: response.content,
+              allowed: response.allowed,
+              policyReason: response.policyReason,
+            })
+          }
+        },
+      })
+    }
+
+    steps.push({
+      label: "Writing final response...",
+      action: async () => {
+        setFinalResponse(fixture.finalResponse)
+      },
+    })
+
+    return steps
+  }, [fixture, api, isAiDisabled, pushCoachMessage, setFinalResponse, track])
+
+  useEffect(() => {
+    if (runningRef.current) return
+    runningRef.current = true
+
+    const steps = buildSteps()
+    let cancelled = false
+
+    async function run() {
+      for (let i = 0; i < steps.length; i++) {
+        if (cancelled) return
+        setCurrentStep(i)
+        setStepLabel(steps[i].label)
+        try {
+          await steps[i].action()
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown autoplay step failure"
+          setFailure({ stepIndex: i, label: steps[i].label, message })
+          track("autoplay_step_failed", { step_index: i, step_label: steps[i].label, error_message: message })
+          return
+        }
+        // Theatrical delay between steps
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+      }
+      if (!cancelled) {
+        setIsComplete(true)
+        // Notify parent (demo console) that auto-play is done
+        window.parent?.postMessage({ type: AUTOPLAY_COMPLETE_MESSAGE, sessionId: session.id }, window.location.origin)
+      }
+    }
+
+    run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [buildSteps, runToken, session.id, track])
+
+  const totalSteps = fixture.sqlQueries.length +
+    fixture.pythonScripts.length +
+    fixture.coachScript.filter((t) => t.role === "user" && !isAiDisabled).length +
+    1 // final response
+
+  const handleSkipToEnd = useCallback(() => {
+    setFinalResponse(fixture.finalResponse)
+    setIsComplete(true)
+    window.parent?.postMessage({ type: AUTOPLAY_COMPLETE_MESSAGE, sessionId: session.id }, window.location.origin)
+  }, [fixture.finalResponse, session.id, setFinalResponse])
+
+  const handleRetry = useCallback(() => {
+    setFailure(null)
+    setCurrentStep(0)
+    setStepLabel("Retrying auto-play...")
+    setRunToken((prev) => prev + 1)
+    runningRef.current = false
+  }, [])
+
+  if (isComplete) {
+    return (
+      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#34C759] px-4 py-2 text-[13px] font-medium text-white shadow-lg">
+        Auto-play complete
+      </div>
+    )
+  }
+
+  if (failure) {
+    return (
+      <div className="fixed bottom-4 left-1/2 z-50 w-[min(680px,92vw)] -translate-x-1/2 rounded-xl border border-[#FF3B30]/30 bg-white p-4 shadow-lg">
+        <p className="text-[13px] font-semibold text-[#FF3B30]">Auto-play paused</p>
+        <p className="mt-1 text-[12px] text-[#1D1D1F]">{failure.label}</p>
+        <p className="mt-1 text-[12px] text-[#6E6E73]">{failure.message}</p>
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            onClick={handleRetry}
+            className="rounded-full bg-[#0071E3] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#0077ED]"
+          >
+            Retry Auto-Play
+          </button>
+          <button
+            onClick={handleSkipToEnd}
+            className="rounded-full border border-[#D2D2D7] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F] hover:bg-[#F5F5F7]"
+          >
+            Skip to End
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-[#1D1D1F] px-4 py-2.5 shadow-lg">
+      <Spinner className="h-4 w-4 text-white" />
+      <span className="max-w-[300px] truncate text-[13px] text-white">{stepLabel}</span>
+      <span className="text-[12px] text-[#86868B]">
+        {currentStep + 1}/{totalSteps}
+      </span>
+      <button
+        onClick={handleSkipToEnd}
+        className="ml-2 rounded-full bg-white/20 px-3 py-1 text-[12px] font-medium text-white hover:bg-white/30"
+      >
+        Skip
+      </button>
+    </div>
+  )
+}

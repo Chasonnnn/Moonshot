@@ -167,11 +167,17 @@ export class MoonshotApiClient {
     })
   }
 
-  async generateCase(token: string, caseId: string, idempotencyKey: string): Promise<JobAccepted> {
+  async generateCase(
+    token: string,
+    caseId: string,
+    idempotencyKey: string,
+    payload?: { mode?: "live" | "fixture"; template_id?: string },
+  ): Promise<JobAccepted> {
     return this.request<JobAccepted>(`/v1/cases/${caseId}/generate`, {
       method: "POST",
       token,
       idempotencyKey,
+      body: payload,
     })
   }
 
@@ -199,14 +205,23 @@ export class MoonshotApiClient {
     })
   }
 
-  async createSession(token: string, taskFamilyId: string, candidateId: string): Promise<SessionRecord> {
+  async createSession(
+    token: string,
+    taskFamilyId: string,
+    candidateId: string,
+    policyOverrides?: Record<string, unknown>,
+  ): Promise<SessionRecord> {
     return this.request<SessionRecord>("/v1/sessions", {
       method: "POST",
       token,
       body: {
         task_family_id: taskFamilyId,
         candidate_id: candidateId,
-        policy: { raw_content_opt_in: false, retention_ttl_days: 30 },
+        policy: {
+          raw_content_opt_in: false,
+          retention_ttl_days: 30,
+          ...(policyOverrides ?? {}),
+        },
       },
     })
   }
@@ -291,11 +306,17 @@ export class MoonshotApiClient {
     })
   }
 
-  async scoreSession(token: string, sessionId: string, idempotencyKey: string): Promise<JobAccepted> {
+  async scoreSession(
+    token: string,
+    sessionId: string,
+    idempotencyKey: string,
+    payload?: { mode?: "live" | "fixture"; template_id?: string },
+  ): Promise<JobAccepted> {
     return this.request<JobAccepted>(`/v1/sessions/${sessionId}/score`, {
       method: "POST",
       token,
       idempotencyKey,
+      body: payload,
     })
   }
 

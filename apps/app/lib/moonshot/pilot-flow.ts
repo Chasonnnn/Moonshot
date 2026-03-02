@@ -22,7 +22,15 @@ export interface PilotFlowState {
 }
 
 export type DemoSeedMode = "fixture" | "fresh" | "both"
-export type DemoRunPhase = "idle" | "awaiting_approval" | "session_ready" | "completed"
+export type DemoRunPhase =
+  | "idle"
+  | "generating"
+  | "preview"
+  | "session_ready"
+  | "playing"
+  | "report"
+  | "awaiting_approval"
+  | "completed"
 
 export interface ScenarioSeedEntry {
   source: "fixture" | "fresh"

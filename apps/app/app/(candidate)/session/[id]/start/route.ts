@@ -12,6 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const { id } = await params
+  const requestUrl = new URL(request.url)
 
   try {
     const client = createMoonshotClientFromEnv()
@@ -49,7 +50,11 @@ export async function GET(
       return NextResponse.json({ detail: "Missing host header for session bootstrap redirect." }, { status: 500 })
     }
     const proto = request.headers.get("x-forwarded-proto") ?? "http"
-    const redirect = NextResponse.redirect(new URL(`/session/${id}`, `${proto}://${host}`))
+    const destination = new URL(`/session/${id}`, `${proto}://${host}`)
+    requestUrl.searchParams.forEach((value, key) => {
+      destination.searchParams.set(key, value)
+    })
+    const redirect = NextResponse.redirect(destination)
     redirect.cookies.set("moonshot-session", tokenResp.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

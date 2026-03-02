@@ -7,6 +7,9 @@ const mockCoachMessage = vi.fn()
 const mockCoachFeedback = vi.fn()
 const mockTrack = vi.fn()
 
+const mockCoachMessages: unknown[] = []
+const mockPushCoachMessage = vi.fn((msg: unknown) => mockCoachMessages.push(msg))
+
 vi.mock("@/components/candidate/session-context", () => ({
   useSession: () => ({
     api: {
@@ -14,13 +17,19 @@ vi.mock("@/components/candidate/session-context", () => ({
       coachFeedback: mockCoachFeedback,
     },
     isSubmitted: false,
+    isExpired: false,
+    isAiDisabled: false,
     track: mockTrack,
+    autoPlay: false,
+    coachMessages: mockCoachMessages,
+    pushCoachMessage: mockPushCoachMessage,
   }),
 }))
 
 describe("CoachPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockCoachMessages.length = 0
   })
 
   it("renders input and send button", () => {

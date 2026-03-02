@@ -2,6 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SqlWorkspace } from "@/components/candidate/sql-workspace"
+import { AnalysisWorkspace } from "@/components/candidate/python-workspace"
 import { DashboardWorkspace } from "@/components/candidate/dashboard-workspace"
 
 export function WorkspacePanel() {
@@ -11,12 +12,18 @@ export function WorkspacePanel() {
         <TabsTrigger value="sql" className="text-[12px]">
           SQL Workspace
         </TabsTrigger>
+        <TabsTrigger value="python" className="text-[12px]">
+          Analysis
+        </TabsTrigger>
         <TabsTrigger value="dashboard" className="text-[12px]">
           Dashboard
         </TabsTrigger>
       </TabsList>
       <TabsContent value="sql" className="mt-0 flex-1 overflow-hidden">
         <SqlWorkspace />
+      </TabsContent>
+      <TabsContent value="python" className="mt-0 flex-1 overflow-hidden">
+        <AnalysisWorkspace />
       </TabsContent>
       <TabsContent value="dashboard" className="mt-0 flex-1 overflow-hidden">
         <DashboardWorkspace />

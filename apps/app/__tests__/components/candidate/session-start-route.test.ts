@@ -13,5 +13,6 @@ describe("candidate session start route", () => {
     expect(source).toContain("moonshot-session-sig")
     expect(source).toContain("moonshot-csrf")
     expect(source).toContain("`/session/${id}`")
+    expect(source).toContain("requestUrl.searchParams.forEach")
   })
 })

@@ -1,25 +1,24 @@
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
-
-vi.mock("react", async () => {
-  const actual = await vi.importActual<typeof import("react")>("react")
-  return {
-    ...actual,
-    useActionState: (_action: unknown, initialState: unknown) => [initialState, vi.fn(), false],
-  }
-})
 
 vi.mock("@/actions/pilot", () => ({
-  runJdaDemoFlow: vi.fn(),
+  runDemoFastPath: vi.fn(),
+  runDemoAutoComplete: vi.fn(),
+}))
+
+vi.mock("@/actions/reports", () => ({
+  loadReportDetailSnapshot: vi.fn(),
+}))
+
+vi.mock("@/components/employer/report-review-console", () => ({
+  ReportReviewConsole: () => <div data-testid="report-review-console" />,
 }))
 
 import { DemoConsole } from "@/components/employer/demo-console"
 
-describe("DemoConsole assessment mode wiring", () => {
-  it("writes selected assessment mode into form state payload", async () => {
-    const user = userEvent.setup()
-    const { container } = render(
+describe("DemoConsole template selection", () => {
+  it("renders template cards and allows selection", async () => {
+    render(
       <DemoConsole
         snapshot={{
           ok: true,
@@ -32,14 +31,31 @@ describe("DemoConsole assessment mode wiring", () => {
       />,
     )
 
-    const hidden = container.querySelector<HTMLInputElement>('input[name="assessment_mode"]')
-    expect(hidden).not.toBeNull()
-    expect(hidden?.value).toBe("assessment")
+    expect(screen.getByText("KPI Discrepancy Investigation")).toBeTruthy()
+    expect(screen.getByText("SQL Data Quality Triage")).toBeTruthy()
+    expect(screen.getByText("Stakeholder Ambiguity Handling")).toBeTruthy()
 
-    const modeCombobox = screen.getAllByRole("combobox")[1]
-    await user.click(modeCombobox)
-    await user.click(screen.getByText("No AI"))
+    expect(screen.getByText("Start Demo")).toBeTruthy()
+  })
 
-    expect(hidden?.value).toBe("assessment_no_ai")
+  it("shows step indicator with Select Role active initially", () => {
+    render(
+      <DemoConsole
+        snapshot={{
+          ok: true,
+          apiVersion: "0.6.0",
+          schemaVersion: "0.6.0",
+          caseCount: 0,
+          jobCount: 0,
+          error: null,
+        }}
+      />,
+    )
+
+    expect(screen.getByText("Select Role")).toBeTruthy()
+    expect(screen.getByText("Generating")).toBeTruthy()
+    expect(screen.getByText("Preview & Confirm")).toBeTruthy()
+    expect(screen.getByText("Candidate Session")).toBeTruthy()
+    expect(screen.getByText("Report")).toBeTruthy()
   })
 })

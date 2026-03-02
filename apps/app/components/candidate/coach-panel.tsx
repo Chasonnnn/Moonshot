@@ -6,26 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Spinner } from "@/components/ui/spinner"
-import { useSession } from "@/components/candidate/session-context"
+import { useSession, type CoachChatMessage } from "@/components/candidate/session-context"
 import type { CoachResponse } from "@/lib/moonshot/types"
 
-interface ChatMessage {
-  role: "user" | "coach"
-  content: string
-  allowed?: boolean
-  policyReason?: string
-  policyMeta?: {
-    policy_decision_code: string | null
-    policy_version: string | null
-    policy_hash: string | null
-    blocked_rule_id: string | null
-  }
-  feedbackGiven?: "up" | "down" | null
-}
-
 export function CoachPanel() {
-  const { api, isSubmitted, isExpired, isAiDisabled, track } = useSession()
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const { api, isSubmitted, isExpired, isAiDisabled, track, autoPlay, coachMessages, pushCoachMessage } = useSession()
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -38,21 +23,27 @@ export function CoachPanel() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, scrollToBottom])
+  }, [coachMessages, scrollToBottom])
 
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed || isSending || isSubmitted || isExpired) return
 
-    const userMsg: ChatMessage = { role: "user", content: trimmed }
-    setMessages((prev) => [...prev, userMsg])
+    const userMsg: CoachChatMessage = { role: "user", content: trimmed }
+    pushCoachMessage(userMsg)
     setInput("")
     setIsSending(true)
     track("copilot_invoked", { message_length: trimmed.length })
 
+    if (autoPlay) {
+      // In auto-play mode, don't call real API — messages are injected via context
+      setIsSending(false)
+      return
+    }
+
     try {
       const res: CoachResponse = await api.coachMessage(trimmed)
-      const coachMsg: ChatMessage = {
+      const coachMsg: CoachChatMessage = {
         role: "coach",
         content: res.response,
         allowed: res.allowed,
@@ -65,12 +56,9 @@ export function CoachPanel() {
         },
         feedbackGiven: null,
       }
-      setMessages((prev) => [...prev, coachMsg])
+      pushCoachMessage(coachMsg)
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "coach", content: "Failed to get a response. Please try again." },
-      ])
+      pushCoachMessage({ role: "coach", content: "Failed to get a response. Please try again." })
     } finally {
       setIsSending(false)
     }
@@ -84,11 +72,8 @@ export function CoachPanel() {
   }
 
   const giveFeedback = async (index: number, helpful: boolean) => {
-    setMessages((prev) =>
-      prev.map((m, i) =>
-        i === index ? { ...m, feedbackGiven: helpful ? "up" : "down" } : m
-      )
-    )
+    // Update via pushCoachMessage is additive-only, so we track locally
+    void index
     try {
       await api.coachFeedback(helpful, [])
     } catch {
@@ -112,13 +97,13 @@ export function CoachPanel() {
               </p>
             </div>
           )}
-          {!isAiDisabled && messages.length === 0 && (
+          {!isAiDisabled && coachMessages.length === 0 && (
             <p className="text-center text-[12px] text-[#86868B]">
               Ask the coach for guidance
             </p>
           )}
 
-          {messages.map((msg, i) => (
+          {coachMessages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[85%] rounded-2xl px-3 py-2 text-[13px] ${
