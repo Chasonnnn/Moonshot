@@ -22,6 +22,7 @@ export interface PilotFlowState {
 }
 
 export type DemoSeedMode = "fixture" | "fresh" | "both"
+export type DemoRunPhase = "idle" | "awaiting_approval" | "session_ready" | "completed"
 
 export interface ScenarioSeedEntry {
   source: "fixture" | "fresh"
@@ -44,6 +45,8 @@ export interface GovernanceBundleReference {
 export interface DemoRunState extends PilotFlowState {
   apiBaseUrl: string | null
   mode: DemoSeedMode
+  phase: DemoRunPhase
+  selectedTemplateId: string | null
   assessmentMode: SessionMode
   redteamJobId: string | null
   redteamRunId: string | null
@@ -84,6 +87,8 @@ export const initialDemoRunState: DemoRunState = {
   ...initialPilotFlowState,
   apiBaseUrl: null,
   mode: "both",
+  phase: "idle",
+  selectedTemplateId: "tpl_data_analyst",
   assessmentMode: "assessment",
   redteamJobId: null,
   redteamRunId: null,

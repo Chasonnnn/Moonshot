@@ -14,44 +14,7 @@ import {
   type ScenarioSeedManifest,
 } from "@/lib/moonshot/pilot-flow"
 import { MoonshotApiError, type SessionMode, type SessionRecord } from "@/lib/moonshot/types"
-
-interface FixtureScenario {
-  scenarioId: string
-  title: string
-  scenario: string
-  artifacts: Array<{ type: string; name: string }>
-}
-
-const FIXTURE_SCENARIOS: FixtureScenario[] = [
-  {
-    scenarioId: "jda_s1",
-    title: "KPI Discrepancy Investigation",
-    scenario: "Find root cause of conversion decline and propose next actions.",
-    artifacts: [
-      { type: "csv", name: "funnel_weekly.csv" },
-      { type: "md", name: "tracking_notes.md" },
-    ],
-  },
-  {
-    scenarioId: "jda_s2",
-    title: "SQL Data Quality Triage",
-    scenario: "Resolve conflicting row counts between source and dashboard.",
-    artifacts: [
-      { type: "csv", name: "orders.csv" },
-      { type: "csv", name: "customers.csv" },
-      { type: "log", name: "etl_log.txt" },
-    ],
-  },
-  {
-    scenarioId: "jda_s3",
-    title: "Stakeholder Ambiguity Handling",
-    scenario: "Respond to vague stakeholder request with assumptions and escalation plan.",
-    artifacts: [
-      { type: "txt", name: "request_thread.txt" },
-      { type: "csv", name: "metric_dictionary.csv" },
-    ],
-  },
-]
+import { DEMO_CASE_TEMPLATES } from "@/lib/moonshot/demo-case-templates"
 
 export interface DashboardSnapshot {
   activeCases: number
@@ -83,14 +46,6 @@ function toErrorMessage(error: unknown): string {
   return "Unknown error"
 }
 
-function parseDemoMode(formData: FormData | undefined): DemoSeedMode {
-  const raw = formData?.get("mode")
-  if (raw === "fixture" || raw === "fresh" || raw === "both") {
-    return raw
-  }
-  return initialDemoRunState.mode
-}
-
 function parseAssessmentMode(formData: FormData | undefined): SessionMode {
   const raw = String(formData?.get("assessment_mode") ?? "").trim()
   if (raw === "practice" || raw === "assessment" || raw === "assessment_no_ai" || raw === "assessment_ai_assisted") {
@@ -98,6 +53,27 @@ function parseAssessmentMode(formData: FormData | undefined): SessionMode {
   }
   return initialDemoRunState.assessmentMode
 }
+
+type DemoIntent = "prepare" | "continue" | "finalize"
+
+function parseDemoIntent(formData: FormData | undefined): DemoIntent {
+  const raw = String(formData?.get("intent") ?? "").trim()
+  if (raw === "prepare" || raw === "continue" || raw === "finalize") {
+    return raw
+  }
+  return "prepare"
+}
+
+function parseTemplateId(formData: FormData | undefined): string {
+  const raw = String(formData?.get("template_id") ?? "").trim()
+  if (DEMO_CASE_TEMPLATES.some((tpl) => tpl.id === raw)) {
+    return raw
+  }
+  return initialDemoRunState.selectedTemplateId ?? DEMO_CASE_TEMPLATES[0].id
+}
+
+const SAMPLE_FINAL_RESPONSE =
+  "I would segment retention by cohort, validate source/dashboard parity, document assumptions, and escalate with confidence caveats."
 
 async function runCaseToReportExportFlow(args: {
   caseId: string
@@ -381,86 +357,213 @@ export async function runJdaPilotFlow(_previous: PilotFlowState): Promise<PilotF
 }
 
 export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData): Promise<DemoRunState> {
-  void previous
-  const startedAt = new Date().toISOString()
-  const mode = parseDemoMode(formData)
-  const assessmentMode = parseAssessmentMode(formData)
-  const steps: PilotFlowStep[] = []
-  const seedEntries: ScenarioSeedEntry[] = []
-  let tenantId: string | null = null
-  let apiBaseUrl: string | null = null
+  const startedAt = previous.startedAt ?? new Date().toISOString()
+  const intent = parseDemoIntent(formData)
+  const assessmentMode = intent === "prepare" ? parseAssessmentMode(formData) : previous.assessmentMode
+  const selectedTemplateId = intent === "prepare" ? parseTemplateId(formData) : (previous.selectedTemplateId ?? parseTemplateId(formData))
+  const mode: DemoSeedMode = "fresh"
+  const steps: PilotFlowStep[] = intent === "prepare" ? [] : [...previous.steps]
+  const seedEntries: ScenarioSeedEntry[] = previous.seedManifest?.entries ?? []
+  let tenantId: string | null = previous.tenantId
+  let apiBaseUrl: string | null = previous.apiBaseUrl
 
   try {
     const client = createMoonshotClientFromEnv()
     tenantId = client.config.tenantId
     apiBaseUrl = client.config.baseUrl
-    const [adminToken, reviewerToken, candidateToken, meta] = await Promise.all([
-      client.issueToken("org_admin", client.config.adminUserId),
-      client.issueToken("reviewer", client.config.reviewerUserId),
-      client.issueToken("candidate", client.config.candidateUserId),
-      client.getMetaVersion(),
-    ])
-    steps.push(toStep("health", `Connected to API ${meta.api_version}`))
 
-    let caseIdForRun: string | null = null
+    if (intent === "prepare") {
+      const [adminToken, meta] = await Promise.all([
+        client.issueToken("org_admin", client.config.adminUserId),
+        client.getMetaVersion(),
+      ])
+      steps.push(toStep("health", `Connected to API ${meta.api_version}`))
 
-    if (mode === "fixture" || mode === "both") {
-      for (const fixture of FIXTURE_SCENARIOS) {
-        const seededCase = await client.createCase(adminToken.access_token, {
-          title: `[Fixture] ${fixture.title}`,
-          scenario: fixture.scenario,
-          artifacts: fixture.artifacts,
-          metrics: [],
-          allowed_tools: ["sql_workspace", "dashboard_workspace", "copilot"],
-        })
-        seedEntries.push({
-          source: "fixture",
-          scenarioId: fixture.scenarioId,
-          title: fixture.title,
-          caseId: seededCase.id,
-        })
-        if (caseIdForRun === null) {
-          caseIdForRun = seededCase.id
-        }
+      const template = DEMO_CASE_TEMPLATES.find((item) => item.id === selectedTemplateId)
+      if (!template) {
+        throw new Error(`Unknown demo template: ${selectedTemplateId}`)
       }
-    }
 
-    if (mode === "fresh" || mode === "both") {
-      const freshCase = await client.createCase(adminToken.access_token, {
-        title: `JDA Fresh Demo Case ${new Date().toISOString()}`,
-        scenario: "Investigate conversion drop and recommend actions with explicit caveats and escalation logic.",
-        artifacts: [{ type: "csv", name: "conversion_drop.csv" }],
+      const createdCase = await client.createCase(adminToken.access_token, {
+        title: `[Template] ${template.title}`,
+        scenario: template.scenario,
+        artifacts: template.artifacts,
         metrics: [],
         allowed_tools: ["sql_workspace", "dashboard_workspace", "copilot"],
       })
-      seedEntries.push({
-        source: "fresh",
-        scenarioId: "fresh_generated",
-        title: "Fresh generated scenario",
-        caseId: freshCase.id,
-      })
-      caseIdForRun = freshCase.id
+
+      const generateJob = await client.generateCase(adminToken.access_token, createdCase.id, `demo-generate-${randomUUID()}`)
+      steps.push(toStep("submit_generate_job", `Generation job submitted (${generateJob.job_id})`))
+      const generated = await client.waitForJobTerminalResult(adminToken.access_token, generateJob.job_id)
+      if (generated.status !== "completed") {
+        throw new Error(`Generate job failed: ${JSON.stringify(generated.result)}`)
+      }
+      const taskFamily = generated.result["task_family"] as Record<string, unknown> | undefined
+      const taskFamilyId = String(taskFamily?.["id"] ?? "")
+      if (!taskFamilyId) {
+        throw new Error("Generate result missing task_family.id")
+      }
+
+      steps.push(
+        toStep(
+          "seed_or_generate",
+          `Template case created (${createdCase.id}) and task family generated (${taskFamilyId})`,
+        ),
+      )
+      steps.push(
+        toStep(
+          "review_publish",
+          `Manual approval required in /cases/${createdCase.id}. Approve + Publish task family before continuing.`,
+        ),
+      )
+
+      return {
+        ...initialDemoRunState,
+        status: "success",
+        phase: "awaiting_approval",
+        mode,
+        selectedTemplateId,
+        assessmentMode,
+        startedAt,
+        completedAt: new Date().toISOString(),
+        tenantId,
+        apiBaseUrl,
+        caseId: createdCase.id,
+        taskFamilyId,
+        steps,
+        error: null,
+        seedManifest: summarizeSeedManifest(mode, [
+          {
+            source: "fresh",
+            scenarioId: template.id,
+            title: template.title,
+            caseId: createdCase.id,
+          },
+        ]),
+      }
     }
 
-    if (caseIdForRun === null) {
-      throw new Error("No case selected for demo run")
+    if (intent === "continue") {
+      const [reviewerToken] = await Promise.all([
+        client.issueToken("reviewer", client.config.reviewerUserId),
+      ])
+
+      const caseId = previous.caseId
+      const taskFamilyId = previous.taskFamilyId
+      if (!caseId || !taskFamilyId) {
+        throw new Error("Prepare step is incomplete. Run Prepare Demo Case first.")
+      }
+
+      const taskFamily = await client.getTaskFamily(reviewerToken.access_token, taskFamilyId)
+      if (taskFamily.status !== "published") {
+        steps.push({
+          name: "review_publish",
+          ok: false,
+          detail: `Task family is ${taskFamily.status}. Approve and publish in /cases/${caseId} before continuing.`,
+          requestId: null,
+        })
+        return {
+          ...previous,
+          status: "error",
+          phase: "awaiting_approval",
+          completedAt: new Date().toISOString(),
+          steps,
+          error: `Task family must be published before session handoff (current=${taskFamily.status}).`,
+        }
+      }
+
+      const session = await client.createSession(reviewerToken.access_token, taskFamilyId, client.config.candidateUserId)
+      await client.setSessionMode(reviewerToken.access_token, session.id, assessmentMode)
+      steps.push(toStep("create_session", `Session created (${session.id})`))
+      steps.push(toStep("candidate_handoff", `Candidate session ready at /session/${session.id}/start`))
+
+      return {
+        ...previous,
+        status: "success",
+        phase: "session_ready",
+        assessmentMode,
+        completedAt: new Date().toISOString(),
+        sessionId: session.id,
+        steps,
+        error: null,
+      }
     }
 
-    steps.push(toStep("seed_or_generate", `Seeded ${seedEntries.length} scenario(s); run case=${caseIdForRun}`))
+    const sessionId = previous.sessionId
+    const caseId = previous.caseId
+    const taskFamilyId = previous.taskFamilyId
+    if (!sessionId || !caseId || !taskFamilyId) {
+      throw new Error("Session handoff is not ready. Run Continue After Manual Approval first.")
+    }
 
-    const flow = await runCaseToReportExportFlow({
-      caseId: caseIdForRun,
-      adminToken: adminToken.access_token,
-      reviewerToken: reviewerToken.access_token,
-      candidateToken: candidateToken.access_token,
-      candidateUserId: client.config.candidateUserId,
-      assessmentMode,
-      steps,
-    })
+    const [adminToken, reviewerToken, candidateToken] = await Promise.all([
+      client.issueToken("org_admin", client.config.adminUserId),
+      client.issueToken("reviewer", client.config.reviewerUserId),
+      client.issueToken("candidate", client.config.candidateUserId),
+    ])
+
+    await client.ingestEvents(candidateToken.access_token, sessionId, [
+      { event_type: "session_started", payload: { time_to_first_action_ms: 920 } },
+      { event_type: "sql_query_run", payload: { row_count: 3, runtime_ms: 44 } },
+      { event_type: "copilot_invoked", payload: { source: "coach" } },
+      { event_type: "verification_step_completed", payload: { step: "sanity_check" } },
+    ])
+
+    if (assessmentMode === "assessment_no_ai") {
+      try {
+        await client.coachMessage(
+          candidateToken.access_token,
+          sessionId,
+          "Can you clarify what validation evidence I should include before escalation?",
+        )
+        throw new Error("Expected coach API to be disabled for assessment_no_ai mode")
+      } catch (error) {
+        if (!(error instanceof MoonshotApiError) || error.errorCode !== "coach_disabled_for_mode") {
+          throw error
+        }
+        steps.push(
+          toStep(
+            "candidate_handoff",
+            `Coach API block verified for assessment_no_ai (request_id=${error.requestId ?? "n/a"})`,
+            error.requestId,
+          ),
+        )
+      }
+    } else {
+      await client.coachMessage(
+        candidateToken.access_token,
+        sessionId,
+        "Can you clarify what validation evidence I should include before escalation?",
+      )
+    }
+
+    await client.submitSession(candidateToken.access_token, sessionId, SAMPLE_FINAL_RESPONSE)
+    steps.push(toStep("candidate_handoff", "Sample response submitted for demo completion"))
+
+    const scoreJob = await client.scoreSession(reviewerToken.access_token, sessionId, `score-${randomUUID()}`)
+    steps.push(toStep("score", `Score job submitted (${scoreJob.job_id})`))
+    const scored = await client.waitForJobTerminalResult(reviewerToken.access_token, scoreJob.job_id)
+    if (scored.status !== "completed") {
+      throw new Error(`Score job failed: ${JSON.stringify(scored.result)}`)
+    }
+
+    const summary = await client.getReportSummary(reviewerToken.access_token, sessionId)
+    await client.getReport(reviewerToken.access_token, sessionId)
+    const exportJob = await client.exportSession(reviewerToken.access_token, sessionId, `export-${randomUUID()}`)
+    const exported = await client.waitForJobTerminalResult(reviewerToken.access_token, exportJob.job_id)
+    if (exported.status !== "completed") {
+      throw new Error(`Export job failed: ${JSON.stringify(exported.result)}`)
+    }
+    const exportRunId = String(exported.result["run_id"] ?? "")
+    if (!exportRunId) {
+      throw new Error("Export result missing run_id")
+    }
+    await client.getExport(reviewerToken.access_token, exportRunId)
+    steps.push(toStep("report_export", `Report + export complete (run_id=${exportRunId})`))
 
     const redteamJob = await client.createRedteamRun(
       adminToken.access_token,
-      { targetType: "session", targetId: flow.sessionId },
+      { targetType: "session", targetId: sessionId },
       `demo-redteam-${randomUUID()}`,
     )
     const redteamResult = await client.waitForJobTerminalResult(adminToken.access_token, redteamJob.job_id)
@@ -501,7 +604,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
     const [auditVerify, purgePreview, contextTraces] = await Promise.all([
       client.getAuditChainVerification(adminToken.access_token),
       client.purgeExpiredRawContentDryRun(adminToken.access_token),
-      client.getContextInjectionTraces(reviewerToken.access_token, flow.sessionId),
+      client.getContextInjectionTraces(reviewerToken.access_token, sessionId),
     ])
 
     const governanceChecks = [
@@ -513,20 +616,21 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
     steps.push(toStep("governance_checks", governanceChecks.join(" · ")))
 
     return {
+      ...previous,
       status: "success",
-      startedAt,
+      phase: "completed",
+      selectedTemplateId,
+      assessmentMode,
       completedAt: new Date().toISOString(),
-      tenantId,
       apiBaseUrl,
-      caseId: caseIdForRun,
-      taskFamilyId: flow.taskFamilyId,
-      sessionId: flow.sessionId,
-      exportRunId: flow.exportRunId,
-      confidence: flow.confidence,
+      tenantId,
+      caseId,
+      taskFamilyId,
+      sessionId,
+      exportRunId,
+      confidence: summary.confidence,
       steps,
       error: null,
-      mode,
-      assessmentMode,
       redteamJobId: redteamJob.job_id,
       redteamRunId,
       redteamRequestId: redteamRun.request_id ?? null,
@@ -548,10 +652,14 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
       detail: toErrorMessage(error),
       requestId: error instanceof MoonshotApiError ? error.requestId : null,
     })
+
+    const base = intent === "prepare" ? initialDemoRunState : previous
     return {
-      ...initialDemoRunState,
+      ...base,
       status: "error",
       mode,
+      phase: intent === "prepare" ? "idle" : previous.phase,
+      selectedTemplateId,
       assessmentMode,
       apiBaseUrl,
       startedAt,
@@ -559,7 +667,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
       tenantId,
       steps,
       error: toErrorMessage(error),
-      seedManifest: summarizeSeedManifest(mode, seedEntries),
+      seedManifest: seedEntries.length > 0 ? summarizeSeedManifest(mode, seedEntries) : previous.seedManifest,
     }
   }
 }
