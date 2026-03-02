@@ -12,6 +12,7 @@ import { EventTimeline } from "@/components/employer/event-timeline"
 import { IntegrityTierSelect } from "@/components/employer/integrity-tier-select"
 import type { IntegrityTier } from "@/lib/integrity-tiers"
 import { getScoringLabel } from "@/lib/scoring-labels"
+import type { SessionMode } from "@/lib/moonshot/types"
 
 const initialReportActionState: ReportActionState = {
   ok: false,
@@ -25,6 +26,18 @@ function formatConfidence(value: unknown): string {
   const num = Number(value)
   if (Number.isNaN(num)) return String(value)
   return `${Math.round(num * 100)}%`
+}
+
+function toSessionMode(value: unknown): SessionMode | undefined {
+  if (
+    value === "practice" ||
+    value === "assessment" ||
+    value === "assessment_no_ai" ||
+    value === "assessment_ai_assisted"
+  ) {
+    return value
+  }
+  return undefined
 }
 
 export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string; snapshot: ReportDetailSnapshot }) {
@@ -41,7 +54,7 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
     )
   }
 
-  const scoringLabel = getScoringLabel(snapshot.session?.policy?.coach_mode)
+  const scoringLabel = getScoringLabel(toSessionMode(snapshot.session?.policy?.coach_mode))
   const sessionStartedAt = snapshot.session?.created_at ?? new Date().toISOString()
 
   return (
