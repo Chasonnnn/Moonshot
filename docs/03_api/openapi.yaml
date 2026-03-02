@@ -508,6 +508,14 @@ paths:
           - type: string
           - type: 'null'
           title: Idempotency-Key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/CaseGenerateRequest'
+              - type: 'null'
+              title: Payload
       responses:
         '202':
           description: Successful Response
@@ -1003,6 +1011,70 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/python/run:
+    post:
+      tags:
+      - simulator-runtime
+      summary: Run Python Code
+      operationId: run_python_code_v1_sessions__session_id__python_run_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PythonRunRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PythonRunResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/python/history:
+    get:
+      tags:
+      - simulator-runtime
+      summary: List Python History
+      operationId: list_python_history_v1_sessions__session_id__python_history_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PythonHistoryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/sessions/{session_id}/dashboard/state:
     get:
       tags:
@@ -1161,6 +1233,14 @@ paths:
           - type: string
           - type: 'null'
           title: Idempotency-Key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/SessionScoreRequest'
+              - type: 'null'
+              title: Payload
       responses:
         '202':
           description: Successful Response
@@ -2144,6 +2224,22 @@ components:
       - title
       - scenario
       title: CaseCreate
+    CaseGenerateRequest:
+      properties:
+        mode:
+          type: string
+          enum:
+          - live
+          - fixture
+          title: Mode
+          default: live
+        template_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Id
+      type: object
+      title: CaseGenerateRequest
     CaseSpec:
       properties:
         id:
@@ -2918,6 +3014,93 @@ components:
       - purged_sessions
       - dry_run
       title: PurgeExpiredResponse
+    PythonHistoryItem:
+      properties:
+        code:
+          type: string
+          title: Code
+        ok:
+          type: boolean
+          title: Ok
+        stdout:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stdout
+        stderr:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stderr
+        plot_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plot Url
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        runtime_ms:
+          type: integer
+          title: Runtime Ms
+          default: 0
+        executed_at:
+          type: string
+          format: date-time
+          title: Executed At
+      type: object
+      required:
+      - code
+      - ok
+      title: PythonHistoryItem
+    PythonHistoryResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/PythonHistoryItem'
+          type: array
+          title: Items
+      type: object
+      title: PythonHistoryResponse
+    PythonRunRequest:
+      properties:
+        code:
+          type: string
+          title: Code
+      type: object
+      required:
+      - code
+      title: PythonRunRequest
+    PythonRunResponse:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+        stdout:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stdout
+        stderr:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stderr
+        plot_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plot Url
+        runtime_ms:
+          type: integer
+          title: Runtime Ms
+      type: object
+      required:
+      - ok
+      - runtime_ms
+      title: PythonRunResponse
     RedTeamRun:
       properties:
         id:
@@ -3513,6 +3696,22 @@ components:
       required:
       - mode
       title: SessionModeRequest
+    SessionScoreRequest:
+      properties:
+        mode:
+          type: string
+          enum:
+          - live
+          - fixture
+          title: Mode
+          default: live
+        template_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Id
+      type: object
+      title: SessionScoreRequest
     SessionSubmitRequest:
       properties:
         final_response:

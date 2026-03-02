@@ -62,6 +62,14 @@ class CaseUpdate(BaseModel):
     status: str | None = None
 
 
+GenerateMode = Literal["live", "fixture"]
+
+
+class CaseGenerateRequest(BaseModel):
+    mode: GenerateMode = "live"
+    template_id: str | None = None
+
+
 class CaseSpec(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     tenant_id: str
@@ -217,6 +225,33 @@ class SQLHistoryResponse(BaseModel):
     items: list[SQLHistoryItem] = Field(default_factory=list)
 
 
+class PythonRunRequest(BaseModel):
+    code: str
+
+
+class PythonHistoryItem(BaseModel):
+    code: str
+    ok: bool
+    stdout: str | None = None
+    stderr: str | None = None
+    plot_url: str | None = None
+    error: str | None = None
+    runtime_ms: int = 0
+    executed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PythonRunResponse(BaseModel):
+    ok: bool
+    stdout: str | None = None
+    stderr: str | None = None
+    plot_url: str | None = None
+    runtime_ms: int
+
+
+class PythonHistoryResponse(BaseModel):
+    items: list[PythonHistoryItem] = Field(default_factory=list)
+
+
 class CoachMessageRequest(BaseModel):
     message: str
 
@@ -236,6 +271,11 @@ SessionMode = Literal["practice", "assessment", "assessment_no_ai", "assessment_
 
 class SessionModeRequest(BaseModel):
     mode: SessionMode
+
+
+class SessionScoreRequest(BaseModel):
+    mode: GenerateMode = "live"
+    template_id: str | None = None
 
 
 class CoachFeedbackRequest(BaseModel):

@@ -25,6 +25,7 @@ from app.schemas import (
     Session,
 )
 from app.services.context_injection import append_context_trace
+from app.services.demo_fixtures import generate_from_fixture, score_from_fixture
 from app.services.exporting import build_export
 from app.services.generation import generate_from_case
 from app.services.idempotency import get_cached, set_cached
@@ -384,11 +385,27 @@ def _handle_generate_case(job: JobRunModel) -> dict[str, Any]:
     if case is None:
         raise RuntimeError("case_not_found")
 
-    generated = generate_from_case(case)
+    mode = str(job.request_payload.get("mode", "live")).strip().lower()
+    template_id = job.request_payload.get("template_id")
+    if mode == "fixture":
+        generated = generate_from_fixture(case, template_id=str(template_id) if template_id is not None else None)
+    else:
+        generated = generate_from_case(case)
+
     case_repository.save_task_family(generated.task_family)
     case_repository.save_rubric(generated.rubric)
 
-    _audit_system(job.tenant_id, "generate", "case", str(case_id), {"task_family_id": str(generated.task_family.id)})
+    _audit_system(
+        job.tenant_id,
+        "generate",
+        "case",
+        str(case_id),
+        {
+            "task_family_id": str(generated.task_family.id),
+            "mode": mode,
+            "template_id": template_id,
+        },
+    )
     return generated.model_dump(mode="json")
 
 
@@ -405,21 +422,36 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
     rubric = case_repository.get_rubric(task_family.rubric_id) if task_family is not None else None
     task_prompt = task_family.variants[0].prompt if task_family is not None and task_family.variants else None
     scoring_config = task_family.scoring_config if task_family is not None else None
+    mode = str(job.request_payload.get("mode", "live")).strip().lower()
+    template_id = job.request_payload.get("template_id")
+    if template_id is None and isinstance(session.policy, dict):
+        policy_template_id = session.policy.get("demo_template_id")
+        if isinstance(policy_template_id, str) and policy_template_id.strip():
+            template_id = policy_template_id.strip()
 
-    try:
-        provider = get_evaluator_provider()
-    except RuntimeError:
-        provider = None
+    if mode == "fixture":
+        score_result, interpretation = score_from_fixture(
+            session_id=session_id,
+            template_id=str(template_id) if template_id is not None else None,
+            events=events,
+            rubric_version=rubric.version if rubric is not None else "fixture-v1",
+            task_family_version=task_family.version if task_family is not None else "fixture-v1",
+        )
+    else:
+        try:
+            provider = get_evaluator_provider()
+        except RuntimeError:
+            provider = None
 
-    score_result, interpretation = score_session(
-        session_id,
-        events,
-        rubric=rubric,
-        task_prompt=task_prompt,
-        final_response=session.final_response,
-        provider=provider,
-        scoring_config=scoring_config,
-    )
+        score_result, interpretation = score_session(
+            session_id,
+            events,
+            rubric=rubric,
+            task_prompt=task_prompt,
+            final_response=session.final_response,
+            provider=provider,
+            scoring_config=scoring_config,
+        )
     scoring_repository.save_score(score_result)
     report = Report(session_id=session_id, score_result=score_result, interpretation=interpretation)
     scoring_repository.save_report(report)
@@ -452,7 +484,12 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
         "score",
         "session",
         str(session_id),
-        {"model_hash": score_result.model_hash, "scorer_version": score_result.scorer_version},
+        {
+            "model_hash": score_result.model_hash,
+            "scorer_version": score_result.scorer_version,
+            "mode": mode,
+            "template_id": template_id,
+        },
     )
     return score_result.model_dump(mode="json")
 

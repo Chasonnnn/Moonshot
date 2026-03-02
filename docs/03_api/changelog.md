@@ -1,6 +1,15 @@
 # API Changelog
 
 ## 0.6.0 - 2026-03-01
+- Added deterministic demo fixture-mode request contracts for async jobs:
+  - `POST /v1/cases/{case_id}/generate` optional body supports `mode=fixture` + `template_id`.
+  - `POST /v1/sessions/{session_id}/score` optional body supports `mode=fixture` + `template_id`.
+- Added simulator runtime Python endpoints to the public API spec:
+  - `POST /v1/sessions/{session_id}/python/run`
+  - `GET /v1/sessions/{session_id}/python/history`
+- Added demo fixture contract governance gate:
+  - `apps/api/scripts/check_demo_fixture_contract.py`
+  - included in `make demo-gate`.
 - Expanded coaching mode contract to four explicit values:
   - `practice`
   - `assessment`

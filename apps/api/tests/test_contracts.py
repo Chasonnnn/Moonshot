@@ -32,6 +32,8 @@ EXPECTED_PATHS = {
     "/v1/sessions/{session_id}/mode",
     "/v1/sessions/{session_id}/sql/run",
     "/v1/sessions/{session_id}/sql/history",
+    "/v1/sessions/{session_id}/python/run",
+    "/v1/sessions/{session_id}/python/history",
     "/v1/sessions/{session_id}/dashboard/state",
     "/v1/sessions/{session_id}/dashboard/action",
     "/v1/sessions/{session_id}/coach/message",
@@ -74,6 +76,37 @@ def test_openapi_session_mode_enum_is_four_modes(client):
     assert sorted(mode_enum) == sorted(
         ["practice", "assessment", "assessment_no_ai", "assessment_ai_assisted"]
     )
+
+
+def test_openapi_generate_and_score_include_fixture_mode_payloads(client):
+    schema = client.get("/openapi.json").json()
+    components = schema["components"]["schemas"]
+
+    def resolve_properties(node: dict) -> dict:
+        if "$ref" in node:
+            ref = str(node["$ref"]).split("/")[-1]
+            return resolve_properties(components[ref])
+        for keyword in ("allOf", "anyOf", "oneOf"):
+            if keyword in node:
+                for child in node[keyword]:
+                    props = resolve_properties(child)
+                    if props:
+                        return props
+        return node.get("properties", {})
+
+    generate_post = schema["paths"]["/v1/cases/{case_id}/generate"]["post"]
+    assert "requestBody" in generate_post
+    generate_schema = generate_post["requestBody"]["content"]["application/json"]["schema"]
+    generate_properties = resolve_properties(generate_schema)
+    assert "mode" in generate_properties
+    assert "template_id" in generate_properties
+
+    score_post = schema["paths"]["/v1/sessions/{session_id}/score"]["post"]
+    assert "requestBody" in score_post
+    score_schema = score_post["requestBody"]["content"]["application/json"]["schema"]
+    score_properties = resolve_properties(score_schema)
+    assert "mode" in score_properties
+    assert "template_id" in score_properties
 
 
 def test_docs_openapi_file_tracks_required_paths():

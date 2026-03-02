@@ -23,7 +23,7 @@ migrate-check-postgres:
 	uv run python apps/api/scripts/guard_postgres_migration_target.py
 
 migrate: migrate-check-postgres
-	uv run alembic -c apps/api/alembic.ini upgrade head
+	cd apps/api && uv run alembic -c alembic.ini upgrade head
 
 api-run:
 	bash apps/api/scripts/start_api.sh
@@ -44,6 +44,7 @@ demo-gate:
 	uv run python apps/api/scripts/check_openapi_sync.py
 	uv run python apps/api/scripts/check_frontend_contract_sync.py
 	uv run python apps/api/scripts/check_timeline_source_contract.py
+	uv run python apps/api/scripts/check_demo_fixture_contract.py
 	uv run python apps/api/scripts/check_api_examples.py
 	uv run python apps/api/scripts/check_report_summary_consistency.py
 	uv run python apps/api/scripts/check_export_schema.py

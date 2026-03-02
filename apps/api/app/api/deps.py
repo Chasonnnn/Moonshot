@@ -1,6 +1,15 @@
-from fastapi import Depends, HTTPException, status
+from pydantic import BaseModel
+from fastapi import Depends, HTTPException, Request, status
 
 from app.core.security import UserContext, get_user_context
+
+
+class RequestContext(BaseModel):
+    request_id: str | None = None
+
+
+def request_context(request: Request) -> RequestContext:
+    return RequestContext(request_id=request.headers.get("x-request-id"))
 
 
 def require_roles(*allowed_roles: str):
