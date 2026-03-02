@@ -1,5 +1,30 @@
 # API Changelog
 
+## 0.6.0 - 2026-03-01
+- Expanded coaching mode contract to four explicit values:
+  - `practice`
+  - `assessment`
+  - `assessment_no_ai`
+  - `assessment_ai_assisted`
+- Added strict server enforcement for no-AI assessment mode:
+  - `POST /v1/sessions/{session_id}/coach/message` now returns `403` with:
+    - `error_code=coach_disabled_for_mode`
+    - `error_detail=coach is disabled in assessment_no_ai mode`
+  - blocked coach decisions are still written to session events and audit logs.
+- Added session event read API with pagination/filtering:
+  - `GET /v1/sessions/{session_id}/events`
+  - query params: `limit`, `cursor`, `event_type`
+  - response includes: `items`, `next_cursor`, `limit`, `total`
+- Updated report timeline integration contract:
+  - frontend report detail now exposes `timeline_source` (`real|fixture`)
+  - `timeline_warning` must be shown when fixture timeline is used.
+- Added demo/contract validation gate coverage:
+  - `apps/api/scripts/check_timeline_source_contract.py`
+  - `make demo-gate` now runs timeline-source contract validation.
+- Version bump:
+  - OpenAPI `0.6.0`
+  - MVP/frontend contract docs updated to `v0.6.0`.
+
 ## 0.5.1 - 2026-03-01
 - Added governance run provenance persistence for red-team and fairness entities:
   - `created_by`

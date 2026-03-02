@@ -1,7 +1,7 @@
-# Frontend/Backend Contract v0.5.1
+# Frontend/Backend Contract v0.6.0
 
 ## Integration Principles
-- Frontend builds against OpenAPI `0.5.0` and fixture payloads.
+- Frontend builds against OpenAPI `0.6.0` and fixture payloads.
 - Breaking changes allowed during development but must be versioned.
 - Tenant-scoped APIs; explicit `404`/`403` isolation behavior.
 - No fallback routes; explicit backend errors only.
@@ -65,9 +65,15 @@ Export schema lock:
 - `GET /v1/task-families/{task_family_id}/quality`
 
 ### Coaching loop
-- `POST /v1/sessions/{session_id}/mode` (`practice` / `assessment`)
+- `POST /v1/sessions/{session_id}/mode` (`practice` / `assessment` / `assessment_no_ai` / `assessment_ai_assisted`)
 - `POST /v1/sessions/{session_id}/coach/message`
 - `POST /v1/sessions/{session_id}/coach/feedback`
+- `GET /v1/sessions/{session_id}/events`
+
+Explicit no-AI enforcement:
+- `assessment_no_ai` mode blocks coaching calls with:
+  - `error_code=coach_disabled_for_mode`
+  - `error_detail=coach is disabled in assessment_no_ai mode`
 
 ### Evaluation interpretation loop
 - `GET /v1/reports/{session_id}/summary`
@@ -113,6 +119,9 @@ Red-team list filters:
   - `last_scored_at`
 - Handle coach decision diagnostics:
   - `policy_decision_code`
+ - Handle timeline provenance diagnostics:
+  - `timeline_source`
+  - `timeline_warning`
 
 Employer ops pages expected in MVP:
 - `/cases`

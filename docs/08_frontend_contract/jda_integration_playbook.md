@@ -1,7 +1,7 @@
-# JDA Frontend Integration Playbook (v0.5.0)
+# JDA Frontend Integration Playbook (v0.6.0)
 
 ## Purpose
-This playbook is the implementation contract for frontend teams integrating the JDA MVP path with backend `v0.5.0`.
+This playbook is the implementation contract for frontend teams integrating the JDA MVP path with backend `v0.6.0`.
 
 ## Required Runtime Headers
 1. `Authorization: Bearer <jwt>`
@@ -30,8 +30,10 @@ This playbook is the implementation contract for frontend teams integrating the 
    - `POST /v1/task-families/{task_family_id}/publish`
 5. Create session: `POST /v1/sessions`
 6. Set coach mode: `POST /v1/sessions/{session_id}/mode`
+   - allowed: `practice`, `assessment`, `assessment_no_ai`, `assessment_ai_assisted`
 7. Candidate runtime:
    - `POST /v1/sessions/{session_id}/events`
+   - `GET /v1/sessions/{session_id}/events`
    - `POST /v1/sessions/{session_id}/coach/message`
    - `POST /v1/sessions/{session_id}/submit`
 8. Submit scoring job: `POST /v1/sessions/{session_id}/score` with `Idempotency-Key`
@@ -69,6 +71,9 @@ All non-2xx API responses return:
 4. `request_id`
 
 Frontend must log and display `request_id` in developer/debug views.
+If coach mode is `assessment_no_ai`, `POST /coach/message` returns:
+1. `error_code=coach_disabled_for_mode`
+2. `error_detail=coach is disabled in assessment_no_ai mode`
 
 ## Idempotency Rules
 1. Required for:

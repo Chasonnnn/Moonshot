@@ -5,8 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "Moonshot Backend"
-    api_version: str = "0.5.1"
-    schema_version: str = "0.5.1"
+    api_version: str = "0.6.0"
+    schema_version: str = "0.6.0"
     database_url: str = "sqlite+pysqlite:///./moonshot.db"
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 

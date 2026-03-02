@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moonshot Backend
-  version: 0.5.1
+  version: 0.6.0
 paths:
   /health:
     get:
@@ -810,6 +810,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventIngestResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - sessions
+      summary: List Session Events
+      operationId: list_session_events_v1_sessions__session_id__events_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 100
+          title: Limit
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Cursor
+      - name: event_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Event Type
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionEventListResponse'
         '422':
           description: Validation Error
           content:
@@ -3405,10 +3458,56 @@ components:
       - candidate_id
       - task_prompt
       title: SessionDetail
+    SessionEvent:
+      properties:
+        event_type:
+          type: string
+          title: Event Type
+        payload:
+          additionalProperties: true
+          type: object
+          title: Payload
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+      type: object
+      required:
+      - event_type
+      - timestamp
+      title: SessionEvent
+    SessionEventListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SessionEvent'
+          type: array
+          title: Items
+        next_cursor:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Cursor
+        limit:
+          type: integer
+          title: Limit
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - limit
+      - total
+      title: SessionEventListResponse
     SessionModeRequest:
       properties:
         mode:
           type: string
+          enum:
+          - practice
+          - assessment
+          - assessment_no_ai
+          - assessment_ai_assisted
           title: Mode
       type: object
       required:
