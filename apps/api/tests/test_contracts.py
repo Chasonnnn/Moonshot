@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[3]
 EXPECTED_PATHS = {
     "/health",
     "/v1/meta/version",
+    "/v1/meta/model-options",
     "/v1/auth/token",
     "/v1/jobs",
     "/v1/jobs/stale-leases",
@@ -100,6 +101,10 @@ def test_openapi_generate_and_score_include_fixture_mode_payloads(client):
     generate_properties = resolve_properties(generate_schema)
     assert "mode" in generate_properties
     assert "template_id" in generate_properties
+    assert "variant_count" in generate_properties
+    assert "model_override" in generate_properties
+    assert "reasoning_effort" in generate_properties
+    assert "thinking_budget_tokens" in generate_properties
 
     score_post = schema["paths"]["/v1/sessions/{session_id}/score"]["post"]
     assert "requestBody" in score_post
@@ -107,6 +112,30 @@ def test_openapi_generate_and_score_include_fixture_mode_payloads(client):
     score_properties = resolve_properties(score_schema)
     assert "mode" in score_properties
     assert "template_id" in score_properties
+    assert "model_override" in score_properties
+    assert "reasoning_effort" in score_properties
+    assert "thinking_budget_tokens" in score_properties
+
+    coach_post = schema["paths"]["/v1/sessions/{session_id}/coach/message"]["post"]
+    assert "requestBody" in coach_post
+    coach_schema = coach_post["requestBody"]["content"]["application/json"]["schema"]
+    coach_properties = resolve_properties(coach_schema)
+    assert "model_override" in coach_properties
+    assert "reasoning_effort" in coach_properties
+    assert "thinking_budget_tokens" in coach_properties
+
+
+def test_openapi_fixture_variant_and_rubric_detail_fields_exist(client):
+    schema = client.get("/openapi.json").json()
+    components = schema["components"]["schemas"]
+
+    task_variant = components["TaskVariant"]["properties"]
+    assert "skill" in task_variant
+    assert "difficulty_level" in task_variant
+    assert "round_hint" in task_variant
+    assert "estimated_minutes" in task_variant
+    assert "deliverables" in task_variant
+    assert "artifact_refs" in task_variant
 
 
 def test_docs_openapi_file_tracks_required_paths():

@@ -7,7 +7,9 @@
 
 ## Environment
 - Required: `MOONSHOT_DATABASE_URL`
-- Required when provider is Gemini: `MOONSHOT_GEMINI_API_KEY`
+- Required when provider is LiteLLM:
+  - `MOONSHOT_LITELLM_BASE_URL`
+  - `MOONSHOT_LITELLM_API_KEY`
 - Optional worker lease tuning: `MOONSHOT_WORKER_LEASE_SECONDS`
 - Optional worker heartbeat tuning:
   - `MOONSHOT_WORKER_HEARTBEAT_INTERVAL_SECONDS`
@@ -17,7 +19,6 @@
   - `MOONSHOT_MANAGED_SECRETS_REQUIRED`
   - `MOONSHOT_MANAGED_SECRETS_REGION`
   - `MOONSHOT_JWT_SIGNING_KEYS_SECRET_ID`
-  - `MOONSHOT_GEMINI_API_KEY_SECRET_ID`
 
 ## SLO Targets (Pilot)
 - API availability: 99.5%

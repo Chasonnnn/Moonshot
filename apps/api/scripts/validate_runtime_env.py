@@ -21,9 +21,12 @@ def main() -> int:
     if _missing("MOONSHOT_JWT_SIGNING_KEYS"):
         failures.append("MOONSHOT_JWT_SIGNING_KEYS must be set")
 
-    provider = os.getenv("MOONSHOT_MODEL_PROVIDER", "gemini").strip().lower() or "gemini"
-    if provider == "gemini" and _missing("MOONSHOT_GEMINI_API_KEY"):
-        failures.append("MOONSHOT_GEMINI_API_KEY must be set when MOONSHOT_MODEL_PROVIDER=gemini")
+    provider = os.getenv("MOONSHOT_MODEL_PROVIDER", "litellm").strip().lower() or "litellm"
+    if provider == "litellm":
+        if _missing("MOONSHOT_LITELLM_BASE_URL"):
+            failures.append("MOONSHOT_LITELLM_BASE_URL must be set when MOONSHOT_MODEL_PROVIDER=litellm")
+        if _missing("MOONSHOT_LITELLM_API_KEY"):
+            failures.append("MOONSHOT_LITELLM_API_KEY must be set when MOONSHOT_MODEL_PROVIDER=litellm")
 
     if failures:
         for failure in failures:

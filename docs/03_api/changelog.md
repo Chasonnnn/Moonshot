@@ -1,9 +1,35 @@
 # API Changelog
 
 ## 0.6.0 - 2026-03-01
+- Migrated runtime provider routing to LiteLLM-backed agent providers (codesign, coach, evaluator).
+- Added required LiteLLM runtime environment contract:
+  - `MOONSHOT_LITELLM_BASE_URL`
+  - `MOONSHOT_LITELLM_API_KEY`
+- Added strict required model allowlist validation against LiteLLM Proxy `GET /v1/model/info`:
+  - `gpt-5.3-codex`
+  - `chatgpt/gpt-5.2`
+  - `gemini/gemini-3.1-pro-preview`
+  - `gemini/gemini-3.1-flash-lite-preview`
+  - `anthropic/claude-opus-4-6`
+- Added model options discovery endpoint:
+  - `GET /v1/meta/model-options`
+- Extended request contracts with optional model/reasoning overrides:
+  - `POST /v1/cases/{case_id}/generate`
+  - `POST /v1/sessions/{session_id}/coach/message`
+  - `POST /v1/sessions/{session_id}/score`
+- Added reasoning policy defaults and constraints:
+  - default `reasoning_effort=high`
+  - `xhigh` only for explicit allowlisted models
+  - `anthropic/claude-opus-4-6` supports adaptive thinking by default and explicit thinking-budget overrides
 - Added deterministic demo fixture-mode request contracts for async jobs:
   - `POST /v1/cases/{case_id}/generate` optional body supports `mode=fixture` + `template_id`.
   - `POST /v1/sessions/{session_id}/score` optional body supports `mode=fixture` + `template_id`.
+- Expanded fixture generation controls and metadata contracts:
+  - `POST /v1/cases/{case_id}/generate` now supports optional `variant_count` (5-20, default 12 in fixture mode).
+  - `TaskVariant` now includes optional metadata for skill, difficulty, round hint, estimated minutes, deliverables, and artifact references.
+  - `RubricDimension` now includes detailed evaluation bullets, evidence signals, failure modes, and score bands.
+- Removed silent fixture template fallback behavior:
+  - unknown fixture `template_id` now fails explicitly with a validation-style runtime error.
 - Added simulator runtime Python endpoints to the public API spec:
   - `POST /v1/sessions/{session_id}/python/run`
   - `GET /v1/sessions/{session_id}/python/history`

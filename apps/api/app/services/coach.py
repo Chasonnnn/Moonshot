@@ -36,7 +36,15 @@ def _load_policy() -> dict:
     }
 
 
-def coach_reply(message: str, session_context: str, *, mode: str = "assessment") -> CoachResponse:
+def coach_reply(
+    message: str,
+    session_context: str,
+    *,
+    mode: str = "assessment",
+    model_override: str | None = None,
+    reasoning_effort: str | None = None,
+    thinking_budget_tokens: int | None = None,
+) -> CoachResponse:
     policy = _load_policy()
     lowered = message.lower()
 
@@ -56,7 +64,11 @@ def coach_reply(message: str, session_context: str, *, mode: str = "assessment")
                     blocked_rule_id=rule["id"],
                 )
 
-    provider = get_coach_provider()
+    provider = get_coach_provider(
+        model_override=model_override,
+        reasoning_effort=reasoning_effort,
+        thinking_budget_tokens=thinking_budget_tokens,
+    )
     if mode == "practice":
         prompt = (
             "You are a coaching assistant in practice mode. "

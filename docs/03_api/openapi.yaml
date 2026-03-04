@@ -28,6 +28,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetaVersion'
+  /v1/meta/model-options:
+    get:
+      summary: Model Options
+      operationId: model_options_v1_meta_model_options_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelOptionsResponse'
   /v1/auth/token:
     post:
       tags:
@@ -2238,6 +2249,28 @@ components:
           - type: string
           - type: 'null'
           title: Template Id
+        variant_count:
+          anyOf:
+          - type: integer
+            maximum: 20.0
+            minimum: 5.0
+          - type: 'null'
+          title: Variant Count
+        model_override:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model Override
+        reasoning_effort:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reasoning Effort
+        thinking_budget_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Thinking Budget Tokens
       type: object
       title: CaseGenerateRequest
     CaseSpec:
@@ -2400,6 +2433,21 @@ components:
         message:
           type: string
           title: Message
+        model_override:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model Override
+        reasoning_effort:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reasoning Effort
+        thinking_budget_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Thinking Budget Tokens
       type: object
       required:
       - message
@@ -2993,6 +3041,43 @@ components:
       - prompt_hash
       - latency_ms
       title: ModelInvocationTrace
+    ModelOptionStatus:
+      properties:
+        model:
+          type: string
+          title: Model
+        available:
+          type: boolean
+          title: Available
+        resolved_model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolved Model
+      type: object
+      required:
+      - model
+      - available
+      title: ModelOptionStatus
+    ModelOptionsResponse:
+      properties:
+        required_models:
+          items:
+            type: string
+          type: array
+          title: Required Models
+        defaults_by_agent:
+          additionalProperties:
+            type: string
+          type: object
+          title: Defaults By Agent
+        options:
+          items:
+            $ref: '#/components/schemas/ModelOptionStatus'
+          type: array
+          title: Options
+      type: object
+      title: ModelOptionsResponse
     PurgeExpiredRequest:
       properties:
         dry_run:
@@ -3293,6 +3378,63 @@ components:
       required:
       - decision
       title: ReviewQueueResolveRequest
+    Rubric:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        dimensions:
+          items:
+            $ref: '#/components/schemas/RubricDimension'
+          type: array
+          title: Dimensions
+        failure_modes:
+          items:
+            type: string
+          type: array
+          title: Failure Modes
+        version:
+          type: string
+          title: Version
+          default: 0.1.0
+      type: object
+      required:
+      - dimensions
+      title: Rubric
+    RubricDimension:
+      properties:
+        key:
+          type: string
+          title: Key
+        anchor:
+          type: string
+          title: Anchor
+        evaluation_points:
+          items:
+            type: string
+          type: array
+          title: Evaluation Points
+        evidence_signals:
+          items:
+            type: string
+          type: array
+          title: Evidence Signals
+        common_failure_modes:
+          items:
+            type: string
+          type: array
+          title: Common Failure Modes
+        score_bands:
+          additionalProperties:
+            type: string
+          type: object
+          title: Score Bands
+      type: object
+      required:
+      - key
+      - anchor
+      title: RubricDimension
     SLOProbeResponse:
       properties:
         overall_status:
@@ -3710,6 +3852,21 @@ components:
           - type: string
           - type: 'null'
           title: Template Id
+        model_override:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model Override
+        reasoning_effort:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reasoning Effort
+        thinking_budget_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Thinking Budget Tokens
       type: object
       title: SessionScoreRequest
     SessionSubmitRequest:
@@ -3740,6 +3897,10 @@ components:
           type: string
           format: uuid
           title: Rubric Id
+        rubric:
+          anyOf:
+          - $ref: '#/components/schemas/Rubric'
+          - type: 'null'
         status:
           type: string
           title: Status
@@ -3860,6 +4021,36 @@ components:
         prompt:
           type: string
           title: Prompt
+        skill:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skill
+        difficulty_level:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Difficulty Level
+        round_hint:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Round Hint
+        estimated_minutes:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Estimated Minutes
+        deliverables:
+          items:
+            type: string
+          type: array
+          title: Deliverables
+        artifact_refs:
+          items:
+            type: string
+          type: array
+          title: Artifact Refs
       type: object
       required:
       - prompt

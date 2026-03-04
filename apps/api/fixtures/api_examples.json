@@ -404,7 +404,7 @@
   "task_quality_signal": {
     "response": {
       "task_family_id": "00000000-0000-0000-0000-000000000050",
-      "variant_count": 3,
+      "variant_count": 12,
       "diversity_score": 0.42,
       "clarity_score": 0.81,
       "realism_score": 0.9,

@@ -53,9 +53,9 @@ cp apps/api/.env.example apps/api/.env.local
 export MOONSHOT_DATABASE_URL=postgresql+psycopg://moonshot:moonshot@localhost:5432/moonshot
 export MOONSHOT_BOOTSTRAP_TOKEN=moonshot-bootstrap-dev
 export MOONSHOT_JWT_SIGNING_KEYS='{"v1":"moonshot-dev-signing-key-change-me"}'
-export MOONSHOT_MODEL_PROVIDER=openai
-# if using gemini provider:
-# export MOONSHOT_GEMINI_API_KEY=...
+export MOONSHOT_MODEL_PROVIDER=litellm
+export MOONSHOT_LITELLM_BASE_URL=https://<your-litellm-host>
+export MOONSHOT_LITELLM_API_KEY=<your-litellm-api-key>
 ```
 
 Hybrid local runtime (recommended):
@@ -167,8 +167,15 @@ Common issues and fixes:
   - Continue polling `GET /v1/jobs/{job_id}` and `GET /v1/jobs/{job_id}/result`.
 - `runtime-env: FAIL (...)` on startup:
   - Set required env vars shown in `apps/api/.env.example`.
-- `gemini_api_key_missing`:
-  - Set `MOONSHOT_GEMINI_API_KEY` or switch `MOONSHOT_MODEL_PROVIDER=openai` for local tests.
+- `provider_litellm_base_url_missing` / `provider_litellm_api_key_missing`:
+  - Set `MOONSHOT_LITELLM_BASE_URL` and `MOONSHOT_LITELLM_API_KEY`.
+- `provider_litellm_required_models_missing`:
+  - Ensure your LiteLLM `/v1/model/info` includes:
+    - `gpt-5.3-codex`
+    - `chatgpt/gpt-5.2`
+    - `gemini/gemini-3.1-pro-preview`
+    - `gemini/gemini-3.1-flash-lite-preview`
+    - `anthropic/claude-opus-4-6`
 - Migration guard rejects SQLite:
   - Migrations are Postgres-authoritative. Use `MOONSHOT_DATABASE_URL=postgresql+psycopg://...`.
 - Worker appears idle:

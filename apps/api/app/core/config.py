@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     worker_heartbeat_interval_seconds: float = 5.0
     worker_stale_after_seconds: float = 30.0
 
-    model_provider: str = "gemini"
+    model_provider: str = "litellm"
+    litellm_base_url: str | None = None
+    litellm_api_key: str | None = None
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.0-flash"
     openai_model: str = "gpt-5-mini"

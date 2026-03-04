@@ -5,24 +5,118 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from app.schemas import GenerationResult, Interpretation, ModelInvocationTrace, Rubric, RubricDimension, ScoreResult, TaskFamily, TaskVariant
+from app.schemas import (
+    DimensionScoreOutput,
+    GenerationResult,
+    Interpretation,
+    ModelInvocationTrace,
+    Rubric,
+    RubricDimension,
+    ScoreResult,
+    TaskFamily,
+    TaskVariant,
+)
 from app.schemas.contracts import CaseSpec
 
 
-_FIXTURE_DEFAULT = "tpl_data_analyst"
+_DEFAULT_VARIANT_COUNT = 12
+_MIN_VARIANT_COUNT = 5
+_MAX_VARIANT_COUNT = 20
 
 
 _FIXTURE_PROFILES: dict[str, dict[str, Any]] = {
     "tpl_data_analyst": {
         "task_prompt": (
-            "Investigate an 18% weekly conversion-rate decline, isolate likely root causes, "
-            "validate with at least two checks, and propose actions with caveats."
+            "Investigate a conversion-rate decline, isolate likely root causes, validate with multiple checks, "
+            "and present decisions with confidence caveats."
         ),
+        "skills": ["sql", "python", "dashboard", "analysis"],
+        "difficulty_plan": [
+            "foundation",
+            "foundation",
+            "intermediate",
+            "intermediate",
+            "intermediate",
+            "advanced",
+            "advanced",
+            "advanced",
+            "expert",
+            "expert",
+            "expert",
+            "capstone",
+        ],
         "rubric_dimensions": [
-            ("analytical_depth", "Identifies root cause with concrete evidence from multiple slices."),
-            ("sql_proficiency", "Uses correct SQL logic and iterative checks."),
-            ("communication", "Communicates findings and uncertainty clearly."),
-            ("verification", "Validates assumptions before conclusions."),
+            {
+                "key": "analytical_depth",
+                "anchor": "Identifies root causes with triangulated evidence from multiple slices.",
+                "evaluation_points": [
+                    "Compares at least two segments before concluding",
+                    "Separates signal from noise with confidence caveats",
+                    "Explains causal hypotheses and alternatives",
+                ],
+                "evidence_signals": [
+                    "cross-segment comparison",
+                    "temporal validation",
+                    "counterfactual check",
+                ],
+                "common_failure_modes": [
+                    "single-slice conclusion",
+                    "missing uncertainty statement",
+                ],
+                "score_bands": {
+                    "1": "Unsubstantiated conclusion with no checks",
+                    "3": "Reasonable hypothesis with partial validation",
+                    "5": "Multi-source validated diagnosis with caveats",
+                },
+            },
+            {
+                "key": "sql_proficiency",
+                "anchor": "Uses accurate and iterative SQL checks to validate findings.",
+                "evaluation_points": [
+                    "Chooses appropriate joins/filters",
+                    "Validates row-count or aggregation integrity",
+                    "Builds queries that are easy to audit",
+                ],
+                "evidence_signals": ["query correctness", "sanity checks", "traceability"],
+                "common_failure_modes": ["aggregation mismatch", "missing null handling"],
+                "score_bands": {
+                    "1": "Incorrect SQL that invalidates conclusions",
+                    "3": "Mostly correct SQL with limited validation",
+                    "5": "Robust SQL workflow with explicit checks",
+                },
+            },
+            {
+                "key": "communication",
+                "anchor": "Communicates decisions clearly for technical and business stakeholders.",
+                "evaluation_points": [
+                    "Structures findings into issue/evidence/action",
+                    "Uses audience-appropriate language",
+                    "States risks and next actions",
+                ],
+                "evidence_signals": ["clear narrative", "actionable recommendation"],
+                "common_failure_modes": ["overly technical framing", "no prioritization"],
+                "score_bands": {
+                    "1": "Confusing output with unclear recommendation",
+                    "3": "Understandable output with limited prioritization",
+                    "5": "Clear executive-ready recommendation with risks",
+                },
+            },
+            {
+                "key": "verification",
+                "anchor": "Performs verification steps before final recommendations.",
+                "evaluation_points": [
+                    "Runs consistency checks",
+                    "Compares alternative explanations",
+                    "Records unresolved unknowns",
+                ],
+                "evidence_signals": ["verification events", "cross-check queries"],
+                "common_failure_modes": ["no verification pass", "ignores contradictions"],
+                "score_bands": {
+                    "1": "No explicit verification",
+                    "3": "Some verification with gaps",
+                    "5": "Comprehensive verification and limitations",
+                },
+            },
         ],
         "failure_modes": [
             "Jumps to conclusions without evidence.",
@@ -41,14 +135,89 @@ _FIXTURE_PROFILES: dict[str, dict[str, Any]] = {
     },
     "tpl_jda_quality": {
         "task_prompt": (
-            "Resolve the source-vs-dashboard row-count discrepancy, identify likely data-quality root causes, "
-            "and document escalation-ready findings."
+            "Resolve the source-vs-dashboard discrepancy, identify likely data-quality or ETL root causes, "
+            "and produce escalation-ready findings."
         ),
+        "skills": ["sql", "dashboard", "documentation", "qa"],
+        "difficulty_plan": [
+            "foundation",
+            "foundation",
+            "intermediate",
+            "intermediate",
+            "intermediate",
+            "advanced",
+            "advanced",
+            "advanced",
+            "expert",
+            "expert",
+            "expert",
+            "capstone",
+        ],
         "rubric_dimensions": [
-            ("data_quality_process", "Systematically investigates missing and duplicate records."),
-            ("sql_accuracy", "Writes accurate comparison and validation SQL."),
-            ("documentation", "Documents findings with precise references."),
-            ("escalation_judgment", "Escalates appropriately based on impact and certainty."),
+            {
+                "key": "data_quality_process",
+                "anchor": "Systematically investigates missing and duplicate records.",
+                "evaluation_points": [
+                    "Distinguishes missing vs duplicate impact",
+                    "Links evidence to pipeline stage",
+                    "Uses repeatable investigation checklist",
+                ],
+                "evidence_signals": ["dedupe check", "reconciliation query", "lineage notes"],
+                "common_failure_modes": ["confuses duplicate with missing", "no lineage reasoning"],
+                "score_bands": {
+                    "1": "Ad hoc triage without root-cause isolation",
+                    "3": "Partial systematic process",
+                    "5": "Clear and reproducible RCA workflow",
+                },
+            },
+            {
+                "key": "sql_accuracy",
+                "anchor": "Writes accurate comparison and validation SQL.",
+                "evaluation_points": [
+                    "Uses consistent keys",
+                    "Validates intermediate results",
+                    "Prevents double counting",
+                ],
+                "evidence_signals": ["query correctness", "runtime sanity"],
+                "common_failure_modes": ["join explosion", "inconsistent filters"],
+                "score_bands": {
+                    "1": "Queries produce misleading results",
+                    "3": "Mostly correct with minor integrity gaps",
+                    "5": "Accurate and defensible SQL pipeline",
+                },
+            },
+            {
+                "key": "documentation",
+                "anchor": "Documents findings with precise references.",
+                "evaluation_points": [
+                    "Captures assumptions",
+                    "Provides reproducible evidence references",
+                    "Summarizes impact clearly",
+                ],
+                "evidence_signals": ["referenced artifacts", "decision log"],
+                "common_failure_modes": ["missing references", "ambiguous impact summary"],
+                "score_bands": {
+                    "1": "Unstructured notes",
+                    "3": "Adequate notes with gaps",
+                    "5": "Clear and audit-ready documentation",
+                },
+            },
+            {
+                "key": "escalation_judgment",
+                "anchor": "Escalates appropriately based on impact and certainty.",
+                "evaluation_points": [
+                    "Chooses correct severity level",
+                    "Separates knowns from unknowns",
+                    "Recommends next owner/actions",
+                ],
+                "evidence_signals": ["severity rationale", "ownership clarity"],
+                "common_failure_modes": ["premature escalation", "under-escalation"],
+                "score_bands": {
+                    "1": "Escalation choice is unsupported",
+                    "3": "Reasonable escalation with weak rationale",
+                    "5": "Strong escalation decision with clear ownership",
+                },
+            },
         ],
         "failure_modes": [
             "No duplicate/missing split.",
@@ -68,13 +237,88 @@ _FIXTURE_PROFILES: dict[str, dict[str, Any]] = {
     "tpl_jda_ambiguity": {
         "task_prompt": (
             "Respond to an ambiguous stakeholder request by clarifying assumptions, asking targeted questions, "
-            "and proposing a scoped deliverable."
+            "and proposing a scoped deliverable with escalation logic."
         ),
+        "skills": ["communication", "assumptions", "escalation", "analysis"],
+        "difficulty_plan": [
+            "foundation",
+            "foundation",
+            "intermediate",
+            "intermediate",
+            "intermediate",
+            "advanced",
+            "advanced",
+            "advanced",
+            "expert",
+            "expert",
+            "expert",
+            "capstone",
+        ],
         "rubric_dimensions": [
-            ("ambiguity_recognition", "Identifies key ambiguities in the request."),
-            ("assumption_documentation", "States assumptions explicitly and clearly."),
-            ("communication_clarity", "Communicates professionally and with structure."),
-            ("escalation_appropriateness", "Balances proactive delivery with clarification."),
+            {
+                "key": "ambiguity_recognition",
+                "anchor": "Identifies key ambiguities in the request.",
+                "evaluation_points": [
+                    "Surfaces missing scope details",
+                    "Identifies risks of wrong assumptions",
+                    "Proposes clarifying checkpoints",
+                ],
+                "evidence_signals": ["clarifying questions", "scope decomposition"],
+                "common_failure_modes": ["assumes scope silently", "ignores unknowns"],
+                "score_bands": {
+                    "1": "Misses core ambiguities",
+                    "3": "Catches obvious ambiguities",
+                    "5": "Comprehensive ambiguity map",
+                },
+            },
+            {
+                "key": "assumption_documentation",
+                "anchor": "States assumptions explicitly and clearly.",
+                "evaluation_points": [
+                    "Lists assumptions with confidence level",
+                    "Maps assumptions to decisions",
+                    "Flags invalidation conditions",
+                ],
+                "evidence_signals": ["assumption ledger", "explicit caveats"],
+                "common_failure_modes": ["implicit assumptions", "no caveat tracking"],
+                "score_bands": {
+                    "1": "Implicit assumptions only",
+                    "3": "Some assumptions stated",
+                    "5": "Clear assumption management",
+                },
+            },
+            {
+                "key": "communication_clarity",
+                "anchor": "Communicates professionally and with structure.",
+                "evaluation_points": [
+                    "Uses concise and audience-appropriate language",
+                    "Structures response around decision and action",
+                    "Includes timeline/ownership",
+                ],
+                "evidence_signals": ["structured response", "action framing"],
+                "common_failure_modes": ["rambling response", "missing ask"],
+                "score_bands": {
+                    "1": "Unclear communication",
+                    "3": "Reasonably clear communication",
+                    "5": "Executive-ready concise communication",
+                },
+            },
+            {
+                "key": "escalation_appropriateness",
+                "anchor": "Balances proactive delivery with clarification.",
+                "evaluation_points": [
+                    "Escalates only when needed",
+                    "Commits to a minimum viable deliverable",
+                    "Uses escalation triggers",
+                ],
+                "evidence_signals": ["escalation criteria", "delivery fallback plan"],
+                "common_failure_modes": ["blocks without progress", "over-commits without clarity"],
+                "score_bands": {
+                    "1": "Escalation behavior is counterproductive",
+                    "3": "Adequate escalation behavior",
+                    "5": "Nuanced escalation and delivery balance",
+                },
+            },
         ],
         "failure_modes": [
             "Assumes scope without clarifying.",
@@ -94,17 +338,31 @@ _FIXTURE_PROFILES: dict[str, dict[str, Any]] = {
 }
 
 
-def _normalize_template_id(template_id: str | None) -> str:
+def _resolve_template_id(template_id: str | None) -> str:
     candidate = (template_id or "").strip()
-    if candidate in _FIXTURE_PROFILES:
-        return candidate
-    return _FIXTURE_DEFAULT
+    if not candidate:
+        raise RuntimeError("fixture_template_not_found:missing_template_id")
+    if candidate not in _FIXTURE_PROFILES:
+        raise RuntimeError(f"fixture_template_not_found:{candidate}")
+    return candidate
+
+
+def _resolve_variant_count(variant_count: int | None) -> int:
+    if variant_count is None:
+        return _DEFAULT_VARIANT_COUNT
+    if variant_count < _MIN_VARIANT_COUNT or variant_count > _MAX_VARIANT_COUNT:
+        raise ValueError(
+            f"fixture_variant_count_out_of_range:{variant_count}"
+        )
+    return variant_count
 
 
 def _metric(events: list[dict[str, Any]]) -> dict[str, Any]:
     query_runs = sum(1 for e in events if e.get("event_type") == "sql_query_run")
     query_errors = sum(1 for e in events if e.get("event_type") == "sql_query_error")
     python_runs = sum(1 for e in events if e.get("event_type") == "python_code_run")
+    r_runs = sum(1 for e in events if e.get("event_type") in {"analysis_r_run", "r_code_run"})
+    dashboard_actions = sum(1 for e in events if e.get("event_type") == "dashboard_action")
     ai_calls = sum(1 for e in events if e.get("event_type") == "copilot_invoked")
     verification_steps = sum(1 for e in events if e.get("event_type") == "verification_step_completed")
     policy_flags = sum(1 for e in events if e.get("payload", {}).get("policy_violation") is True)
@@ -121,6 +379,8 @@ def _metric(events: list[dict[str, Any]]) -> dict[str, Any]:
         "query_attempt_count": query_runs,
         "query_error_rate": round(query_error_rate, 3),
         "python_run_count": python_runs,
+        "r_run_count": r_runs,
+        "dashboard_action_count": dashboard_actions,
         "ai_prompt_count": ai_calls,
         "verification_steps": verification_steps,
         "policy_violation_count": policy_flags,
@@ -137,34 +397,75 @@ def _fixture_trace(template_id: str, seed_text: str) -> ModelInvocationTrace:
     )
 
 
-def generate_from_fixture(case: CaseSpec, *, template_id: str | None) -> GenerationResult:
-    resolved = _normalize_template_id(template_id)
+def _build_variants(*, base_prompt: str, profile: dict[str, Any], variant_count: int) -> list[TaskVariant]:
+    skills = list(profile["skills"])
+    difficulty_plan = list(profile["difficulty_plan"])
+    variants: list[TaskVariant] = []
+    for idx in range(variant_count):
+        skill = skills[idx % len(skills)]
+        difficulty = difficulty_plan[idx % len(difficulty_plan)]
+        round_hint = f"round_{(idx % 3) + 1}"
+        variants.append(
+            TaskVariant(
+                prompt=(
+                    f"Variant {idx + 1}: {base_prompt} Focus on {skill} evidence. "
+                    f"Difficulty={difficulty}. Include reproducible checks and escalation rationale."
+                ),
+                skill=skill,
+                difficulty_level=difficulty,
+                round_hint=round_hint,
+                estimated_minutes=10 + (idx % 4) * 5,
+                deliverables=[
+                    "analysis_summary",
+                    "evidence_table",
+                    "recommended_actions",
+                ],
+                artifact_refs=[
+                    "orders.csv",
+                    "etl_log.txt",
+                    "dashboard_snapshot.png",
+                ],
+            )
+        )
+    return variants
+
+
+def generate_from_fixture(
+    case: CaseSpec,
+    *,
+    template_id: str | None,
+    variant_count: int | None = None,
+) -> GenerationResult:
+    resolved = _resolve_template_id(template_id)
+    resolved_variant_count = _resolve_variant_count(variant_count)
     profile = _FIXTURE_PROFILES[resolved]
     base_prompt = str(profile["task_prompt"])
 
     rubric = Rubric(
         dimensions=[
-            RubricDimension(key=key, anchor=anchor) for key, anchor in profile["rubric_dimensions"]
+            RubricDimension.model_validate(item)
+            for item in profile["rubric_dimensions"]
         ],
         failure_modes=list(profile["failure_modes"]),
-        version="fixture-v1",
+        version="fixture-v2",
     )
 
-    variants = [
-        TaskVariant(prompt=f"Variant A: {base_prompt}"),
-        TaskVariant(prompt=f"Variant B: {base_prompt} Prioritize validation sequencing and traceability."),
-        TaskVariant(prompt=f"Variant C: {base_prompt} Emphasize escalation criteria and risk communication."),
-    ]
+    variants = _build_variants(
+        base_prompt=base_prompt,
+        profile=profile,
+        variant_count=resolved_variant_count,
+    )
 
     task_family = TaskFamily(
         case_id=case.id,
         variants=variants,
         rubric_id=rubric.id,
         status="generated",
-        version="fixture-v1",
+        version="fixture-v2",
         generation_diagnostics={
             "mode": "fixture",
             "template_id": resolved,
+            "variant_count": resolved_variant_count,
             "diversity_passed": True,
             "rubric_leakage_detected": False,
             "grounding_coverage_score": 1.0,
@@ -186,7 +487,7 @@ def score_from_fixture(
     rubric_version: str,
     task_family_version: str,
 ) -> tuple[ScoreResult, Interpretation]:
-    resolved = _normalize_template_id(template_id)
+    resolved = _resolve_template_id(template_id)
     profile = _FIXTURE_PROFILES[resolved]
     mock_score = profile["mock_score"]
 
@@ -196,10 +497,31 @@ def score_from_fixture(
     if "fixture_score_profile" not in trigger_codes:
         trigger_codes.append("fixture_score_profile")
 
+    dimension_evidence = {
+        item["key"]: DimensionScoreOutput(
+            key=item["key"],
+            score=float(dimension_scores.get(item["key"], 0.0)),
+            rationale=f"Fixture evidence indicates competency in {item['key'].replace('_', ' ')}.",
+            failure_modes_matched=list(item.get("common_failure_modes", []))[:1],
+            confidence=min(0.99, confidence + 0.03),
+        )
+        for item in profile["rubric_dimensions"]
+    }
+
+    objective_metrics = _metric(events)
+    objective_metrics["rounds_completed"] = 3
+    objective_metrics["tool_coverage"] = {
+        "sql": objective_metrics["query_attempt_count"] > 0,
+        "python": objective_metrics["python_run_count"] > 0,
+        "r": objective_metrics["r_run_count"] > 0,
+        "dashboard": objective_metrics["dashboard_action_count"] > 0,
+    }
+
     score_result = ScoreResult(
         session_id=session_id,
-        objective_metrics=_metric(events),
+        objective_metrics=objective_metrics,
         dimension_scores=dimension_scores,
+        dimension_evidence=dimension_evidence,
         confidence=confidence,
         needs_human_review=confidence < 0.7,
         scorer_version="0.2.0",
@@ -219,10 +541,10 @@ def score_from_fixture(
     )
 
     interpretation = Interpretation(
-        summary=f"Fixture-evaluated performance profile for template '{resolved}'.",
+        summary=f"Fixture-evaluated performance profile for template '{resolved}' with multi-round deterministic diagnostics.",
         suggestions=[
-            "Review candidate evidence chain for completeness.",
-            "Validate escalation rationale against rubric anchors.",
+            "Review round-by-round evidence chain for consistency.",
+            "Validate escalation rationale against rubric score bands.",
         ],
     )
     return score_result, interpretation

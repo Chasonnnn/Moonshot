@@ -1,3 +1,4 @@
+from app.core.config import get_settings
 from app.services.jobs import process_jobs_until_empty
 
 
@@ -26,7 +27,7 @@ def test_generate_fixture_mode_returns_deterministic_family(client, admin_header
     gen_res = client.post(
         f"/v1/cases/{case_id}/generate",
         headers={**admin_headers, "Idempotency-Key": "fixture-generate-1"},
-        json={"mode": "fixture", "template_id": "tpl_jda_quality"},
+        json={"mode": "fixture", "template_id": "tpl_jda_quality", "variant_count": 12},
     )
     assert gen_res.status_code == 202
 
@@ -35,8 +36,20 @@ def test_generate_fixture_mode_returns_deterministic_family(client, admin_header
     rubric = generated["rubric"]
 
     assert task_family["id"]
-    assert len(task_family["variants"]) >= 3
+    assert len(task_family["variants"]) == 12
+    first_variant = task_family["variants"][0]
+    assert first_variant["skill"]
+    assert first_variant["difficulty_level"]
+    assert first_variant["round_hint"]
+    assert first_variant["estimated_minutes"] is not None
+    assert isinstance(first_variant["deliverables"], list)
+    assert isinstance(first_variant["artifact_refs"], list)
     assert rubric["id"]
+    first_dimension = rubric["dimensions"][0]
+    assert isinstance(first_dimension["evaluation_points"], list)
+    assert isinstance(first_dimension["evidence_signals"], list)
+    assert isinstance(first_dimension["common_failure_modes"], list)
+    assert isinstance(first_dimension["score_bands"], dict)
     rubric_keys = {item["key"] for item in rubric["dimensions"]}
     assert "sql_accuracy" in rubric_keys
     assert "data_quality_process" in rubric_keys
@@ -115,4 +128,40 @@ def test_score_fixture_mode_uses_fixture_score_payload(client, admin_headers, re
     scored = _job_result(client, score_res.json()["job_id"], reviewer_headers)
     assert scored["confidence"] == 0.82
     assert scored["dimension_scores"]["sql_accuracy"] == 0.8
+    assert "dimension_evidence" in scored
+    assert "sql_accuracy" in scored["dimension_evidence"]
     assert "fixture_score_profile" in scored["trigger_codes"]
+
+
+def test_generate_fixture_mode_rejects_unknown_template(client, admin_headers, monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "worker_max_attempts_default", 1)
+
+    case_res = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Fixture Unknown Template",
+            "scenario": "Fixture scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["sql_workspace", "python_workspace"],
+        },
+    )
+    assert case_res.status_code == 201
+    case_id = case_res.json()["id"]
+
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "fixture-generate-unknown-template"},
+        json={"mode": "fixture", "template_id": "tpl_unknown"},
+    )
+    assert gen_res.status_code == 202
+
+    process_jobs_until_empty()
+    result_res = client.get(f"/v1/jobs/{gen_res.json()['job_id']}/result", headers=admin_headers)
+    assert result_res.status_code == 200
+    payload = result_res.json()
+    assert payload["status"] == "failed_permanent"
+    assert payload["result"]["error_code"] == "validation_error"
+    assert "fixture_template_not_found" in payload["result"]["error_detail"]

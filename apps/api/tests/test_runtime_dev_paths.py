@@ -37,7 +37,8 @@ def test_api_env_example_has_required_local_keys():
         "MOONSHOT_BOOTSTRAP_TOKEN=",
         "MOONSHOT_JWT_SIGNING_KEYS=",
         "MOONSHOT_MODEL_PROVIDER=",
-        "MOONSHOT_GEMINI_API_KEY=",
+        "MOONSHOT_LITELLM_BASE_URL=",
+        "MOONSHOT_LITELLM_API_KEY=",
     ):
         assert key in content
 
@@ -50,4 +51,5 @@ def test_runtime_env_validation_script_enforces_required_keys():
     assert "MOONSHOT_BOOTSTRAP_TOKEN" in content
     assert "MOONSHOT_JWT_SIGNING_KEYS" in content
     assert "MOONSHOT_MODEL_PROVIDER" in content
-    assert "MOONSHOT_GEMINI_API_KEY" in content
+    assert "MOONSHOT_LITELLM_BASE_URL" in content
+    assert "MOONSHOT_LITELLM_API_KEY" in content

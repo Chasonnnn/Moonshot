@@ -68,6 +68,10 @@ GenerateMode = Literal["live", "fixture"]
 class CaseGenerateRequest(BaseModel):
     mode: GenerateMode = "live"
     template_id: str | None = None
+    variant_count: int | None = Field(default=None, ge=5, le=20)
+    model_override: str | None = None
+    reasoning_effort: str | None = None
+    thinking_budget_tokens: int | None = None
 
 
 class CaseSpec(BaseModel):
@@ -88,11 +92,21 @@ class CaseSpec(BaseModel):
 class TaskVariant(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     prompt: str
+    skill: str | None = None
+    difficulty_level: str | None = None
+    round_hint: str | None = None
+    estimated_minutes: int | None = None
+    deliverables: list[str] = Field(default_factory=list)
+    artifact_refs: list[str] = Field(default_factory=list)
 
 
 class RubricDimension(BaseModel):
     key: str
     anchor: str
+    evaluation_points: list[str] = Field(default_factory=list)
+    evidence_signals: list[str] = Field(default_factory=list)
+    common_failure_modes: list[str] = Field(default_factory=list)
+    score_bands: dict[str, str] = Field(default_factory=dict)
 
 
 class Rubric(BaseModel):
@@ -117,6 +131,7 @@ class TaskFamily(BaseModel):
     case_id: UUID
     variants: list[TaskVariant] = Field(default_factory=list)
     rubric_id: UUID
+    rubric: Rubric | None = None
     status: str = "generated"
     version: str = "0.1.0"
     generation_diagnostics: dict[str, Any] = Field(default_factory=dict)
@@ -254,6 +269,9 @@ class PythonHistoryResponse(BaseModel):
 
 class CoachMessageRequest(BaseModel):
     message: str
+    model_override: str | None = None
+    reasoning_effort: str | None = None
+    thinking_budget_tokens: int | None = None
 
 
 class CoachResponse(BaseModel):
@@ -276,6 +294,9 @@ class SessionModeRequest(BaseModel):
 class SessionScoreRequest(BaseModel):
     mode: GenerateMode = "live"
     template_id: str | None = None
+    model_override: str | None = None
+    reasoning_effort: str | None = None
+    thinking_budget_tokens: int | None = None
 
 
 class CoachFeedbackRequest(BaseModel):
@@ -564,6 +585,18 @@ class ErrorResponse(BaseModel):
 class MetaVersion(BaseModel):
     api_version: str
     schema_version: str
+
+
+class ModelOptionStatus(BaseModel):
+    model: str
+    available: bool
+    resolved_model: str | None = None
+
+
+class ModelOptionsResponse(BaseModel):
+    required_models: list[str] = Field(default_factory=list)
+    defaults_by_agent: dict[str, str] = Field(default_factory=dict)
+    options: list[ModelOptionStatus] = Field(default_factory=list)
 
 
 class AuthTokenRequest(BaseModel):

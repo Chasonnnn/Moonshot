@@ -56,6 +56,36 @@ def test_generate_is_async_submit_and_result(client, admin_headers):
     assert len(payload["task_family"]["variants"]) >= 3
 
 
+def test_generate_fixture_respects_variant_count(client, admin_headers):
+    case = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Fixture Variant Count",
+            "scenario": "Deterministic fixture generation",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["sql_workspace", "python_workspace"],
+        },
+    )
+    assert case.status_code == 201
+    case_id = case.json()["id"]
+
+    submit = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "fixture-variant-count-12"},
+        json={"mode": "fixture", "template_id": "tpl_jda_quality", "variant_count": 12},
+    )
+    assert submit.status_code == 202
+    job_id = submit.json()["job_id"]
+
+    _drain_jobs()
+    result = client.get(f"/v1/jobs/{job_id}/result", headers=admin_headers)
+    assert result.status_code == 200
+    payload = result.json()["result"]
+    assert len(payload["task_family"]["variants"]) == 12
+
+
 def test_score_is_async_and_creates_export_job(client, admin_headers, reviewer_headers, candidate_headers):
     case = client.post(
         "/v1/cases",

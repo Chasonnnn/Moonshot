@@ -84,7 +84,14 @@ def send_coach_message(
 
     coach_engine_mode = "practice" if coach_mode == "practice" else "assessment"
 
-    response = coach_reply(payload.message, context, mode=coach_engine_mode)
+    response = coach_reply(
+        payload.message,
+        context,
+        mode=coach_engine_mode,
+        model_override=payload.model_override,
+        reasoning_effort=payload.reasoning_effort,
+        thinking_budget_tokens=payload.thinking_budget_tokens,
+    )
     session_repository.append_events(
         session_id,
         [

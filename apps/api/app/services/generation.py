@@ -83,8 +83,18 @@ def _grounding_coverage_score(case: CaseSpec, prompts: list[str]) -> float:
     return round(sum(1 for hit in checks if hit) / len(checks), 3)
 
 
-def generate_from_case(case: CaseSpec) -> GenerationResult:
-    provider = get_codesign_provider()
+def generate_from_case(
+    case: CaseSpec,
+    *,
+    model_override: str | None = None,
+    reasoning_effort: str | None = None,
+    thinking_budget_tokens: int | None = None,
+) -> GenerationResult:
+    provider = get_codesign_provider(
+        model_override=model_override,
+        reasoning_effort=reasoning_effort,
+        thinking_budget_tokens=thinking_budget_tokens,
+    )
     artifact_summary = _artifact_summary(case)
 
     variant_seeds = [

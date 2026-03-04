@@ -15,6 +15,7 @@ dependencies = [
   "pyjwt>=2.11.0",
   "pyyaml>=6.0.3",
   "google-genai>=1.65.0",
+  "litellm",
 ]
 
 [project.optional-dependencies]
@@ -30,3 +31,10 @@ testpaths = ["apps/api/tests"]
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "apps/api"}
+
+[tool.setuptools.packages.find]
+where = ["apps/api"]
+include = ["app*"]

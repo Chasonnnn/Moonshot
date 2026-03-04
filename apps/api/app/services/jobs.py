@@ -387,10 +387,37 @@ def _handle_generate_case(job: JobRunModel) -> dict[str, Any]:
 
     mode = str(job.request_payload.get("mode", "live")).strip().lower()
     template_id = job.request_payload.get("template_id")
+    variant_count = job.request_payload.get("variant_count")
+    model_override = job.request_payload.get("model_override")
+    reasoning_effort = job.request_payload.get("reasoning_effort")
+    thinking_budget_tokens = job.request_payload.get("thinking_budget_tokens")
     if mode == "fixture":
-        generated = generate_from_fixture(case, template_id=str(template_id) if template_id is not None else None)
+        normalized_variant_count = (
+            int(variant_count) if isinstance(variant_count, int) else None
+        )
+        generated = generate_from_fixture(
+            case,
+            template_id=str(template_id) if template_id is not None else None,
+            variant_count=normalized_variant_count,
+        )
     else:
-        generated = generate_from_case(case)
+        normalized_model_override = str(model_override) if isinstance(model_override, str) and model_override.strip() else None
+        normalized_reasoning_effort = (
+            str(reasoning_effort) if isinstance(reasoning_effort, str) and reasoning_effort.strip() else None
+        )
+        normalized_thinking_budget = (
+            int(thinking_budget_tokens)
+            if isinstance(thinking_budget_tokens, int)
+            else None
+        )
+        override_kwargs: dict[str, Any] = {}
+        if normalized_model_override is not None:
+            override_kwargs["model_override"] = normalized_model_override
+        if normalized_reasoning_effort is not None:
+            override_kwargs["reasoning_effort"] = normalized_reasoning_effort
+        if normalized_thinking_budget is not None:
+            override_kwargs["thinking_budget_tokens"] = normalized_thinking_budget
+        generated = generate_from_case(case, **override_kwargs)
 
     case_repository.save_task_family(generated.task_family)
     case_repository.save_rubric(generated.rubric)
@@ -404,6 +431,7 @@ def _handle_generate_case(job: JobRunModel) -> dict[str, Any]:
             "task_family_id": str(generated.task_family.id),
             "mode": mode,
             "template_id": template_id,
+            "variant_count": variant_count,
         },
     )
     return generated.model_dump(mode="json")
@@ -438,10 +466,26 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
             task_family_version=task_family.version if task_family is not None else "fixture-v1",
         )
     else:
-        try:
-            provider = get_evaluator_provider()
-        except RuntimeError:
-            provider = None
+        model_override = job.request_payload.get("model_override")
+        reasoning_effort = job.request_payload.get("reasoning_effort")
+        thinking_budget_tokens = job.request_payload.get("thinking_budget_tokens")
+        normalized_model_override = str(model_override) if isinstance(model_override, str) and model_override.strip() else None
+        normalized_reasoning_effort = (
+            str(reasoning_effort) if isinstance(reasoning_effort, str) and reasoning_effort.strip() else None
+        )
+        normalized_thinking_budget = (
+            int(thinking_budget_tokens)
+            if isinstance(thinking_budget_tokens, int)
+            else None
+        )
+        provider_kwargs: dict[str, Any] = {}
+        if normalized_model_override is not None:
+            provider_kwargs["model_override"] = normalized_model_override
+        if normalized_reasoning_effort is not None:
+            provider_kwargs["reasoning_effort"] = normalized_reasoning_effort
+        if normalized_thinking_budget is not None:
+            provider_kwargs["thinking_budget_tokens"] = normalized_thinking_budget
+        provider = get_evaluator_provider(**provider_kwargs)
 
         score_result, interpretation = score_session(
             session_id,
