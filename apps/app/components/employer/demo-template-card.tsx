@@ -33,6 +33,9 @@ export function DemoTemplateCard({ template, selected, onSelect, disabled }: Dem
           <p className="mt-1.5 text-[13px] leading-relaxed text-[#6E6E73]">
             {template.description}
           </p>
+          <p className="mt-2 text-[12px] text-[#4D4D52]">
+            Includes co-design loop, multi-round candidate simulation, and detailed evaluation dashboard.
+          </p>
         </div>
         <span className="shrink-0 text-[12px] text-[#86868B]">
           {template.estimatedDuration}

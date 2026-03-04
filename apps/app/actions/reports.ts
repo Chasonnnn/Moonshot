@@ -15,6 +15,7 @@ import {
   type SessionRecord,
 } from "@/lib/moonshot/types"
 import { getMockSessionEvents } from "@/lib/mock-events"
+import { DEMO_FIXTURES, type DemoCoDesignBundle, type DemoEvaluationBundle, type DemoRound } from "@/lib/moonshot/demo-fixtures"
 
 export interface ReportDetailSnapshot {
   session: SessionRecord | null
@@ -26,6 +27,10 @@ export interface ReportDetailSnapshot {
   timeline_source: "real" | "fixture"
   timeline_warning: string | null
   interpretation: InterpretationView | null
+  demo_template_id: string | null
+  co_design_bundle: DemoCoDesignBundle | null
+  round_blueprint: DemoRound[]
+  evaluation_bundle: DemoEvaluationBundle | null
   error: string | null
 }
 
@@ -56,6 +61,8 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
     const reviewer = await client.issueToken("reviewer", client.config.reviewerUserId)
 
     const session = await client.getSession(reviewer.access_token, sessionId)
+    const demoTemplateId = typeof session.policy?.demo_template_id === "string" ? session.policy.demo_template_id : null
+    const fixture = demoTemplateId ? DEMO_FIXTURES[demoTemplateId] ?? null : null
     const [summary, redteamRuns, fairnessRuns] = await Promise.all([
       client.getReportSummary(reviewer.access_token, sessionId),
       client.listRedteamRuns(reviewer.access_token, { targetType: "session", targetId: sessionId, limit: 5 }),
@@ -96,6 +103,10 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       timeline_source: timelineSource,
       timeline_warning: timelineWarning,
       interpretation: null,
+      demo_template_id: demoTemplateId,
+      co_design_bundle: fixture?.coDesignBundle ?? null,
+      round_blueprint: fixture?.rounds ?? [],
+      evaluation_bundle: fixture?.evaluationBundle ?? null,
       error: null,
     }
   } catch (error) {
@@ -110,6 +121,10 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       timeline_source: "real",
       timeline_warning: null,
       interpretation: null,
+      demo_template_id: null,
+      co_design_bundle: null,
+      round_blueprint: [],
+      evaluation_bundle: null,
       error: `${parsed.error} (request_id=${parsed.requestId ?? "n/a"})`,
     }
   }

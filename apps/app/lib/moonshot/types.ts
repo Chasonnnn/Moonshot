@@ -62,6 +62,12 @@ export interface CaseSpec {
 export interface TaskVariant {
   id: string
   prompt: string
+  skill?: string | null
+  difficulty_level?: string | null
+  round_hint?: string | null
+  estimated_minutes?: number | null
+  deliverables?: string[]
+  artifact_refs?: string[]
 }
 
 export interface TaskFamily {

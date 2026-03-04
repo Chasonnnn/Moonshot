@@ -676,6 +676,8 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
 export interface FastPathResult {
   sessionId: string | null
   candidateUrl: string | null
+  taskFamilyId: string | null
+  generatedVariantCount: number | null
   error: string | null
 }
 
@@ -685,7 +687,13 @@ export async function runDemoFastPath(templateId: string): Promise<FastPathResul
 
     const template = DEMO_CASE_TEMPLATES.find((item) => item.id === templateId)
     if (!template) {
-      return { sessionId: null, candidateUrl: null, error: `Unknown template: ${templateId}` }
+      return {
+        sessionId: null,
+        candidateUrl: null,
+        taskFamilyId: null,
+        generatedVariantCount: null,
+        error: `Unknown template: ${templateId}`,
+      }
     }
 
     const adminToken = await client.issueToken("org_admin", client.config.adminUserId)
@@ -703,17 +711,30 @@ export async function runDemoFastPath(templateId: string): Promise<FastPathResul
       adminToken.access_token,
       createdCase.id,
       `demo-fp-gen-${randomUUID()}`,
-      { mode: "fixture", template_id: templateId },
+      { mode: "fixture", template_id: templateId, variant_count: 12 },
     )
     const generated = await client.waitForJobTerminalResult(adminToken.access_token, generateJob.job_id)
     if (generated.status !== "completed") {
-      return { sessionId: null, candidateUrl: null, error: `Generate job failed: ${generated.status}` }
+      return {
+        sessionId: null,
+        candidateUrl: null,
+        taskFamilyId: null,
+        generatedVariantCount: null,
+        error: `Generate job failed: ${generated.status}`,
+      }
     }
 
     const taskFamily = generated.result["task_family"] as Record<string, unknown> | undefined
     const taskFamilyId = String(taskFamily?.["id"] ?? "")
+    const variants = Array.isArray(taskFamily?.["variants"]) ? taskFamily["variants"] : []
     if (!taskFamilyId) {
-      return { sessionId: null, candidateUrl: null, error: "Generate result missing task_family.id" }
+      return {
+        sessionId: null,
+        candidateUrl: null,
+        taskFamilyId: null,
+        generatedVariantCount: null,
+        error: "Generate result missing task_family.id",
+      }
     }
 
     await client.reviewTaskFamily(reviewerToken.access_token, taskFamilyId)
@@ -721,19 +742,23 @@ export async function runDemoFastPath(templateId: string): Promise<FastPathResul
 
     const session = await client.createSession(reviewerToken.access_token, taskFamilyId, client.config.candidateUserId, {
       demo_template_id: templateId,
-      sample_script_version: "fixture-v1",
+      sample_script_version: "fixture-v2",
     })
     await client.setSessionMode(reviewerToken.access_token, session.id, "assessment")
 
     return {
       sessionId: session.id,
       candidateUrl: `/session/${session.id}/start`,
+      taskFamilyId,
+      generatedVariantCount: variants.length,
       error: null,
     }
   } catch (error) {
     return {
       sessionId: null,
       candidateUrl: null,
+      taskFamilyId: null,
+      generatedVariantCount: null,
       error: toErrorMessage(error),
     }
   }

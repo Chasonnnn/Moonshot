@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/empty"
 import type { SessionEvent } from "@/lib/moonshot/types"
 
-type Category = "lifecycle" | "tool" | "integrity" | "ai"
+type Category = "lifecycle" | "workflow" | "tool" | "integrity" | "ai"
 
 const CATEGORY_COLORS: Record<Category, string> = {
   lifecycle: "#0071E3",
+  workflow: "#34C759",
   tool: "#86868B",
   integrity: "#FF9F0A",
   ai: "#AF52DE",
@@ -24,6 +25,7 @@ const CATEGORY_COLORS: Record<Category, string> = {
 
 const CATEGORY_LABELS: Record<Category, string> = {
   lifecycle: "Lifecycle",
+  workflow: "Workflow",
   tool: "Tool",
   integrity: "Integrity",
   ai: "AI",
@@ -32,7 +34,16 @@ const CATEGORY_LABELS: Record<Category, string> = {
 const EVENT_CATEGORY: Record<string, Category> = {
   session_started: "lifecycle",
   session_submitted: "lifecycle",
+  stakeholder_recommendation_submitted: "lifecycle",
+  co_design_started: "workflow",
+  co_design_completed: "workflow",
+  task_generation_completed: "workflow",
+  round_started: "workflow",
+  round_completed: "workflow",
   sql_query_run: "tool",
+  python_run: "tool",
+  analysis_r_run: "tool",
+  dashboard_action: "tool",
   verification_step_completed: "tool",
   tab_blur_detected: "integrity",
   copy_paste_detected: "integrity",
@@ -64,7 +75,7 @@ export function EventTimeline({
   integrityTier,
 }: EventTimelineProps) {
   const [activeCategories, setActiveCategories] = useState<Set<Category>>(
-    () => new Set<Category>(["lifecycle", "tool", "integrity", "ai"])
+    () => new Set<Category>(["lifecycle", "workflow", "tool", "integrity", "ai"])
   )
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
 
@@ -95,13 +106,14 @@ export function EventTimeline({
 
   const counts = useMemo(() => {
     const total = events.length
+    const rounds = events.filter((e) => e.event_type === "round_completed").length
     const integrity = events.filter(
       (e) => getCategory(e.event_type) === "integrity"
     ).length
     const ai = events.filter(
       (e) => getCategory(e.event_type) === "ai"
     ).length
-    return { total, integrity, ai }
+    return { total, rounds, integrity, ai }
   }, [events])
 
   function toggleCategory(cat: Category) {
@@ -142,6 +154,9 @@ export function EventTimeline({
         </span>
         <span>
           AI usage: <strong data-testid="ai-count">{counts.ai}</strong>
+        </span>
+        <span>
+          Rounds tracked: <strong>{counts.rounds}</strong>
         </span>
       </div>
 

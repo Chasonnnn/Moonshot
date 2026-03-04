@@ -24,6 +24,7 @@ export interface PilotFlowState {
 export type DemoSeedMode = "fixture" | "fresh" | "both"
 export type DemoRunPhase =
   | "idle"
+  | "co_design"
   | "generating"
   | "preview"
   | "session_ready"

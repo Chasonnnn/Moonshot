@@ -171,7 +171,7 @@ export class MoonshotApiClient {
     token: string,
     caseId: string,
     idempotencyKey: string,
-    payload?: { mode?: "live" | "fixture"; template_id?: string },
+    payload?: { mode?: "live" | "fixture"; template_id?: string; variant_count?: number },
   ): Promise<JobAccepted> {
     return this.request<JobAccepted>(`/v1/cases/${caseId}/generate`, {
       method: "POST",

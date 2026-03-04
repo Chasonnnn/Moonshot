@@ -13,8 +13,19 @@ import { getModeRules } from "@/components/candidate/session-preflight"
 import { ChevronRight } from "lucide-react"
 
 export function TaskPanel() {
-  const { session, isSubmitted, isExpired, finalResponse, setFinalResponse, mode } = useSession()
+  const {
+    session,
+    isSubmitted,
+    isExpired,
+    finalResponse,
+    setFinalResponse,
+    mode,
+    fixtureData,
+    currentRoundIndex,
+    totalRounds,
+  } = useSession()
   const rules = getModeRules(mode)
+  const currentRound = fixtureData?.rounds[currentRoundIndex] ?? null
 
   return (
     <ScrollArea className="h-full">
@@ -34,6 +45,28 @@ export function TaskPanel() {
         </Collapsible>
 
         <Separator />
+
+        {currentRound && (
+          <>
+            <div>
+              <h3 className="text-[13px] font-medium text-[#86868B] uppercase tracking-wide">
+                Current Round
+              </h3>
+              <p className="mt-2 text-[14px] font-medium text-[#1D1D1F]">
+                {currentRound.title} ({currentRoundIndex + 1}/{totalRounds})
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-[#4D4D52]">
+                {currentRound.objective}
+              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px] text-[#1D1D1F]">
+                {currentRound.deliverables.map((deliverable) => (
+                  <li key={deliverable}>{deliverable}</li>
+                ))}
+              </ul>
+            </div>
+            <Separator />
+          </>
+        )}
 
         <div>
           <h3 className="text-[13px] font-medium text-[#86868B] uppercase tracking-wide">

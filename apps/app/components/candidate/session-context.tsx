@@ -44,6 +44,9 @@ interface SessionContextValue {
   fixtureData: DemoFixtureData | null
   coachMessages: CoachChatMessage[]
   pushCoachMessage: (msg: CoachChatMessage) => void
+  currentRoundIndex: number
+  setCurrentRoundIndex: (index: number) => void
+  totalRounds: number
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
@@ -80,6 +83,8 @@ export function SessionProvider({
   const pushCoachMessage = useCallback((msg: CoachChatMessage) => {
     setCoachMessages((prev) => [...prev, msg])
   }, [])
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
+  const totalRounds = fixtureData?.rounds.length ?? 0
 
   const value = useMemo(
     () => ({
@@ -98,8 +103,27 @@ export function SessionProvider({
       fixtureData,
       coachMessages,
       pushCoachMessage,
+      currentRoundIndex,
+      setCurrentRoundIndex,
+      totalRounds,
     }),
-    [session, api, isSubmitted, finalResponse, remainingSeconds, isExpired, track, mode, isAiDisabled, autoPlay, fixtureData, coachMessages, pushCoachMessage]
+    [
+      session,
+      api,
+      isSubmitted,
+      finalResponse,
+      remainingSeconds,
+      isExpired,
+      track,
+      mode,
+      isAiDisabled,
+      autoPlay,
+      fixtureData,
+      coachMessages,
+      pushCoachMessage,
+      currentRoundIndex,
+      totalRounds,
+    ]
   )
 
   return (

@@ -1,15 +1,17 @@
 "use client"
 
-import { useActionState, useState } from "react"
-import { FileTextIcon, SparklesIcon, ShieldCheckIcon, ScaleIcon, CodeIcon, LinkIcon } from "lucide-react"
+import { useActionState, useMemo, useState } from "react"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { FileTextIcon, SparklesIcon, ShieldCheckIcon, ScaleIcon, CodeIcon, LinkIcon, BrainIcon } from "lucide-react"
 
 import { createInterpretationAction, type ReportActionState, type ReportDetailSnapshot } from "@/actions/reports"
 import { useActionStateToast } from "@/components/employer/action-state-toast"
-import { Badge } from "@/components/ui/badge"
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EventTimeline } from "@/components/employer/event-timeline"
 import { IntegrityTierSelect } from "@/components/employer/integrity-tier-select"
+import { Badge } from "@/components/ui/badge"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { IntegrityTier } from "@/lib/integrity-tiers"
 import { getScoringLabel } from "@/lib/scoring-labels"
 import type { SessionMode } from "@/lib/moonshot/types"
@@ -40,11 +42,28 @@ function toSessionMode(value: unknown): SessionMode | undefined {
   return undefined
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== "object" || value === null) return null
+  return value as Record<string, unknown>
+}
+
 export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string; snapshot: ReportDetailSnapshot }) {
   const [state, formAction, isPending] = useActionState(createInterpretationAction, initialReportActionState)
   const [integrityTier, setIntegrityTier] = useState<IntegrityTier>("standard")
   useActionStateToast(state)
 
+  const scoringLabel = getScoringLabel(toSessionMode(snapshot.session?.policy?.coach_mode))
+  const sessionStartedAt = snapshot.session?.created_at ?? new Date().toISOString()
+
+  const scoreResult = useMemo(
+    () => asRecord(asRecord(snapshot.report)?.score_result),
+    [snapshot.report],
+  )
+  const dimensionEvidence = useMemo(
+    () => asRecord(scoreResult?.dimension_evidence),
+    [scoreResult],
+  )
+  
   if (snapshot.error) {
     return (
       <section className="rounded-2xl border border-[#FF9F0A] bg-white p-6 shadow-sm">
@@ -54,8 +73,7 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
     )
   }
 
-  const scoringLabel = getScoringLabel(toSessionMode(snapshot.session?.policy?.coach_mode))
-  const sessionStartedAt = snapshot.session?.created_at ?? new Date().toISOString()
+  const toolChartData = snapshot.evaluation_bundle?.toolProficiency ?? []
 
   return (
     <Tabs defaultValue="overview">
@@ -66,7 +84,6 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
         <TabsTrigger value="provenance" className="text-[12px]">Provenance</TabsTrigger>
       </TabsList>
 
-      {/* Overview Tab */}
       <TabsContent value="overview">
         <section className="space-y-6">
           <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
@@ -77,10 +94,8 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
                 {scoringLabel.label}
               </Badge>
             </div>
-            {scoringLabel.warning && (
-              <p className="mt-2 text-[11px] text-[#FF9F0A]">{scoringLabel.warning}</p>
-            )}
-            <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            {scoringLabel.warning && <p className="mt-2 text-[11px] text-[#FF9F0A]">{scoringLabel.warning}</p>}
+            <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Status</p>
                 <div className="mt-0.5">
@@ -92,24 +107,100 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
                 <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{formatConfidence(snapshot.summary?.confidence)}</p>
               </div>
               <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Template</p>
+                <p className="mt-0.5 font-mono text-[12px] text-[#1D1D1F]">{snapshot.demo_template_id ?? "n/a"}</p>
+              </div>
+              <div>
                 <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Human Review</p>
                 <div className="mt-0.5">
-                  {snapshot.summary?.needs_human_review === null || snapshot.summary?.needs_human_review === undefined ? (
-                    <span className="text-[13px] text-[#6E6E73]">n/a</span>
+                  {snapshot.summary?.needs_human_review ? (
+                    <Badge variant="outline" className="border-[#FF9F0A]/40 bg-[#FF9F0A]/10 text-[#FF9F0A] text-[11px]">Required</Badge>
                   ) : (
-                    <Badge
-                      variant="outline"
-                      className={snapshot.summary.needs_human_review
-                        ? "border-[#FF9F0A]/40 bg-[#FF9F0A]/10 text-[#FF9F0A] text-[11px]"
-                        : "text-[11px]"}
-                    >
-                      {snapshot.summary.needs_human_review ? "Required" : "Clear"}
-                    </Badge>
+                    <Badge variant="outline" className="text-[11px]">Clear</Badge>
                   )}
                 </div>
               </div>
             </div>
           </div>
+
+          {snapshot.evaluation_bundle && (
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <BrainIcon className="size-5 text-[#6E6E73]" />
+                <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Co-Design Alignment Scorecard</h2>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {snapshot.evaluation_bundle.coDesignAlignment.map((item) => (
+                  <div key={item.dimension} className="rounded-lg border border-[#E5E5EA] bg-[#FAFAFB] p-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[13px] font-semibold text-[#1D1D1F]">{item.dimension}</p>
+                      <Badge variant="outline" className="text-[11px]">{item.score}/100</Badge>
+                    </div>
+                    <p className="mt-1 text-[12px] text-[#6E6E73]">{item.note}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {toolChartData.length > 0 && (
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+              <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Tool Proficiency</h2>
+              <ChartContainer
+                className="h-[260px] w-full"
+                config={{
+                  score: { label: "Score", color: "#0071E3" },
+                }}
+              >
+                <BarChart data={toolChartData} margin={{ left: 12, right: 12, top: 8, bottom: 8 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="tool" tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tickLine={false} axisLine={false} width={36} />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                  <Bar dataKey="score" fill="var(--color-score)" radius={6} />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          )}
+
+          {snapshot.evaluation_bundle && (
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+                <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Round-by-Round Performance</h2>
+                <div className="mt-3 overflow-x-auto rounded-lg border border-[#E5E5EA]">
+                  <table className="min-w-full text-left text-[12px]">
+                    <thead className="bg-[#F5F5F7] text-[#4D4D52]">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Round</th>
+                        <th className="px-3 py-2 font-medium">Score</th>
+                        <th className="px-3 py-2 font-medium">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {snapshot.evaluation_bundle.roundPerformance.map((round) => (
+                        <tr key={round.round} className="border-t border-[#F0F0F2]">
+                          <td className="px-3 py-2 text-[#1D1D1F]">{round.round}</td>
+                          <td className="px-3 py-2 font-semibold text-[#1D1D1F]">{round.score}</td>
+                          <td className="px-3 py-2 text-[#6E6E73]">{round.note}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+                <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Agent Intelligent Evaluation</h2>
+                <div className="mt-3 space-y-2">
+                  {snapshot.evaluation_bundle.agentNarrative.map((line) => (
+                    <div key={line} className="rounded-lg bg-[#F5F5F7] p-3 text-[12px] text-[#1D1D1F]">
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2">
@@ -117,9 +208,7 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
               <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Interpretation</h2>
             </div>
             {(snapshot.report?.interpretation as { summary?: string } | undefined)?.summary ? (
-              <p className="mt-2 text-[13px] text-[#1D1D1F]">
-                {(snapshot.report?.interpretation as { summary?: string }).summary}
-              </p>
+              <p className="mt-2 text-[13px] text-[#1D1D1F]">{(snapshot.report?.interpretation as { summary?: string }).summary}</p>
             ) : (
               <Empty className="py-6">
                 <EmptyHeader>
@@ -148,7 +237,6 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
         </section>
       </TabsContent>
 
-      {/* Output Tab */}
       <TabsContent value="output">
         <section className="space-y-6">
           <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
@@ -169,27 +257,67 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
                 </EmptyHeader>
               </Empty>
             )}
-            {snapshot.session && (
-              <div className="mt-4 grid grid-cols-2 gap-4 text-[12px] sm:grid-cols-3">
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Session ID</p>
-                  <p className="mt-0.5 font-mono text-[#1D1D1F]">{snapshot.session.id}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Status</p>
-                  <p className="mt-0.5 text-[#1D1D1F]">{snapshot.session.status}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Candidate</p>
-                  <p className="mt-0.5 font-mono text-[#1D1D1F]">{snapshot.session.candidate_id}</p>
-                </div>
-              </div>
-            )}
           </div>
+
+          {snapshot.evaluation_bundle && (
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+              <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Trigger and Rationale</h2>
+              <div className="mt-3 overflow-x-auto rounded-lg border border-[#E5E5EA]">
+                <table className="min-w-full text-left text-[12px]">
+                  <thead className="bg-[#F5F5F7] text-[#4D4D52]">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Code</th>
+                      <th className="px-3 py-2 font-medium">Rationale</th>
+                      <th className="px-3 py-2 font-medium">Impact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snapshot.evaluation_bundle.triggerRationale.map((item) => (
+                      <tr key={item.code} className="border-t border-[#F0F0F2]">
+                        <td className="px-3 py-2 font-mono text-[#1D1D1F]">{item.code}</td>
+                        <td className="px-3 py-2 text-[#6E6E73]">{item.rationale}</td>
+                        <td className="px-3 py-2 text-[#1D1D1F]">{item.impact}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {dimensionEvidence && Object.keys(dimensionEvidence).length > 0 && (
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+              <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Dimension Evidence</h2>
+              <div className="mt-3 overflow-x-auto rounded-lg border border-[#E5E5EA]">
+                <table className="min-w-full text-left text-[12px]">
+                  <thead className="bg-[#F5F5F7] text-[#4D4D52]">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Dimension</th>
+                      <th className="px-3 py-2 font-medium">Score</th>
+                      <th className="px-3 py-2 font-medium">Confidence</th>
+                      <th className="px-3 py-2 font-medium">Rationale</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(dimensionEvidence).map(([key, value]) => {
+                      const item = asRecord(value)
+                      return (
+                        <tr key={key} className="border-t border-[#F0F0F2]">
+                          <td className="px-3 py-2 text-[#1D1D1F]">{key}</td>
+                          <td className="px-3 py-2 text-[#1D1D1F]">{String(item?.score ?? "n/a")}</td>
+                          <td className="px-3 py-2 text-[#1D1D1F]">{String(item?.confidence ?? "n/a")}</td>
+                          <td className="px-3 py-2 text-[#6E6E73]">{String(item?.rationale ?? "n/a")}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
       </TabsContent>
 
-      {/* Integrity Tab */}
       <TabsContent value="integrity">
         <section className="space-y-6">
           <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
@@ -197,9 +325,7 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
               <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Event Timeline</h2>
               <div className="flex items-center gap-2">
                 <span className="text-[12px] text-[#6E6E73]">Source</span>
-                <Badge variant="outline" className="text-[11px]">
-                  {snapshot.timeline_source}
-                </Badge>
+                <Badge variant="outline" className="text-[11px]">{snapshot.timeline_source}</Badge>
               </div>
             </div>
             {snapshot.timeline_warning ? (
@@ -266,7 +392,6 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
         </section>
       </TabsContent>
 
-      {/* Provenance Tab */}
       <TabsContent value="provenance">
         <section className="space-y-6">
           <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
