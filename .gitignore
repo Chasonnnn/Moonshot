@@ -3,6 +3,8 @@ __pycache__/
 .pytest_cache/
 .venv/
 .env
+.env.local
+apps/api/.env.local
 .DS_Store
 *.egg-info/
 apps/api/.coverage
