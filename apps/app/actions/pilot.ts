@@ -116,7 +116,6 @@ const DEMO_LIVE_JOB_WAIT = {
 
 const DEMO_LIVE_DEFAULT_MODEL = "anthropic/claude-opus-4-6"
 const DEMO_LIVE_DEFAULT_REASONING_EFFORT = "high"
-const DEMO_LIVE_DEFAULT_THINKING_BUDGET_TOKENS = 10_000
 const LIVE_CO_DESIGN_SCHEMA_ID = "moonshot.demo.live_co_design.v1"
 const LIVE_GENERATION_OUTPUT_SCHEMA_ID = "moonshot.demo.live_generation_output.v1"
 
@@ -283,8 +282,7 @@ async function getWorkerReadinessError(
   adminToken: string,
 ): Promise<string | null> {
   const health = await client.getWorkersHealth(adminToken)
-  const healthyWorkers = health.workers.filter((worker) => worker.status === "ok")
-  if (healthyWorkers.length > 0) {
+  if (health.overall_status === "ok") {
     return null
   }
   if (health.workers.length === 0) {
@@ -1182,7 +1180,6 @@ export async function prepareDemoPreview(
         variant_count: 12,
         model_override: mode === "live" ? selectedLiveModel : undefined,
         reasoning_effort: mode === "live" ? selectedReasoningEffort : undefined,
-        thinking_budget_tokens: mode === "live" ? DEMO_LIVE_DEFAULT_THINKING_BUDGET_TOKENS : undefined,
       },
     )
     const generated = await client.waitForJobTerminalResult(
@@ -1400,7 +1397,6 @@ export async function runDemoFastPath(
           variant_count: 12,
           model_override: mode === "live" ? selectedLiveModel : undefined,
           reasoning_effort: mode === "live" ? selectedReasoningEffort : undefined,
-          thinking_budget_tokens: mode === "live" ? DEMO_LIVE_DEFAULT_THINKING_BUDGET_TOKENS : undefined,
         },
       )
       const generated = await client.waitForJobTerminalResult(
@@ -1611,7 +1607,6 @@ export async function runDemoAutoComplete(
         template_id: mode === "fixture" ? templateId : undefined,
         model_override: mode === "live" ? selectedLiveModel : undefined,
         reasoning_effort: mode === "live" ? selectedReasoningEffort : undefined,
-        thinking_budget_tokens: mode === "live" ? DEMO_LIVE_DEFAULT_THINKING_BUDGET_TOKENS : undefined,
       },
     )
     const scored = await client.waitForJobTerminalResult(

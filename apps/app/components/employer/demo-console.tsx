@@ -355,10 +355,11 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
     () => LIVE_MODEL_PRESETS.find((preset) => preset.key === selectedLivePresetKey) ?? LIVE_MODEL_PRESETS[0],
     [selectedLivePresetKey],
   )
-  const selectedLiveModel = useMemo(
+  const selectedLiveResolvedModel = useMemo(
     () => resolvePresetModelId(selectedLivePreset, new Set(liveAvailableModelIds)),
     [liveAvailableModelIds, selectedLivePreset],
   )
+  const selectedLiveModel = useMemo(() => selectedLivePreset.preferredIds[0], [selectedLivePreset])
   const liveCoDesignParse = useMemo(() => {
     const jobDescription = liveCoDesignDraft.jobDescription.trim()
     const sampleTasks = parseLines(liveCoDesignDraft.sampleTasksText)
@@ -675,7 +676,9 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wide text-[#0A4A8A]">Operators Panel</p>
               <p className="mt-1 text-[12px] text-[#1D1D1F]">
-                Model: {selectedLiveModel} · Reasoning: {selectedLivePreset.reasoningLabel}
+                Model: {selectedLiveModel}
+                {selectedLiveResolvedModel !== selectedLiveModel ? ` (resolved: ${selectedLiveResolvedModel})` : ""}
+                {" · "}Reasoning: {selectedLivePreset.reasoningLabel}
               </p>
               <p className="text-[12px] text-[#1D1D1F]">Live stage status updates are shown below.</p>
             </div>
@@ -708,7 +711,7 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
                 </SelectContent>
               </Select>
               <p className="mt-1 text-[11px] text-[#6E6E73]">
-                {liveAvailableModelIds.includes(selectedLiveModel)
+                {liveAvailableModelIds.includes(selectedLiveResolvedModel)
                   ? "Official LiteLLM model ID resolved."
                   : "Using preferred alias; verify availability in LiteLLM catalog."}
               </p>
