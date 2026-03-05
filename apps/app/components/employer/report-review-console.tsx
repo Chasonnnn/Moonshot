@@ -2,15 +2,20 @@
 
 import { useActionState, useMemo, useState } from "react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
-import { FileTextIcon, SparklesIcon, ShieldCheckIcon, ScaleIcon, CodeIcon, LinkIcon, BrainIcon } from "lucide-react"
+import { FileTextIcon, ShieldCheckIcon, ScaleIcon, CodeIcon, LinkIcon, BrainIcon } from "lucide-react"
 
 import {
-  createInterpretationAction,
+  INITIAL_REPORT_ACTION_STATE,
   updateHumanReviewAction,
-  type ReportActionState,
   type ReportDetailSnapshot,
 } from "@/actions/reports"
 import { useActionStateToast } from "@/components/employer/action-state-toast"
+import { OverallScoreGauge } from "@/components/employer/charts/overall-score-gauge"
+import { DimensionRadar } from "@/components/employer/charts/dimension-radar"
+import { RoundPerformanceLine } from "@/components/employer/charts/round-performance-line"
+import { DimensionHeatmap } from "@/components/employer/charts/dimension-heatmap"
+import { SmartSummaryCard } from "@/components/employer/smart-summary-card"
+import { LlmAnalysisPanel } from "@/components/employer/llm-analysis-panel"
 import { EventTimeline } from "@/components/employer/event-timeline"
 import { IntegrityTierSelect } from "@/components/employer/integrity-tier-select"
 import { Badge } from "@/components/ui/badge"
@@ -24,13 +29,6 @@ import { Textarea } from "@/components/ui/textarea"
 import type { IntegrityTier } from "@/lib/integrity-tiers"
 import { getScoringLabel } from "@/lib/scoring-labels"
 import type { SessionMode } from "@/lib/moonshot/types"
-
-const initialReportActionState: ReportActionState = {
-  ok: false,
-  message: "",
-  error: null,
-  requestId: null,
-}
 
 function formatConfidence(value: unknown): string {
   if (value === null || value === undefined || value === "n/a") return "n/a"
@@ -57,10 +55,8 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string; snapshot: ReportDetailSnapshot }) {
-  const [state, formAction, isPending] = useActionState(createInterpretationAction, initialReportActionState)
-  const [humanState, humanFormAction, isHumanPending] = useActionState(updateHumanReviewAction, initialReportActionState)
+  const [humanState, humanFormAction, isHumanPending] = useActionState(updateHumanReviewAction, INITIAL_REPORT_ACTION_STATE)
   const [integrityTier, setIntegrityTier] = useState<IntegrityTier>("standard")
-  useActionStateToast(state)
   useActionStateToast(humanState)
 
   const scoringLabel = getScoringLabel(toSessionMode(snapshot.session?.policy?.coach_mode))
@@ -74,7 +70,22 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
     () => asRecord(scoreResult?.dimension_evidence),
     [scoreResult],
   )
-  
+
+  const smartSummary = snapshot.computed_analysis ?? {
+    strengths: [],
+    weaknesses: [],
+    trend: "steady" as const,
+    confidenceLevel: "medium" as const,
+    hiringSuggestion: "lean-no" as const,
+    triggerSummary: { count: 0, codes: [] },
+    overallScore: 0,
+  }
+  const displayOverallScore =
+    snapshot.summary?.final_score_source === "human_override" &&
+    typeof snapshot.human_review?.override_overall_score === "number"
+      ? Math.round(snapshot.human_review.override_overall_score * 100)
+      : smartSummary.overallScore
+
   if (snapshot.error) {
     return (
       <section className="rounded-2xl border border-[#FF9F0A] bg-white p-6 shadow-sm">
@@ -97,6 +108,7 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
 
       <TabsContent value="overview">
         <section className="space-y-6">
+          {/* 1. Report Summary */}
           <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2">
               <FileTextIcon className="size-5 text-[#6E6E73]" />
@@ -150,6 +162,86 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
             </div>
           </div>
 
+          {/* 2. Overall Score Gauge + Smart Summary — side by side */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+              <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Overall Score</h2>
+              <OverallScoreGauge
+                score={displayOverallScore}
+                confidence={snapshot.summary?.final_confidence ?? null}
+              />
+            </div>
+            <SmartSummaryCard summary={smartSummary} />
+          </div>
+
+          {/* 3. Dimension Radar + Dimension Heatmap — side by side */}
+          {snapshot.evaluation_bundle && snapshot.evaluation_bundle.coDesignAlignment.length > 0 && (
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+                <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Dimension Radar</h2>
+                <DimensionRadar dimensions={snapshot.evaluation_bundle.coDesignAlignment} />
+              </div>
+              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+                <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Dimension Scores</h2>
+                <DimensionHeatmap dimensions={snapshot.evaluation_bundle.coDesignAlignment} />
+              </div>
+            </div>
+          )}
+
+          {/* 4. Round Performance Line Chart — full width */}
+          {snapshot.evaluation_bundle && snapshot.evaluation_bundle.roundPerformance.length > 0 && (
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+              <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Round-by-Round Performance</h2>
+              <RoundPerformanceLine rounds={snapshot.evaluation_bundle.roundPerformance} />
+            </div>
+          )}
+
+          {/* 5. Tool Proficiency BarChart */}
+          {toolChartData.length > 0 && (
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+              <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Tool Proficiency</h2>
+              <ChartContainer
+                className="h-[260px] w-full"
+                config={{
+                  score: { label: "Score", color: "#0071E3" },
+                }}
+              >
+                <BarChart data={toolChartData} margin={{ left: 12, right: 12, top: 8, bottom: 8 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="tool" tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tickLine={false} axisLine={false} width={36} />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                  <Bar dataKey="score" fill="var(--color-score)" radius={6} />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          )}
+
+          {/* 6. Co-Design Alignment Scorecard */}
+          {snapshot.evaluation_bundle && (
+            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <BrainIcon className="size-5 text-[#6E6E73]" />
+                <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Co-Design Alignment Scorecard</h2>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {snapshot.evaluation_bundle.coDesignAlignment.map((item) => (
+                  <div key={item.dimension} className="rounded-lg border border-[#E5E5EA] bg-[#FAFAFB] p-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[13px] font-semibold text-[#1D1D1F]">{item.dimension}</p>
+                      <Badge variant="outline" className="text-[11px]">{item.score}/100</Badge>
+                    </div>
+                    <p className="mt-1 text-[12px] text-[#6E6E73]">{item.note}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 7. LLM Analysis Panel (replaces old Interpretation section) */}
+          <LlmAnalysisPanel sessionId={sessionId} snapshot={snapshot} />
+
+          {/* 8. Human Notes & Override */}
           <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
             <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Human Notes &amp; Override</h2>
             <form action={humanFormAction} className="mt-4 space-y-3">
@@ -209,119 +301,6 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
                 className="text-[12px]"
               >
                 {isHumanPending ? "Saving..." : "Save Human Review"}
-              </Button>
-            </form>
-          </div>
-
-          {snapshot.evaluation_bundle && (
-            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
-                <BrainIcon className="size-5 text-[#6E6E73]" />
-                <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Co-Design Alignment Scorecard</h2>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {snapshot.evaluation_bundle.coDesignAlignment.map((item) => (
-                  <div key={item.dimension} className="rounded-lg border border-[#E5E5EA] bg-[#FAFAFB] p-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[13px] font-semibold text-[#1D1D1F]">{item.dimension}</p>
-                      <Badge variant="outline" className="text-[11px]">{item.score}/100</Badge>
-                    </div>
-                    <p className="mt-1 text-[12px] text-[#6E6E73]">{item.note}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {toolChartData.length > 0 && (
-            <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-              <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Tool Proficiency</h2>
-              <ChartContainer
-                className="h-[260px] w-full"
-                config={{
-                  score: { label: "Score", color: "#0071E3" },
-                }}
-              >
-                <BarChart data={toolChartData} margin={{ left: 12, right: 12, top: 8, bottom: 8 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="tool" tickLine={false} axisLine={false} />
-                  <YAxis domain={[0, 100]} tickLine={false} axisLine={false} width={36} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                  <Bar dataKey="score" fill="var(--color-score)" radius={6} />
-                </BarChart>
-              </ChartContainer>
-            </div>
-          )}
-
-          {snapshot.evaluation_bundle && (
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-                <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Round-by-Round Performance</h2>
-                <div className="mt-3 overflow-x-auto rounded-lg border border-[#E5E5EA]">
-                  <table className="min-w-full text-left text-[12px]">
-                    <thead className="bg-[#F5F5F7] text-[#4D4D52]">
-                      <tr>
-                        <th className="px-3 py-2 font-medium">Round</th>
-                        <th className="px-3 py-2 font-medium">Score</th>
-                        <th className="px-3 py-2 font-medium">Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {snapshot.evaluation_bundle.roundPerformance.map((round) => (
-                        <tr key={round.round} className="border-t border-[#F0F0F2]">
-                          <td className="px-3 py-2 text-[#1D1D1F]">{round.round}</td>
-                          <td className="px-3 py-2 font-semibold text-[#1D1D1F]">{round.score}</td>
-                          <td className="px-3 py-2 text-[#6E6E73]">{round.note}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-                <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Agent Intelligent Evaluation</h2>
-                <div className="mt-3 space-y-2">
-                  {snapshot.evaluation_bundle.agentNarrative.map((line) => (
-                    <div key={line} className="rounded-lg bg-[#F5F5F7] p-3 text-[12px] text-[#1D1D1F]">
-                      {line}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <SparklesIcon className="size-5 text-[#6E6E73]" />
-              <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Interpretation</h2>
-            </div>
-            {(snapshot.report?.interpretation as { summary?: string } | undefined)?.summary ? (
-              <p className="mt-2 text-[13px] text-[#1D1D1F]">{(snapshot.report?.interpretation as { summary?: string }).summary}</p>
-            ) : (
-              <Empty className="py-6">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon"><SparklesIcon /></EmptyMedia>
-                  <EmptyTitle>No interpretation yet</EmptyTitle>
-                  <EmptyDescription>Generate an AI interpretation to summarize this report.</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            )}
-            <form action={formAction} className="mt-4 flex flex-wrap items-center gap-2">
-              <input type="hidden" name="session_id" value={sessionId} />
-              <Input
-                name="focus_dimension"
-                placeholder="Focus dimension (optional)"
-                className="h-8 max-w-[240px] rounded-lg text-[12px]"
-              />
-              <Button
-                type="submit"
-                disabled={isPending}
-                size="sm"
-                className="text-[12px]"
-              >
-                {isPending ? "Generating..." : "Generate Interpretation"}
               </Button>
             </form>
           </div>
