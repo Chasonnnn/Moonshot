@@ -17,6 +17,7 @@ import {
 } from "@/lib/moonshot/types"
 import { getMockSessionEvents } from "@/lib/mock-events"
 import { DEMO_FIXTURES, type DemoCoDesignBundle, type DemoEvaluationBundle, type DemoRound } from "@/lib/moonshot/demo-fixtures"
+import { INITIAL_REPORT_ACTION_STATE, type ReportActionState } from "@/lib/report-action-state"
 import { computeSmartSummary, type SmartSummary } from "@/lib/report-analysis"
 
 export interface ReportDetailSnapshot {
@@ -36,22 +37,6 @@ export interface ReportDetailSnapshot {
   evaluation_bundle: DemoEvaluationBundle | null
   computed_analysis: SmartSummary | null
   error: string | null
-}
-
-export interface ReportActionState {
-  ok: boolean
-  message: string
-  error: string | null
-  requestId: string | null
-  interpretation: InterpretationView | null
-}
-
-export const INITIAL_REPORT_ACTION_STATE: ReportActionState = {
-  ok: false,
-  message: "",
-  error: null,
-  requestId: null,
-  interpretation: null,
 }
 
 function parseActionError(error: unknown): { error: string; requestId: string | null } {

@@ -4,7 +4,6 @@ import { useActionState } from "react"
 import { SparklesIcon } from "lucide-react"
 import {
   createInterpretationAction,
-  INITIAL_REPORT_ACTION_STATE,
   type ReportDetailSnapshot,
 } from "@/actions/reports"
 import { useActionStateToast } from "@/components/employer/action-state-toast"
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import type { InterpretationView } from "@/lib/moonshot/types"
+import { INITIAL_REPORT_ACTION_STATE } from "@/lib/report-action-state"
 
 type ReportInterpretation = {
   summary?: string

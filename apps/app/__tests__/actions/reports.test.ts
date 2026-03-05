@@ -15,7 +15,8 @@ vi.mock("@/lib/mock-events", () => ({
   getMockSessionEvents: mockGetMockSessionEvents,
 }))
 
-import { INITIAL_REPORT_ACTION_STATE, loadReportDetailSnapshot, updateHumanReviewAction } from "@/actions/reports"
+import { loadReportDetailSnapshot, updateHumanReviewAction } from "@/actions/reports"
+import { INITIAL_REPORT_ACTION_STATE } from "@/lib/report-action-state"
 
 function buildClient(overrides: Partial<Record<string, unknown>> = {}) {
   return {

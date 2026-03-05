@@ -5,7 +5,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { FileTextIcon, ShieldCheckIcon, ScaleIcon, CodeIcon, LinkIcon, BrainIcon } from "lucide-react"
 
 import {
-  INITIAL_REPORT_ACTION_STATE,
   updateHumanReviewAction,
   type ReportDetailSnapshot,
 } from "@/actions/reports"
@@ -27,6 +26,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import type { IntegrityTier } from "@/lib/integrity-tiers"
+import { INITIAL_REPORT_ACTION_STATE } from "@/lib/report-action-state"
 import { getScoringLabel } from "@/lib/scoring-labels"
 import type { SessionMode } from "@/lib/moonshot/types"
 
