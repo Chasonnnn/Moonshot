@@ -1,0 +1,4 @@
+support_model,restaurants_supported,variable_cost_per_store_usd,monthly_orders_lift_per_store,aov_usd,take_rate
+shared_team,20,185,52,15.0,0.2
+dedicated_am,20,420,58,15.0,0.2
+automation_first,20,95,21,15.0,0.2

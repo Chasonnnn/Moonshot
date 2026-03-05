@@ -17,6 +17,12 @@
       "title": "Stakeholder Ambiguity Handling",
       "prompt": "Respond to vague stakeholder request with assumptions and escalation plan.",
       "artifacts": ["request_thread.txt", "metric_dictionary.csv"]
+    },
+    {
+      "id": "dd_s1",
+      "title": "DoorDash-Style Growth Case Enablement",
+      "prompt": "Design and defend a strategy to double unmanaged restaurant sales with a pilot-ready ROI model.",
+      "artifacts": ["atl_unmanaged_restaurants.xlsx", "sql_add_on_candidate_view.docx", "5_slide_submission_template.pptx"]
     }
   ]
 }

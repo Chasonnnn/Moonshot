@@ -335,6 +335,149 @@ _FIXTURE_PROFILES: dict[str, dict[str, Any]] = {
             "trigger_codes": ["strong_communication", "proactive_clarification"],
         },
     },
+    "tpl_doordash_enablement": {
+        "task_prompt": (
+            "Design and defend a strategy to double unmanaged marketplace restaurant sales in Atlanta, "
+            "including SQL fluency checks, experiment design, and ROI-based trade-offs."
+        ),
+        "skills": ["problem_framing", "sql", "python", "experiments", "slides", "communication"],
+        "difficulty_plan": [
+            "week_1_foundation",
+            "week_1_foundation",
+            "week_2_analysis",
+            "week_2_analysis",
+            "week_2_analysis",
+            "week_3_strategy",
+            "week_3_strategy",
+            "week_3_strategy",
+            "week_4_exec",
+            "week_4_exec",
+            "week_4_exec",
+            "capstone",
+        ],
+        "rubric_dimensions": [
+            {
+                "key": "problem_framing",
+                "anchor": "Defines the business objective, proxy metric, and success criteria without ambiguity.",
+                "evaluation_points": [
+                    "Defines what sales means in available data",
+                    "States assumptions and confidence limits explicitly",
+                    "Locks measurable pilot success criteria",
+                ],
+                "evidence_signals": ["metric taxonomy", "assumption log", "pilot guardrails"],
+                "common_failure_modes": [
+                    "uses undefined success metric",
+                    "omits assumptions behind proxy metrics",
+                ],
+                "score_bands": {
+                    "1": "Objective is vague and not measurable",
+                    "3": "Objective is mostly clear with partial assumptions",
+                    "5": "Objective and success criteria are explicit and testable",
+                },
+            },
+            {
+                "key": "analysis_correctness",
+                "anchor": "Builds a valid root-cause narrative from robust data checks.",
+                "evaluation_points": [
+                    "Benchmarks managed vs unmanaged with control checks",
+                    "Separates correlation from causation claims",
+                    "Uses medians or outlier checks where needed",
+                ],
+                "evidence_signals": ["benchmark table", "validation query set", "outlier analysis"],
+                "common_failure_modes": ["single-slice conclusion", "causal overclaim"],
+                "score_bands": {
+                    "1": "Analysis is inconsistent or unsupported",
+                    "3": "Analysis is directionally right with gaps",
+                    "5": "Analysis is rigorous and defensible",
+                },
+            },
+            {
+                "key": "recommendation_quality",
+                "anchor": "Recommends interventions that map directly to diagnosed gaps.",
+                "evaluation_points": [
+                    "Actions map to specific funnel breakdowns",
+                    "Prioritization is backed by readiness segmentation",
+                    "Recommendation includes implementation sequence",
+                ],
+                "evidence_signals": ["action-to-gap mapping", "tiered rollout plan"],
+                "common_failure_modes": ["generic recommendations", "no prioritization logic"],
+                "score_bands": {
+                    "1": "Recommendations are disconnected from evidence",
+                    "3": "Recommendations are plausible but loosely mapped",
+                    "5": "Recommendations are specific, prioritized, and evidence-linked",
+                },
+            },
+            {
+                "key": "tradeoff_roi_rigor",
+                "anchor": "Quantifies ROI and trade-offs with clear go/no-go decision rules.",
+                "evaluation_points": [
+                    "Defines treatment/control pilot design",
+                    "Models support cost scenarios",
+                    "Uses explicit scale criteria before rollout",
+                ],
+                "evidence_signals": ["pilot design", "roi model", "decision threshold"],
+                "common_failure_modes": ["roi without costs", "no control group"],
+                "score_bands": {
+                    "1": "Trade-off and ROI reasoning is missing",
+                    "3": "Trade-off reasoning exists with limited rigor",
+                    "5": "Trade-off and ROI model is complete and decision-ready",
+                },
+            },
+            {
+                "key": "communication_story",
+                "anchor": "Delivers an executive-ready storyline in a concise 5-slide structure.",
+                "evaluation_points": [
+                    "Leads with decision headline and so-what",
+                    "Maintains logical narrative flow in slide order",
+                    "Defends recommendations under challenge questions",
+                ],
+                "evidence_signals": ["clear headline", "prioritized narrative", "q_and_a resilience"],
+                "common_failure_modes": ["chart dump", "unclear ask"],
+                "score_bands": {
+                    "1": "Storyline is fragmented and unclear",
+                    "3": "Storyline is understandable but not sharp",
+                    "5": "Storyline is concise, compelling, and resilient to probing",
+                },
+            },
+            {
+                "key": "sql_proficiency",
+                "anchor": "Solves SQL tasks from basic filtering to cumulative window logic.",
+                "evaluation_points": [
+                    "Uses date filtering and grouping correctly",
+                    "Builds accurate joins and distinct counts",
+                    "Implements running totals with window functions",
+                ],
+                "evidence_signals": ["correct sql outputs", "query readability", "window function usage"],
+                "common_failure_modes": ["join double-counting", "incorrect window partition/order"],
+                "score_bands": {
+                    "1": "SQL results are incorrect for key questions",
+                    "3": "SQL is mostly correct with minor issues",
+                    "5": "SQL is accurate, complete, and auditable",
+                },
+            },
+        ],
+        "failure_modes": [
+            "Conflates proxy metrics with guaranteed revenue outcomes.",
+            "Skips pilot guardrails and scale criteria.",
+            "Presents recommendations without a resource trade-off model.",
+        ],
+        "mock_score": {
+            "confidence": 0.89,
+            "dimension_scores": {
+                "problem_framing": 0.91,
+                "analysis_correctness": 0.88,
+                "recommendation_quality": 0.87,
+                "tradeoff_roi_rigor": 0.9,
+                "communication_story": 0.86,
+                "sql_proficiency": 0.86,
+            },
+            "trigger_codes": [
+                "pilot_design_rigorous",
+                "roi_tradeoff_quantified",
+                "fixture_program_4week",
+            ],
+        },
+    },
 }
 
 

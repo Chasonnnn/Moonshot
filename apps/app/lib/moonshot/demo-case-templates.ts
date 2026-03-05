@@ -54,4 +54,21 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
     skillTags: ["Communication", "Assumptions", "Stakeholder Management"],
     estimatedDuration: "10 min",
   },
+  {
+    id: "tpl_doordash_enablement",
+    role: "Senior Data Analyst",
+    skills: ["sql", "python", "experimentation", "storytelling", "roi"],
+    title: "DoorDash-Style Growth Case Enablement",
+    scenario:
+      "Build a strategy to double unmanaged restaurant sales with defensible analysis, SQL proficiency, and a pilot-ready rollout.",
+    artifacts: [
+      { type: "xlsx", name: "atl_unmanaged_restaurants.xlsx" },
+      { type: "docx", name: "sql_add_on_candidate_view.docx" },
+      { type: "slides", name: "5_slide_submission_template.pptx" },
+    ],
+    description:
+      "Four-week fixture/live enablement track for marketplace case interviews: metric framing, root-cause diagnostics, SQL fluency, and decision-ready recommendations.",
+    skillTags: ["SQL", "Python", "Experiment Design", "ROI", "Executive Storytelling"],
+    estimatedDuration: "4 weeks",
+  },
 ]

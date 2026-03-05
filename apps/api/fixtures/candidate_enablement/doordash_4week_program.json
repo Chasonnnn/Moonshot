@@ -1,0 +1,91 @@
+{
+  "program_id": "doordash_4week_enablement_v1",
+  "name": "DoorDash-Style 4-Week Candidate Enablement",
+  "target_level": "intermediate",
+  "tool_stack": ["python", "sql", "slides"],
+  "modes": ["fixture_demo", "live_demo"],
+  "interfaces": {
+    "CasePacket": {
+      "business_prompt": "required",
+      "dataset": "required",
+      "sql_addon": "required",
+      "submission_rules": "required"
+    },
+    "CandidateSubmission": {
+      "slide_pdf": "required",
+      "sql_queries": "required",
+      "analysis_notebook_or_workbook": "required",
+      "assumption_log": "required"
+    },
+    "DemoSession": {
+      "fixture_demo": "8m presentation + 20m deep-dive",
+      "live_demo": "45m unseen case simulation"
+    },
+    "Scorecard": {
+      "scale": "0-100",
+      "pass_bar": 75,
+      "min_section_score_equivalent": 6,
+      "weights": {
+        "problem_framing": 20,
+        "analysis_correctness": 25,
+        "recommendation_quality": 20,
+        "tradeoff_roi_rigor": 15,
+        "communication_story": 10,
+        "sql_proficiency": 10
+      }
+    }
+  },
+  "curriculum": [
+    {
+      "week": 1,
+      "focus": "case_decomposition_metric_taxonomy_data_qa",
+      "fixture_output": ["issue_tree", "metric_definitions", "data_cleaning_checklist"],
+      "live_output": ["sales_proxy_definition", "assumption_log"]
+    },
+    {
+      "week": 2,
+      "focus": "root_cause_analytics_sql_fluency",
+      "fixture_output": ["managed_vs_unmanaged_benchmark", "funnel_decomposition", "sql_q1_q4_timed_set"],
+      "live_output": ["join_logic_explanation", "window_function_explanation"]
+    },
+    {
+      "week": 3,
+      "focus": "strategy_pilot_roi",
+      "fixture_output": ["intervention_options", "tiering_logic", "pilot_design", "roi_model"],
+      "live_output": ["tradeoff_defense", "risk_controls"]
+    },
+    {
+      "week": 4,
+      "focus": "executive_narrative_pressure_testing",
+      "fixture_output": ["final_5_slide_deck", "mock_q_and_a"],
+      "live_output": ["full_live_simulation", "red_team_challenge"]
+    }
+  ],
+  "acceptance_tests": {
+    "case_completion": {
+      "deadline_hours": 48,
+      "required_score": 75,
+      "requires_sql_q4_window_correct": true,
+      "requires_explicit_go_no_go": true
+    },
+    "live_defense": {
+      "presentation_minutes": 8,
+      "challenge_questions": 10,
+      "requires_consistent_revisions": true
+    },
+    "transferability": {
+      "requires_non_doordash_repeat": true,
+      "requires_framework_reuse": true
+    }
+  },
+  "monitoring": {
+    "pilot_cohort_size": "3-5",
+    "weekly_kpis": [
+      "median_score_by_rubric_section",
+      "sql_accuracy_by_question_type",
+      "time_to_first_coherent_storyline",
+      "live_demo_confidence_trend"
+    ],
+    "rebalancing_rule": "rebalance_only_if_any_section_average_below_70"
+  }
+}

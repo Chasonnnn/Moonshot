@@ -157,6 +157,7 @@ Tracking docs:
 - [API changelog](docs/03_api/changelog.md)
 - [Ops runbook](docs/07_ops/runbook.md)
 - [Frontend contract](docs/08_frontend_contract/frontend_backend_contract.md)
+- [DoorDash 4-week enablement](docs/09_candidate_enablement/doordash_4week_candidate_enablement.md)
 
 ## Troubleshooting
 

@@ -22,5 +22,6 @@ This document tracks external inspiration used for Demo V2 fixture content in `/
 - `tpl_jda_quality`: discrepancy triage, reconciliation SQL, escalation judgment.
 - `tpl_data_analyst`: product/marketplace metric prioritization and root-cause storytelling.
 - `tpl_jda_ambiguity`: ambiguous stakeholder request handling and scoped decision framing.
+- `tpl_doordash_enablement`: 4-week marketplace growth case prep with fixture + live demo pressure testing.
 - Round-2 analytics fixtures: purchase/cohort and model-critique style artifacts (Python + R).
 - Round-3 dashboard fixtures: pricing/segment recommendation framing and tradeoff communication.

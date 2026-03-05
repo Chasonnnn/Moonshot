@@ -55,6 +55,43 @@ def test_generate_fixture_mode_returns_deterministic_family(client, admin_header
     assert "data_quality_process" in rubric_keys
 
 
+def test_generate_fixture_mode_supports_doordash_enablement_template(client, admin_headers):
+    case_res = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "DoorDash Fixture Generate Case",
+            "scenario": "DoorDash fixture scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["sql_workspace", "python_workspace", "dashboard_workspace"],
+        },
+    )
+    assert case_res.status_code == 201
+    case_id = case_res.json()["id"]
+
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "fixture-generate-doordash-1"},
+        json={"mode": "fixture", "template_id": "tpl_doordash_enablement", "variant_count": 12},
+    )
+    assert gen_res.status_code == 202
+
+    generated = _job_result(client, gen_res.json()["job_id"], admin_headers)
+    task_family = generated["task_family"]
+    rubric = generated["rubric"]
+
+    assert task_family["id"]
+    assert len(task_family["variants"]) == 12
+    rubric_keys = {item["key"] for item in rubric["dimensions"]}
+    assert "problem_framing" in rubric_keys
+    assert "analysis_correctness" in rubric_keys
+    assert "recommendation_quality" in rubric_keys
+    assert "tradeoff_roi_rigor" in rubric_keys
+    assert "communication_story" in rubric_keys
+    assert "sql_proficiency" in rubric_keys
+
+
 def test_score_fixture_mode_uses_fixture_score_payload(client, admin_headers, reviewer_headers, candidate_headers):
     case_res = client.post(
         "/v1/cases",
@@ -130,6 +167,92 @@ def test_score_fixture_mode_uses_fixture_score_payload(client, admin_headers, re
     assert scored["dimension_scores"]["sql_accuracy"] == 0.8
     assert "dimension_evidence" in scored
     assert "sql_accuracy" in scored["dimension_evidence"]
+    assert "fixture_score_profile" in scored["trigger_codes"]
+
+
+def test_score_fixture_mode_uses_doordash_enablement_score_profile(
+    client, admin_headers, reviewer_headers, candidate_headers
+):
+    case_res = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "DoorDash Fixture Score Case",
+            "scenario": "DoorDash fixture score scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["sql_workspace", "python_workspace", "dashboard_workspace"],
+        },
+    )
+    assert case_res.status_code == 201
+    case_id = case_res.json()["id"]
+
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "fixture-generate-doordash-2"},
+        json={"mode": "fixture", "template_id": "tpl_doordash_enablement"},
+    )
+    assert gen_res.status_code == 202
+    generated = _job_result(client, gen_res.json()["job_id"], admin_headers)
+    task_family_id = generated["task_family"]["id"]
+
+    review = client.post(
+        f"/v1/task-families/{task_family_id}/review",
+        headers=reviewer_headers,
+        json={"decision": "approve"},
+    )
+    assert review.status_code == 200
+    publish = client.post(f"/v1/task-families/{task_family_id}/publish", headers=reviewer_headers, json={})
+    assert publish.status_code == 200
+
+    session_res = client.post(
+        "/v1/sessions",
+        headers=reviewer_headers,
+        json={
+            "task_family_id": task_family_id,
+            "candidate_id": "candidate_1",
+            "policy": {
+                "raw_content_opt_in": False,
+                "retention_ttl_days": 30,
+                "demo_template_id": "tpl_doordash_enablement",
+            },
+        },
+    )
+    assert session_res.status_code == 201
+    session_id = session_res.json()["id"]
+
+    ingest = client.post(
+        f"/v1/sessions/{session_id}/events",
+        headers=candidate_headers,
+        json={
+            "events": [
+                {"event_type": "sql_query_run", "payload": {"runtime_ms": 31}},
+                {"event_type": "python_code_run", "payload": {"runtime_ms": 44}},
+                {"event_type": "dashboard_action", "payload": {"action": "annotate"}},
+                {"event_type": "verification_step_completed", "payload": {"step": "roi_sanity_check"}},
+            ]
+        },
+    )
+    assert ingest.status_code == 202
+
+    submit = client.post(
+        f"/v1/sessions/{session_id}/submit",
+        headers=candidate_headers,
+        json={"final_response": "doordash fixture response"},
+    )
+    assert submit.status_code == 200
+
+    score_res = client.post(
+        f"/v1/sessions/{session_id}/score",
+        headers={**reviewer_headers, "Idempotency-Key": "fixture-score-doordash-1"},
+        json={"mode": "fixture", "template_id": "tpl_doordash_enablement"},
+    )
+    assert score_res.status_code == 202
+
+    scored = _job_result(client, score_res.json()["job_id"], reviewer_headers)
+    assert scored["confidence"] == 0.89
+    assert scored["dimension_scores"]["sql_proficiency"] == 0.86
+    assert scored["dimension_scores"]["tradeoff_roi_rigor"] == 0.9
     assert "fixture_score_profile" in scored["trigger_codes"]
 
 

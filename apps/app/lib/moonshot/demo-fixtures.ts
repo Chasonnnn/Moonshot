@@ -15,6 +15,7 @@ export interface DemoPythonScript {
   code: string
   stdout: string
   plotUrl?: string
+  datasetId?: string
 }
 
 export interface DemoEventEntry {
@@ -234,13 +235,15 @@ const DATA_ANALYST_ROUNDS: DemoRound[] = [
     sqlQueries: [],
     pythonScripts: [
       {
-        code: 'import pandas as pd\n\ndf = pd.DataFrame({"channel":["organic","paid_social","email"],"conv":[0.38,0.22,0.51]})\nprint(df.sort_values("conv"))',
-        stdout: "       channel  conv\n1  paid_social  0.22\n0      organic  0.38\n2        email  0.51",
+        code: 'import pandas as pd\n\ndf = pd.read_csv(DATASET_PATH)\nlatest = df[df["week"] == "2026-02-23"][["channel", "conversion_rate"]]\nprint(latest.sort_values("conversion_rate"))',
+        stdout: "       channel  conversion_rate\n5  paid_social             0.22\n2      organic             0.38\n8        email             0.51",
+        datasetId: "conversion_channels_v1",
       },
       {
-        code: 'import matplotlib.pyplot as plt\nweeks=["02-09","02-16","02-23"];paid=[0.44,0.45,0.22]\nplt.plot(weeks, paid, marker="o")\nplt.title("Paid Social Conversion")\nplt.show()',
+        code: 'import pandas as pd\nimport matplotlib.pyplot as plt\n\ndf = pd.read_csv(DATASET_PATH)\npaid = df[df["channel"] == "paid_social"]\nplt.plot(paid["week"], paid["conversion_rate"], marker="o")\nplt.title("Paid Social Conversion")\nplt.xlabel("Week")\nplt.ylabel("Conversion Rate")\nplt.show()',
         stdout: "",
-        plotUrl: "/mock/channel_trend.png",
+        plotUrl: "/runtime/plot_1.png",
+        datasetId: "conversion_channels_v1",
       },
     ],
     rScripts: [
@@ -464,6 +467,173 @@ const JDA_AMBIGUITY_ROUNDS: DemoRound[] = [
       },
     ],
     mockedArtifacts: ["final_response_round3.md"],
+  },
+]
+
+const DOORDASH_ENABLEMENT_VARIANTS = buildVariantCatalog(
+  "Solve a DoorDash-style marketplace case with a measurable growth strategy, SQL proof, and executive-ready narrative.",
+  ["problem_framing", "sql", "python", "experiments", "roi", "storytelling"],
+)
+
+const DOORDASH_ENABLEMENT_ROUNDS: DemoRound[] = [
+  {
+    id: "round_1",
+    title: "Week 1 - Case Decomposition and Data QA",
+    objective: "Define the sales proxy, map the issue tree, and identify data quality risks before analysis.",
+    deliverables: ["Issue tree", "Metric taxonomy", "Data cleaning checklist"],
+    sqlQueries: [
+      {
+        query:
+          "SELECT management_type, AVG(deliveries_l30) AS avg_deliveries, AVG(weekly_page_views) AS avg_views, AVG(conversion_rate) AS avg_conv FROM atl_restaurants GROUP BY management_type;",
+        columns: ["management_type", "avg_deliveries", "avg_views", "avg_conv"],
+        rows: [
+          { management_type: "Managed", avg_deliveries: 313.2, avg_views: 314.2, avg_conv: 0.2869 },
+          { management_type: "Unmanaged", avg_deliveries: 68.4, avg_views: 120.3, avg_conv: 0.1395 },
+        ],
+      },
+      {
+        query:
+          "SELECT COUNT(*) AS mixed_scale_fields FROM data_dictionary WHERE field_name IN ('conversion_rate','pct_cancellations') AND scale_type IN ('0_to_1','0_to_100');",
+        columns: ["mixed_scale_fields"],
+        rows: [{ mixed_scale_fields: 2 }],
+      },
+    ],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: ["Open ATL marketplace overview", "Annotate proxy metric decision", "Flag mixed-scale percentage fields"],
+    coachScript: [
+      {
+        role: "user",
+        content: "The prompt says double sales but there is no GMV. Is deliveries a valid proxy?",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content: "Yes, if you state the assumption explicitly and include caveats about AOV and take-rate differences.",
+        allowed: true,
+      },
+    ],
+    mockedArtifacts: ["week1_issue_tree.md", "week1_metric_taxonomy.csv"],
+  },
+  {
+    id: "round_2",
+    title: "Week 2 - Root-Cause Analysis and SQL Fluency",
+    objective: "Prove the key levers behind unmanaged underperformance and solve SQL Q1-Q4 patterns.",
+    deliverables: ["Benchmark table", "Funnel decomposition", "Timed SQL answers"],
+    sqlQueries: [
+      {
+        query:
+          "SELECT DATE_TRUNC('month', date) AS month, SUM(order_value) AS monthly_sales, SUM(SUM(order_value)) OVER (ORDER BY DATE_TRUNC('month', date)) AS cumulative_sales FROM delivery_data WHERE store_id IN (SELECT DISTINCT store_id FROM owner_mapping WHERE account_owner IN ('Kevin','Carla')) GROUP BY DATE_TRUNC('month', date) ORDER BY month;",
+        columns: ["month", "monthly_sales", "cumulative_sales"],
+        rows: [
+          { month: "2019-06-01", monthly_sales: 8421.2, cumulative_sales: 8421.2 },
+          { month: "2019-07-01", monthly_sales: 9018.7, cumulative_sales: 17439.9 },
+          { month: "2019-08-01", monthly_sales: 9302.4, cumulative_sales: 26742.3 },
+        ],
+      },
+    ],
+    pythonScripts: [
+      {
+        code:
+          'import pandas as pd\n\ndf = pd.read_csv(DATASET_PATH)\nsummary = df.groupby("management_type")[["weekly_page_views", "conversion_rate", "deliveries_l30"]].mean().round(3)\nprint(summary)\nprint("managed_to_unmanaged_delivery_ratio", round(summary.loc["Managed", "deliveries_l30"] / summary.loc["Unmanaged", "deliveries_l30"], 2))',
+        stdout:
+          "                 weekly_page_views  conversion_rate  deliveries_l30\nmanagement_type                                                      \nManaged                     314.200            0.287          313.200\nUnmanaged                   120.300            0.139           68.400\nmanaged_to_unmanaged_delivery_ratio 4.58",
+        datasetId: "atl_unmanaged_funnel_v1",
+      },
+      {
+        code:
+          'import pandas as pd\nimport matplotlib.pyplot as plt\n\ndf = pd.read_csv(DATASET_PATH)\nunmanaged = df[df[\"management_type\"] == \"Unmanaged\"]\nplt.scatter(unmanaged[\"weekly_page_views\"], unmanaged[\"deliveries_l30\"])\nplt.xlabel(\"weekly_page_views\")\nplt.ylabel(\"deliveries_l30\")\nplt.title(\"Unmanaged ATL: Discovery vs Deliveries\")\nplt.show()',
+        stdout: "",
+        plotUrl: "/runtime/plot_1.png",
+        datasetId: "atl_unmanaged_funnel_v1",
+      },
+    ],
+    rScripts: [],
+    dashboardActions: ["Open managed vs unmanaged scorecard", "Annotate discovery and conversion gaps", "Log SQL Q4 window-function checkpoint"],
+    coachScript: [
+      {
+        role: "user",
+        content: "My correlation is high for page views. Can I claim causation?",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content: "No. Treat it as a prioritization signal and pair it with pilot design for causal validation.",
+        allowed: true,
+      },
+    ],
+    mockedArtifacts: ["week2_benchmark.csv", "week2_sql_timed_set.md"],
+  },
+  {
+    id: "round_3",
+    title: "Week 3 - Strategy, Pilot, and ROI Trade-Offs",
+    objective: "Prioritize interventions, design control/treatment pilot, and compare support cost models.",
+    deliverables: ["Tiered rollout plan", "A/B pilot spec", "ROI model"],
+    sqlQueries: [
+      {
+        query:
+          "SELECT tier, COUNT(*) AS restaurant_count, AVG(deliveries_l30) AS avg_deliveries FROM tiered_unmanaged GROUP BY tier ORDER BY tier;",
+        columns: ["tier", "restaurant_count", "avg_deliveries"],
+        rows: [
+          { tier: "Tier 1", restaurant_count: 35, avg_deliveries: 269.0 },
+          { tier: "Tier 2", restaurant_count: 35, avg_deliveries: 67.0 },
+          { tier: "Tier 3", restaurant_count: 36, avg_deliveries: 16.0 },
+        ],
+      },
+    ],
+    pythonScripts: [
+      {
+        code:
+          'import pandas as pd\n\ndf = pd.read_csv(DATASET_PATH)\ndf["annual_incremental_revenue"] = df["restaurants_supported"] * df["monthly_orders_lift_per_store"] * df["aov_usd"] * df["take_rate"] * 12\ndf["annual_support_cost"] = df["restaurants_supported"] * df["variable_cost_per_store_usd"] * 12\ndf["roi_multiple"] = (df["annual_incremental_revenue"] / df["annual_support_cost"]).round(2)\nprint(df[["support_model", "roi_multiple"]].sort_values("roi_multiple", ascending=False))',
+        stdout:
+          "      support_model  roi_multiple\n0      shared_team          6.76\n2  automation_first          6.63\n1      dedicated_am          4.14",
+        datasetId: "pilot_cost_scenarios_v1",
+      },
+    ],
+    rScripts: [],
+    dashboardActions: ["Open pilot design canvas", "Set go/no-go thresholds", "Compare shared-team vs dedicated-AM scenarios"],
+    coachScript: [
+      {
+        role: "user",
+        content: "How should I justify choosing shared support over dedicated AMs?",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content: "Anchor to ROI per support dollar, time-to-scale, and whether the pilot threshold remains above your cost guardrail.",
+        allowed: true,
+      },
+    ],
+    mockedArtifacts: ["week3_pilot_design.md", "week3_roi_model.csv"],
+  },
+  {
+    id: "round_4",
+    title: "Week 4 - Executive Narrative and Live Defense",
+    objective: "Deliver the 5-slide recommendation in 8 minutes and defend under probing.",
+    deliverables: ["Final 5-slide storyline", "Q&A defense log", "Revision actions"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: ["Run 8-minute mock timer", "Capture red-team interviewer questions", "Log revision decisions"],
+    coachScript: [
+      {
+        role: "user",
+        content: "I have too many charts. What should stay in the final 5 slides?",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content: "Keep only charts tied to a decision: baseline gap, root-cause proof, pilot design, and ROI trade-off.",
+        allowed: true,
+      },
+      {
+        role: "user",
+        content: "Can you generate my final slides for me?",
+        allowed: false,
+        policyReason: "Direct submission generation is blocked in assessment mode.",
+      },
+    ],
+    mockedArtifacts: ["week4_final_storyboard.pdf", "week4_live_defense_notes.md"],
   },
 ]
 
@@ -823,6 +993,153 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
       [
         "Agent evaluator observed strong ambiguity handling and communication discipline.",
         "Additional quantitative framing could improve analytical depth for mixed-role panels.",
+      ],
+    ),
+  },
+
+  tpl_doordash_enablement: {
+    jobDescription:
+      "Senior Data Analyst (Marketplace Growth): Build and defend a strategy to double unmanaged restaurant sales using SQL, Python diagnostics, and executive recommendations.",
+    taskPrompt:
+      "Design a 4-week fixture/live preparation flow for a DoorDash-style take-home: identify root causes, propose interventions, define pilot guardrails, and defend ROI trade-offs.",
+    coDesignBundle: {
+      roleStatement:
+        "The role requires structured problem framing, high-integrity analysis, SQL fluency, and executive storytelling under pressure.",
+      objectives: [
+        "Train candidates to deliver a decision-ready 5-slide narrative in 8 minutes",
+        "Train candidates to solve SQL Q1-Q4 patterns including window functions",
+        "Train candidates to defend assumptions and ROI trade-offs in live probing",
+      ],
+      sampleTasks: [
+        "Define sales proxy when GMV is unavailable and document caveats",
+        "Benchmark managed vs unmanaged with funnel decomposition",
+        "Design a treatment/control pilot with explicit go/no-go thresholds",
+      ],
+      rubricBlueprint: [
+        "No recommendation without evidence chain",
+        "No ROI without explicit cost model",
+        "No scale decision without pilot guardrails",
+      ],
+      difficultyLadder: [
+        { level: "Week 1", focus: "Metric framing and data QA", expectation: "Issue tree + metric taxonomy + quality checks" },
+        { level: "Week 2", focus: "Root-cause and SQL fluency", expectation: "Funnel decomposition + timed SQL Q1-Q4" },
+        { level: "Week 3", focus: "Strategy and ROI trade-offs", expectation: "Tiering + A/B pilot + support model comparison" },
+        { level: "Week 4", focus: "Executive defense", expectation: "8-minute deck + 20-minute live Q&A resilience" },
+      ],
+      agentNotes: [
+        "Push candidates to define success criteria before action design.",
+        "Force explicit distinction between correlation evidence and causal claims.",
+        "Score down recommendations that omit control group or cost guardrails.",
+      ],
+    },
+    rubric: [
+      {
+        key: "problem_framing",
+        anchor: "Defines objective, proxy metric, and assumptions with explicit success criteria.",
+        evaluationPoints: ["Sales proxy is explicit", "Assumptions are logged", "Success threshold is measurable"],
+        evidenceSignals: ["metric taxonomy", "assumption log", "pilot threshold"],
+        commonFailureModes: ["vague objective", "implicit assumptions"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "analysis_correctness",
+        anchor: "Builds defensible diagnosis with checks for outliers and alternative explanations.",
+        evaluationPoints: ["Managed/unmanaged benchmark", "Outlier robustness checks", "Correlation-causation separation"],
+        evidenceSignals: ["benchmark table", "validation pass", "alternative hypothesis"],
+        commonFailureModes: ["single-slice analysis", "causal over-claim"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "recommendation_quality",
+        anchor: "Recommends prioritized interventions mapped to diagnosed root causes.",
+        evaluationPoints: ["Action-to-gap mapping", "Tiered prioritization", "Execution sequence clarity"],
+        evidenceSignals: ["intervention matrix", "tier plan"],
+        commonFailureModes: ["generic actions", "no sequencing"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "tradeoff_roi_rigor",
+        anchor: "Quantifies pilot economics and support model trade-offs with clear go/no-go criteria.",
+        evaluationPoints: ["Treatment/control design", "Cost model completeness", "Scale trigger clarity"],
+        evidenceSignals: ["roi table", "guardrail thresholds"],
+        commonFailureModes: ["missing cost assumptions", "no control group"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "communication_story",
+        anchor: "Delivers concise executive narrative that is resilient under challenge questions.",
+        evaluationPoints: ["Decision-first headline", "Narrative flow", "Q&A defense quality"],
+        evidenceSignals: ["slide logic", "challenge-response coherence"],
+        commonFailureModes: ["chart overload", "unclear decision ask"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "sql_proficiency",
+        anchor: "Executes SQL from basic counts to window-function cumulative reporting accurately.",
+        evaluationPoints: ["Correct filtering and grouping", "Join correctness", "Window-function correctness"],
+        evidenceSignals: ["q1_q4_sql_set", "query sanity checks"],
+        commonFailureModes: ["double counting", "incorrect running total logic"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+    ],
+    variantCatalog: DOORDASH_ENABLEMENT_VARIANTS,
+    rounds: DOORDASH_ENABLEMENT_ROUNDS,
+    sqlQueries: DOORDASH_ENABLEMENT_ROUNDS.flatMap((round) => round.sqlQueries),
+    pythonScripts: DOORDASH_ENABLEMENT_ROUNDS.flatMap((round) => [...round.pythonScripts, ...round.rScripts]),
+    coachScript: DOORDASH_ENABLEMENT_ROUNDS.flatMap((round) => round.coachScript),
+    finalResponse:
+      "Recommendation summary:\n1) Use deliveries as the operational sales proxy (explicit caveat: GMV unavailable in dataset).\n2) Prioritize Tier-1 unmanaged restaurants for a 4-week, 10-treatment/10-control pilot.\n3) Bundle three interventions: ads credit (discovery), menu refresh (conversion), order-protocol stabilization (reliability).\n4) Scale only if pilot clears >30% order lift at < $200 variable support cost per store and no material retention decay post-credit.\n\nRationale: managed vs unmanaged gaps are largest on discovery and conversion metrics, while AOV differences are modest. Shared support model yields better capital efficiency than dedicated-AM staffing for initial rollout.",
+    sampleEvents: [
+      { event_type: "session_started", payload: { time_to_first_action_ms: 710 } },
+      { event_type: "sql_query_run", payload: { row_count: 2, runtime_ms: 41 } },
+      { event_type: "sql_query_run", payload: { row_count: 3, runtime_ms: 36 } },
+      { event_type: "python_code_run", payload: { runtime_ms: 58, has_plot: false } },
+      { event_type: "python_code_run", payload: { runtime_ms: 64, has_plot: true } },
+      { event_type: "dashboard_action", payload: { action: "annotate" } },
+      { event_type: "dashboard_action", payload: { action: "set_filter" } },
+      { event_type: "copilot_invoked", payload: { source: "coach" } },
+      { event_type: "verification_step_completed", payload: { step: "outlier_check" } },
+      { event_type: "verification_step_completed", payload: { step: "roi_sanity_check" } },
+    ],
+    mockScoreResult: {
+      confidence: 0.89,
+      dimensionScores: {
+        problem_framing: 0.91,
+        analysis_correctness: 0.88,
+        recommendation_quality: 0.87,
+        tradeoff_roi_rigor: 0.9,
+        communication_story: 0.86,
+        sql_proficiency: 0.86,
+      },
+      triggerCodes: ["pilot_design_rigorous", "roi_tradeoff_quantified", "fixture_program_4week"],
+    },
+    evaluationBundle: buildEvaluationBundle(
+      [
+        { dimension: "JD coverage", score: 95, note: "Matches analyst take-home + live deep-dive competencies." },
+        { dimension: "Task realism", score: 94, note: "Case flow mirrors real marketplace strategy interviews." },
+        { dimension: "Rubric depth", score: 93, note: "Six-dimension scorecard is evidence-linked and decision-oriented." },
+        { dimension: "Difficulty progression", score: 96, note: "Four-week ladder from framing to live defense is explicit." },
+      ],
+      [
+        { round: "Week 1", score: 89, note: "Metric framing and QA discipline established early." },
+        { round: "Week 2", score: 87, note: "Root-cause and SQL execution are mostly robust." },
+        { round: "Week 3", score: 90, note: "Pilot and ROI trade-off framing is strong." },
+        { round: "Week 4", score: 88, note: "Executive narrative is concise and defensible." },
+      ],
+      [
+        { tool: "sql", score: 88 },
+        { tool: "python", score: 85 },
+        { tool: "r", score: 0 },
+        { tool: "dashboard", score: 86 },
+      ],
+      [
+        { code: "pilot_design_rigorous", rationale: "Defined treatment/control and measurable guardrails.", impact: "positive" },
+        { code: "roi_tradeoff_quantified", rationale: "Compared shared-team vs dedicated support on economics.", impact: "positive" },
+        { code: "fixture_program_4week", rationale: "Completed full week-by-week progression under deterministic fixture.", impact: "positive" },
+      ],
+      [
+        "Agent evaluator observed clear progression from diagnostics to decision-ready recommendation.",
+        "Most residual risk came from assumptions around post-credit retention persistence.",
       ],
     ),
   },
