@@ -8,7 +8,11 @@ import { createCaseAction, type CaseActionState, type CasesSnapshot } from "@/ac
 import { useActionStateToast } from "@/components/employer/action-state-toast"
 import { CaseTemplates } from "@/components/employer/case-templates"
 import { Badge } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 const initialCaseActionState: CaseActionState = {
   ok: false,
@@ -31,30 +35,30 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
       <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
         <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Create Case</h2>
         <form action={formAction} className="mt-4 grid gap-3">
-          <input
+          <Input
             name="title"
             placeholder="Case title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="rounded-lg border border-[#D2D2D7] px-3 py-2 text-[13px]"
+            className="rounded-lg text-[13px]"
             required
           />
-          <textarea
+          <Textarea
             name="scenario"
             placeholder="Scenario description"
             value={scenario}
             onChange={(e) => setScenario(e.target.value)}
-            className="min-h-24 rounded-lg border border-[#D2D2D7] px-3 py-2 text-[13px]"
+            className="min-h-24 rounded-lg text-[13px]"
             required
           />
           <div className="flex items-center gap-3">
-            <button
+            <Button
               type="submit"
               disabled={isPending}
-              className="rounded-full bg-[#0071E3] px-4 py-2 text-[13px] font-medium text-white disabled:opacity-60"
+              className="text-[13px]"
             >
               {isPending ? "Creating..." : "Create Case"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -87,7 +91,7 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
                   </div>
                   <Link
                     href={`/cases/${item.id}`}
-                    className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F]"
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-[12px]")}
                   >
                     Open Case
                   </Link>

@@ -4,14 +4,23 @@ import { useActionState, useMemo, useState } from "react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { FileTextIcon, SparklesIcon, ShieldCheckIcon, ScaleIcon, CodeIcon, LinkIcon, BrainIcon } from "lucide-react"
 
-import { createInterpretationAction, type ReportActionState, type ReportDetailSnapshot } from "@/actions/reports"
+import {
+  createInterpretationAction,
+  updateHumanReviewAction,
+  type ReportActionState,
+  type ReportDetailSnapshot,
+} from "@/actions/reports"
 import { useActionStateToast } from "@/components/employer/action-state-toast"
 import { EventTimeline } from "@/components/employer/event-timeline"
 import { IntegrityTierSelect } from "@/components/employer/integrity-tier-select"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import type { IntegrityTier } from "@/lib/integrity-tiers"
 import { getScoringLabel } from "@/lib/scoring-labels"
 import type { SessionMode } from "@/lib/moonshot/types"
@@ -49,8 +58,10 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string; snapshot: ReportDetailSnapshot }) {
   const [state, formAction, isPending] = useActionState(createInterpretationAction, initialReportActionState)
+  const [humanState, humanFormAction, isHumanPending] = useActionState(updateHumanReviewAction, initialReportActionState)
   const [integrityTier, setIntegrityTier] = useState<IntegrityTier>("standard")
   useActionStateToast(state)
+  useActionStateToast(humanState)
 
   const scoringLabel = getScoringLabel(toSessionMode(snapshot.session?.policy?.coach_mode))
   const sessionStartedAt = snapshot.session?.created_at ?? new Date().toISOString()
@@ -107,13 +118,19 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
                 <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{formatConfidence(snapshot.summary?.confidence)}</p>
               </div>
               <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Final Confidence</p>
+                <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{formatConfidence(snapshot.summary?.final_confidence)}</p>
+              </div>
+              <div>
                 <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Template</p>
                 <p className="mt-0.5 font-mono text-[12px] text-[#1D1D1F]">{snapshot.demo_template_id ?? "n/a"}</p>
               </div>
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Human Review</p>
                 <div className="mt-0.5">
-                  {snapshot.summary?.needs_human_review ? (
+                  {snapshot.summary?.has_human_review ? (
+                    <Badge variant="outline" className="border-[#34C759]/40 bg-[#34C759]/10 text-[#0D8A2A] text-[11px]">Saved</Badge>
+                  ) : snapshot.summary?.needs_human_review ? (
                     <Badge variant="outline" className="border-[#FF9F0A]/40 bg-[#FF9F0A]/10 text-[#FF9F0A] text-[11px]">Required</Badge>
                   ) : (
                     <Badge variant="outline" className="text-[11px]">Clear</Badge>
@@ -121,6 +138,79 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
                 </div>
               </div>
             </div>
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Final Score Source</p>
+                <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{snapshot.summary?.final_score_source ?? "n/a"}</p>
+              </div>
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Model Confidence</p>
+                <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{formatConfidence(snapshot.summary?.confidence)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+            <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Human Notes &amp; Override</h2>
+            <form action={humanFormAction} className="mt-4 space-y-3">
+              <input type="hidden" name="session_id" value={sessionId} />
+              <div>
+                <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Notes (Markdown)</Label>
+                <Textarea
+                  name="notes_markdown"
+                  defaultValue={snapshot.human_review?.notes_markdown ?? ""}
+                  className="mt-1 min-h-[120px] rounded-lg text-[13px]"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Tags (csv)</Label>
+                  <Input
+                    name="tags_csv"
+                    defaultValue={snapshot.human_review?.tags.join(", ") ?? ""}
+                    className="mt-1 h-9 rounded-lg text-[13px]"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Dimension Overrides (JSON)</Label>
+                  <Input
+                    name="dimension_overrides_json"
+                    defaultValue={
+                      snapshot.human_review?.dimension_overrides
+                        ? JSON.stringify(snapshot.human_review.dimension_overrides)
+                        : ""
+                    }
+                    className="mt-1 h-9 rounded-lg text-[13px]"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Override Overall Score (0-1)</Label>
+                  <Input
+                    name="override_overall_score"
+                    defaultValue={snapshot.human_review?.override_overall_score ?? ""}
+                    className="mt-1 h-9 rounded-lg text-[13px]"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Override Confidence (0-1)</Label>
+                  <Input
+                    name="override_confidence"
+                    defaultValue={snapshot.human_review?.override_confidence ?? ""}
+                    className="mt-1 h-9 rounded-lg text-[13px]"
+                  />
+                </div>
+              </div>
+              <Button
+                type="submit"
+                disabled={isHumanPending}
+                size="sm"
+                className="text-[12px]"
+              >
+                {isHumanPending ? "Saving..." : "Save Human Review"}
+              </Button>
+            </form>
           </div>
 
           {snapshot.evaluation_bundle && (
@@ -220,18 +310,19 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
             )}
             <form action={formAction} className="mt-4 flex flex-wrap items-center gap-2">
               <input type="hidden" name="session_id" value={sessionId} />
-              <input
+              <Input
                 name="focus_dimension"
                 placeholder="Focus dimension (optional)"
-                className="rounded-lg border border-[#D2D2D7] px-2 py-1.5 text-[12px]"
+                className="h-8 max-w-[240px] rounded-lg text-[12px]"
               />
-              <button
+              <Button
                 type="submit"
                 disabled={isPending}
-                className="rounded-full bg-[#0071E3] px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-60"
+                size="sm"
+                className="text-[12px]"
               >
                 {isPending ? "Generating..." : "Generate Interpretation"}
-              </button>
+              </Button>
             </form>
           </div>
         </section>

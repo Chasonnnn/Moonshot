@@ -8,6 +8,7 @@ import { createMoonshotClientFromEnv } from "@/lib/moonshot/client"
 import {
   MoonshotApiError,
   type FairnessSmokeRun,
+  type HumanReviewRecord,
   type InterpretationView,
   type RedTeamRun,
   type ReportSummary,
@@ -27,6 +28,7 @@ export interface ReportDetailSnapshot {
   timeline_source: "real" | "fixture"
   timeline_warning: string | null
   interpretation: InterpretationView | null
+  human_review: HumanReviewRecord | null
   demo_template_id: string | null
   co_design_bundle: DemoCoDesignBundle | null
   round_blueprint: DemoRound[]
@@ -63,10 +65,11 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
     const session = await client.getSession(reviewer.access_token, sessionId)
     const demoTemplateId = typeof session.policy?.demo_template_id === "string" ? session.policy.demo_template_id : null
     const fixture = demoTemplateId ? DEMO_FIXTURES[demoTemplateId] ?? null : null
-    const [summary, redteamRuns, fairnessRuns] = await Promise.all([
+    const [summary, redteamRuns, fairnessRuns, humanReview] = await Promise.all([
       client.getReportSummary(reviewer.access_token, sessionId),
       client.listRedteamRuns(reviewer.access_token, { targetType: "session", targetId: sessionId, limit: 5 }),
       client.listFairnessSmokeRuns(reviewer.access_token, { targetSessionId: sessionId, limit: 5 }),
+      client.getHumanReview(reviewer.access_token, sessionId),
     ])
     let report: Record<string, unknown> | null = null
     if (summary.report_available) {
@@ -103,6 +106,7 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       timeline_source: timelineSource,
       timeline_warning: timelineWarning,
       interpretation: null,
+      human_review: humanReview,
       demo_template_id: demoTemplateId,
       co_design_bundle: fixture?.coDesignBundle ?? null,
       round_blueprint: fixture?.rounds ?? [],
@@ -121,6 +125,7 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       timeline_source: "real",
       timeline_warning: null,
       interpretation: null,
+      human_review: null,
       demo_template_id: null,
       co_design_bundle: null,
       round_blueprint: [],
@@ -172,6 +177,69 @@ export async function createInterpretationAction(
 
     revalidatePath(`/reports/${sessionId}`)
     return { ok: true, message: `Interpretation generated: ${viewId}`, error: null, requestId: null }
+  } catch (error) {
+    const parsed = parseActionError(error)
+    return { ok: false, message: "", error: parsed.error, requestId: parsed.requestId }
+  }
+}
+
+export async function updateHumanReviewAction(
+  _prev: ReportActionState,
+  formData: FormData,
+): Promise<ReportActionState> {
+  try {
+    const sessionId = String(formData.get("session_id") ?? "").trim()
+    if (!sessionId) {
+      return { ok: false, message: "", error: "session_id is required", requestId: null }
+    }
+
+    const notes = String(formData.get("notes_markdown") ?? "").trim()
+    const tagsRaw = String(formData.get("tags_csv") ?? "").trim()
+    const overrideScoreRaw = String(formData.get("override_overall_score") ?? "").trim()
+    const overrideConfidenceRaw = String(formData.get("override_confidence") ?? "").trim()
+    const dimensionOverridesRaw = String(formData.get("dimension_overrides_json") ?? "").trim()
+
+    const tags = tagsRaw
+      ? tagsRaw.split(",").map((item) => item.trim()).filter(Boolean)
+      : []
+
+    const overrideOverallScore =
+      overrideScoreRaw.length > 0 ? Number.parseFloat(overrideScoreRaw) : null
+    const overrideConfidence =
+      overrideConfidenceRaw.length > 0 ? Number.parseFloat(overrideConfidenceRaw) : null
+
+    if (overrideOverallScore !== null && Number.isNaN(overrideOverallScore)) {
+      return { ok: false, message: "", error: "override_overall_score must be numeric", requestId: null }
+    }
+    if (overrideConfidence !== null && Number.isNaN(overrideConfidence)) {
+      return { ok: false, message: "", error: "override_confidence must be numeric", requestId: null }
+    }
+
+    let dimensionOverrides: Record<string, number> | null = null
+    if (dimensionOverridesRaw.length > 0) {
+      const parsed = JSON.parse(dimensionOverridesRaw) as Record<string, unknown>
+      dimensionOverrides = {}
+      for (const [key, value] of Object.entries(parsed)) {
+        const numeric = Number(value)
+        if (Number.isNaN(numeric)) {
+          return { ok: false, message: "", error: `dimension override for ${key} must be numeric`, requestId: null }
+        }
+        dimensionOverrides[key] = numeric
+      }
+    }
+
+    const client = createMoonshotClientFromEnv()
+    const reviewer = await client.issueToken("reviewer", client.config.reviewerUserId)
+    await client.updateHumanReview(reviewer.access_token, sessionId, {
+      notes_markdown: notes.length > 0 ? notes : null,
+      tags,
+      override_overall_score: overrideOverallScore,
+      override_confidence: overrideConfidence,
+      dimension_overrides: dimensionOverrides,
+    })
+
+    revalidatePath(`/reports/${sessionId}`)
+    return { ok: true, message: "Human review saved", error: null, requestId: null }
   } catch (error) {
     const parsed = parseActionError(error)
     return { ok: false, message: "", error: parsed.error, requestId: parsed.requestId }

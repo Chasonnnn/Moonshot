@@ -42,6 +42,10 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
 
   const buildSteps = useCallback((): AutoPlayStep[] => {
     const steps: AutoPlayStep[] = []
+    const templateId =
+      typeof session.policy?.demo_template_id === "string"
+        ? session.policy.demo_template_id
+        : undefined
 
     if (fixture.rounds.length > 0) {
       fixture.rounds.forEach((round, roundIndex) => {
@@ -74,7 +78,21 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
             label: `Round ${roundIndex + 1}: Python ${script.code.split("\n")[0].slice(0, 40)}...`,
             roundIndex,
             action: async () => {
-              await api.runPython(script.code)
+              const runtimeContext =
+                templateId && script.datasetId
+                  ? {
+                      template_id: templateId,
+                      round_id: round.id,
+                      dataset_id: script.datasetId,
+                    }
+                  : undefined
+              const response = await api.runPython(script.code, runtimeContext)
+              track("python_code_run", {
+                source: "autoplay",
+                round_id: round.id,
+                runtime_ms: response.runtime_ms,
+                artifact_count: response.artifacts.length,
+              })
             },
           })
         }
@@ -177,7 +195,7 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
     })
 
     return steps
-  }, [fixture, api, isAiDisabled, pushCoachMessage, setFinalResponse, setCurrentRoundIndex, track])
+  }, [fixture, api, isAiDisabled, pushCoachMessage, session.policy, setFinalResponse, setCurrentRoundIndex, track])
 
   useEffect(() => {
     if (runningRef.current) return

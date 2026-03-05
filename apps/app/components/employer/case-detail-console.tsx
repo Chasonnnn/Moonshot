@@ -13,7 +13,10 @@ import {
 import { useActionStateToast } from "@/components/employer/action-state-toast"
 import type { CaseSpec, TaskFamily } from "@/lib/moonshot/types"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
 const initialCaseActionState: CaseActionState = {
   ok: false,
@@ -39,26 +42,27 @@ export function CaseDetailConsole({ caseItem, taskFamilies }: { caseItem: CaseSp
         <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Case Details</h2>
         <form action={updateAction} className="mt-4 grid gap-3">
           <input type="hidden" name="case_id" value={caseItem.id} />
-          <input
+          <Input
             name="title"
             defaultValue={caseItem.title}
-            className="rounded-lg border border-[#D2D2D7] px-3 py-2 text-[13px]"
+            className="rounded-lg text-[13px]"
             required
           />
-          <textarea
+          <Textarea
             name="scenario"
             defaultValue={caseItem.scenario}
-            className="min-h-28 rounded-lg border border-[#D2D2D7] px-3 py-2 text-[13px]"
+            className="min-h-28 rounded-lg text-[13px]"
             required
           />
           <div className="flex items-center gap-3">
-            <button
+            <Button
               type="submit"
               disabled={isUpdating}
-              className="rounded-full bg-[#1D1D1F] px-4 py-2 text-[13px] font-medium text-white disabled:opacity-60"
+              variant="secondary"
+              className="text-[13px]"
             >
               {isUpdating ? "Saving..." : "Save Case"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -68,13 +72,13 @@ export function CaseDetailConsole({ caseItem, taskFamilies }: { caseItem: CaseSp
         <form action={generateAction} className="mt-4">
           <input type="hidden" name="case_id" value={caseItem.id} />
           <div className="flex items-center gap-3">
-            <button
+            <Button
               type="submit"
               disabled={isGenerating}
-              className="rounded-full bg-[#0071E3] px-4 py-2 text-[13px] font-medium text-white disabled:opacity-60"
+              className="text-[13px]"
             >
               {isGenerating ? "Submitting..." : "Generate Task Family"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -96,23 +100,26 @@ export function CaseDetailConsole({ caseItem, taskFamilies }: { caseItem: CaseSp
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <form action={reviewAction}>
                   <input type="hidden" name="task_family_id" value={family.id} />
-                  <button
+                  <Button
                     type="submit"
                     disabled={isReviewing}
-                    className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F] disabled:opacity-60"
+                    variant="outline"
+                    size="sm"
+                    className="text-[12px]"
                   >
                     {isReviewing ? "Approving..." : "Approve"}
-                  </button>
+                  </Button>
                 </form>
                 <form action={publishAction}>
                   <input type="hidden" name="task_family_id" value={family.id} />
-                  <button
+                  <Button
                     type="submit"
                     disabled={isPublishing}
-                    className="rounded-full bg-[#34C759] px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-60"
+                    size="sm"
+                    className="bg-[#34C759] text-[12px] text-white hover:bg-[#2CB14D]"
                   >
                     {isPublishing ? "Publishing..." : "Publish"}
-                  </button>
+                  </Button>
                 </form>
               </div>
             </div>

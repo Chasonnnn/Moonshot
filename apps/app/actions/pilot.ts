@@ -14,7 +14,7 @@ import {
   type ScenarioSeedManifest,
 } from "@/lib/moonshot/pilot-flow"
 import { MoonshotApiError, type SessionMode, type SessionRecord } from "@/lib/moonshot/types"
-import { DEMO_CASE_TEMPLATES } from "@/lib/moonshot/demo-case-templates"
+import { DEMO_CASE_TEMPLATES, type DemoCaseTemplate } from "@/lib/moonshot/demo-case-templates"
 import { DEMO_FIXTURES } from "@/lib/moonshot/demo-fixtures"
 
 export interface DashboardSnapshot {
@@ -31,6 +31,32 @@ export interface DashboardSnapshot {
     needsHumanReview: boolean | null
     lastScoredAt: string | null
   }>
+}
+
+export type DemoExecutionMode = "fixture" | "live"
+
+export interface DemoStageDiagnostic {
+  stage: "worker_health" | "create_case" | "generate" | "publish" | "create_session" | "score" | "export"
+  status: "ok" | "error"
+  latency_ms: number
+  detail: string
+  job_id: string | null
+  request_id: string | null
+  model: string | null
+}
+
+export interface LiveCoDesignDifficultyLevel {
+  level: string
+  focus: string
+  expectation: string
+}
+
+export interface LiveCoDesignPromptBundle {
+  jobDescription: string
+  sampleTasks: string[]
+  rubricBlueprint: string[]
+  difficultyLadder: LiveCoDesignDifficultyLevel[]
+  agentNotes: string[]
 }
 
 function toStep(name: string, detail: string, requestId: string | null = null): PilotFlowStep {
@@ -75,6 +101,197 @@ function parseTemplateId(formData: FormData | undefined): string {
 
 const SAMPLE_FINAL_RESPONSE =
   "I would segment retention by cohort, validate source/dashboard parity, document assumptions, and escalate with confidence caveats."
+
+const DEMO_FIXTURE_JOB_WAIT = {
+  timeoutMs: 35_000,
+  initialIntervalMs: 200,
+  maxIntervalMs: 900,
+} as const
+
+const DEMO_LIVE_JOB_WAIT = {
+  timeoutMs: 120_000,
+  initialIntervalMs: 250,
+  maxIntervalMs: 1_250,
+} as const
+
+const DEMO_LIVE_DEFAULT_MODEL = "anthropic/claude-opus-4-6"
+const DEMO_LIVE_DEFAULT_REASONING_EFFORT = "high"
+const DEMO_LIVE_DEFAULT_THINKING_BUDGET_TOKENS = 10_000
+const LIVE_CO_DESIGN_SCHEMA_ID = "moonshot.demo.live_co_design.v1"
+const LIVE_GENERATION_OUTPUT_SCHEMA_ID = "moonshot.demo.live_generation_output.v1"
+
+function normalizeLiveModelOverride(modelOverride: string | null | undefined): string {
+  const normalized = (modelOverride ?? "").trim()
+  if (!normalized) {
+    return DEMO_LIVE_DEFAULT_MODEL
+  }
+  return normalized
+}
+
+function normalizeLiveReasoningEffort(reasoningEffort: string | null | undefined): string {
+  const normalized = (reasoningEffort ?? "").trim().toLowerCase()
+  if (!normalized) {
+    return DEMO_LIVE_DEFAULT_REASONING_EFFORT
+  }
+  if (normalized === "fast") {
+    return "low"
+  }
+  if (normalized === "low" || normalized === "medium" || normalized === "high" || normalized === "xhigh") {
+    return normalized
+  }
+  return DEMO_LIVE_DEFAULT_REASONING_EFFORT
+}
+
+function normalizeLine(input: string): string {
+  return input.replace(/\s+/g, " ").trim()
+}
+
+function normalizeLines(lines: string[]): string[] {
+  return lines.map((line) => normalizeLine(line)).filter((line) => line.length > 0)
+}
+
+function normalizeLiveCoDesignBundle(
+  bundle: LiveCoDesignPromptBundle | null | undefined,
+): LiveCoDesignPromptBundle | null {
+  if (!bundle) {
+    return null
+  }
+  const jobDescription = normalizeLine(bundle.jobDescription)
+  const sampleTasks = normalizeLines(bundle.sampleTasks)
+  const rubricBlueprint = normalizeLines(bundle.rubricBlueprint)
+  const difficultyLadder = bundle.difficultyLadder
+    .map((level) => ({
+      level: normalizeLine(level.level),
+      focus: normalizeLine(level.focus),
+      expectation: normalizeLine(level.expectation),
+    }))
+    .filter((level) => level.level && level.focus && level.expectation)
+  const agentNotes = normalizeLines(bundle.agentNotes)
+  if (!jobDescription || sampleTasks.length === 0 || rubricBlueprint.length === 0 || difficultyLadder.length === 0) {
+    return null
+  }
+  return {
+    jobDescription,
+    sampleTasks,
+    rubricBlueprint,
+    difficultyLadder,
+    agentNotes,
+  }
+}
+
+function toBulletedMarkdown(lines: string[]): string {
+  return lines.map((line) => `- ${line}`).join("\n")
+}
+
+function toDifficultyMarkdown(levels: LiveCoDesignDifficultyLevel[]): string {
+  return levels
+    .map((level) => `- ${level.level}: ${level.focus} | expectation: ${level.expectation}`)
+    .join("\n")
+}
+
+function buildLiveScenario(template: DemoCaseTemplate, bundle: LiveCoDesignPromptBundle | null | undefined): string {
+  const normalizedBundle = normalizeLiveCoDesignBundle(bundle)
+  if (!normalizedBundle) {
+    return template.scenario
+  }
+  return [
+    template.scenario,
+    "",
+    `Live co-design schema: ${LIVE_CO_DESIGN_SCHEMA_ID}`,
+    `Output contract schema: ${LIVE_GENERATION_OUTPUT_SCHEMA_ID}`,
+    "",
+    "Job Description:",
+    normalizedBundle.jobDescription,
+    "",
+    "Sample Tasks:",
+    toBulletedMarkdown(normalizedBundle.sampleTasks),
+    "",
+    "Rubric Blueprint:",
+    toBulletedMarkdown(normalizedBundle.rubricBlueprint),
+    "",
+    "Designed Incremental Difficulty Levels:",
+    toDifficultyMarkdown(normalizedBundle.difficultyLadder),
+    "",
+    "Agent Co-Design Notes:",
+    toBulletedMarkdown(normalizedBundle.agentNotes),
+    "",
+    "Locked Output Contract:",
+    "- variants[] fields: prompt, skill, difficulty_level, round_hint, estimated_minutes, deliverables[], artifact_refs[]",
+    "- rubric.dimensions[] fields: key, anchor, evaluation_points[], evidence_signals[], common_failure_modes[], score_bands{}",
+    "- keep response safe and simulation-only, no answer leakage",
+  ].join("\n")
+}
+
+function buildCaseCreatePayload(
+  template: DemoCaseTemplate,
+  mode: DemoExecutionMode,
+  liveCoDesignBundle: LiveCoDesignPromptBundle | null | undefined,
+): Record<string, unknown> {
+  return {
+    title: `[Demo ${mode === "live" ? "Live" : "Fixture"}] ${template.title}`,
+    scenario: mode === "live" ? buildLiveScenario(template, liveCoDesignBundle) : template.scenario,
+    artifacts: template.artifacts,
+    metrics: [],
+    allowed_tools: ["sql_workspace", "python_workspace", "dashboard_workspace", "copilot"],
+  }
+}
+
+function jobWaitForMode(mode: DemoExecutionMode) {
+  return mode === "live" ? DEMO_LIVE_JOB_WAIT : DEMO_FIXTURE_JOB_WAIT
+}
+
+function stageStartedAt(): number {
+  return Date.now()
+}
+
+function stageLatencyMs(startedAt: number): number {
+  return Math.max(1, Date.now() - startedAt)
+}
+
+function inferFailureStage(diagnostics: DemoStageDiagnostic[]): DemoStageDiagnostic["stage"] {
+  const has = (stage: DemoStageDiagnostic["stage"]) => diagnostics.some((item) => item.stage === stage)
+  if (!has("worker_health")) return "worker_health"
+  if (!has("create_case")) return "create_case"
+  if (!has("generate")) return "generate"
+  if (!has("publish")) return "publish"
+  if (!has("create_session")) return "create_session"
+  if (!has("score")) return "score"
+  if (!has("export")) return "export"
+  return "generate"
+}
+
+function appendFailureDiagnostic(
+  diagnostics: DemoStageDiagnostic[],
+  detail: string,
+): DemoStageDiagnostic[] {
+  const stage = inferFailureStage(diagnostics)
+  const next = [...diagnostics]
+  next.push({
+    stage,
+    status: "error",
+    latency_ms: 0,
+    detail,
+    job_id: null,
+    request_id: null,
+    model: null,
+  })
+  return next
+}
+
+async function getWorkerReadinessError(
+  client: ReturnType<typeof createMoonshotClientFromEnv>,
+  adminToken: string,
+): Promise<string | null> {
+  const health = await client.getWorkersHealth(adminToken)
+  const healthyWorkers = health.workers.filter((worker) => worker.status === "ok")
+  if (healthyWorkers.length > 0) {
+    return null
+  }
+  if (health.workers.length === 0) {
+    return "No active worker detected. Start the worker service (`bash apps/api/scripts/start_worker.sh`) and retry."
+  }
+  return `Worker service is not healthy (overall=${health.overall_status}, stale_leases=${health.stale_leases}). Restart worker and retry.`
+}
 
 async function runCaseToReportExportFlow(args: {
   caseId: string
@@ -195,15 +412,16 @@ export async function loadPilotSnapshot(): Promise<PilotSnapshot> {
     const [meta, cases, jobs] = await Promise.all([
       client.getMetaVersion(),
       client.listCases(adminToken.access_token),
-      client.listJobs(adminToken.access_token, 20),
+      client.listJobs(adminToken.access_token, 100),
     ])
+    const queuedJobs = jobs.items.filter((job) => ["pending", "running", "retrying"].includes(job.status)).length
 
     return {
       ok: true,
       apiVersion: meta.api_version,
       schemaVersion: meta.schema_version,
       caseCount: cases.items.length,
-      jobCount: jobs.items.length,
+      jobCount: queuedJobs,
       error: null,
     }
   } catch (error) {
@@ -673,144 +891,800 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
   }
 }
 
+export interface DemoPreviewVariant {
+  id: string
+  skill: string
+  difficultyLevel: string
+  roundHint: string
+  promptSummary: string
+  deliverables: string[]
+  estimatedMinutes: number
+  artifactRefs: string[]
+}
+
+export interface DemoPreviewRubric {
+  key: string
+  anchor: string
+  evaluationPoints: string[]
+  evidenceSignals: string[]
+  commonFailureModes: string[]
+  scoreBands: Record<string, string>
+}
+
+export interface PrepareDemoPreviewResult {
+  mode: DemoExecutionMode
+  caseId: string | null
+  taskFamilyId: string | null
+  generatedVariantCount: number
+  variants: DemoPreviewVariant[]
+  rubric: DemoPreviewRubric[]
+  diagnostics: DemoStageDiagnostic[]
+  error: string | null
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.filter((item): item is string => typeof item === "string")
+}
+
+function toPreviewVariant(index: number, raw: unknown): DemoPreviewVariant {
+  const row = asRecord(raw) ?? {}
+  const prompt = typeof row.prompt === "string" ? row.prompt : ""
+  const promptSummary = prompt.length > 240 ? `${prompt.slice(0, 237)}...` : prompt
+  const skill = typeof row.skill === "string" && row.skill.trim() ? row.skill : "analysis"
+  const difficultyLevel =
+    typeof row.difficulty_level === "string" && row.difficulty_level.trim()
+      ? row.difficulty_level
+      : "foundation"
+  const roundHint =
+    typeof row.round_hint === "string" && row.round_hint.trim() ? row.round_hint : "round_1"
+  const estimatedMinutes = typeof row.estimated_minutes === "number" ? row.estimated_minutes : 15
+  return {
+    id: typeof row.id === "string" ? row.id : `var_${index + 1}`,
+    skill,
+    difficultyLevel,
+    roundHint,
+    promptSummary,
+    deliverables: asStringArray(row.deliverables),
+    estimatedMinutes,
+    artifactRefs: asStringArray(row.artifact_refs),
+  }
+}
+
+function toPreviewRubric(raw: unknown): DemoPreviewRubric {
+  const row = asRecord(raw) ?? {}
+  const scoreBandsRaw = asRecord(row.score_bands)
+  const scoreBands: Record<string, string> = {}
+  if (scoreBandsRaw) {
+    Object.entries(scoreBandsRaw).forEach(([key, value]) => {
+      if (typeof value === "string") {
+        scoreBands[key] = value
+      }
+    })
+  }
+  return {
+    key: typeof row.key === "string" ? row.key : "dimension",
+    anchor: typeof row.anchor === "string" ? row.anchor : "",
+    evaluationPoints: asStringArray(row.evaluation_points),
+    evidenceSignals: asStringArray(row.evidence_signals),
+    commonFailureModes: asStringArray(row.common_failure_modes),
+    scoreBands,
+  }
+}
+
+function modeFromInput(mode: DemoExecutionMode | undefined): DemoExecutionMode {
+  return mode === "live" ? "live" : "fixture"
+}
+
+export interface LiveModelOption {
+  id: string
+  label: string
+}
+
+export interface LiveModelOptionsResult {
+  options: LiveModelOption[]
+  availableModelIds: string[]
+  defaultModelId: string
+  error: string | null
+}
+
+function collectModelIdsFromLiteLLMInfo(payload: unknown): string[] {
+  if (typeof payload !== "object" || payload === null) {
+    return []
+  }
+  const data = (payload as { data?: unknown }).data
+  if (!Array.isArray(data)) {
+    return []
+  }
+  const ids = new Set<string>()
+  data.forEach((item) => {
+    if (typeof item !== "object" || item === null) {
+      return
+    }
+    const row = item as { model_name?: unknown; litellm_params?: unknown }
+    if (typeof row.model_name === "string" && row.model_name.trim()) {
+      ids.add(row.model_name.trim())
+    }
+    if (typeof row.litellm_params === "object" && row.litellm_params !== null) {
+      const model = (row.litellm_params as { model?: unknown }).model
+      if (typeof model === "string" && model.trim()) {
+        ids.add(model.trim())
+      }
+    }
+  })
+  return Array.from(ids)
+}
+
+export async function loadLiveModelOptions(): Promise<LiveModelOptionsResult> {
+  try {
+    const client = createMoonshotClientFromEnv()
+    const response = await client.getModelOptions()
+
+    const availableIds = new Set<string>()
+    const optionsMap = new Map<string, LiveModelOption>()
+    response.options.forEach((item) => {
+      if (!item.available) return
+      const resolved = (item.resolved_model ?? "").trim()
+      const canonical = item.model.trim()
+      if (canonical) {
+        availableIds.add(canonical)
+      }
+      if (resolved) {
+        availableIds.add(resolved)
+      }
+      const id = resolved || canonical
+      if (!id) return
+      if (!optionsMap.has(id)) {
+        const label = resolved && resolved !== canonical ? `${canonical} (${resolved})` : canonical
+        optionsMap.set(id, { id, label })
+      }
+    })
+
+    const litellmBaseUrl = (process.env.MOONSHOT_LITELLM_BASE_URL ?? "").trim()
+    const litellmApiKey = (process.env.MOONSHOT_LITELLM_API_KEY ?? "").trim()
+    if (litellmBaseUrl && litellmApiKey) {
+      try {
+        const endpoint = `${litellmBaseUrl.replace(/\/+$/, "")}/v1/model/info`
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${litellmApiKey}` },
+          cache: "no-store",
+        })
+        if (response.ok) {
+          const payload = await response.json()
+          collectModelIdsFromLiteLLMInfo(payload).forEach((id) => availableIds.add(id))
+        }
+      } catch {
+        // Keep model options usable even when external model-info endpoint is unavailable.
+      }
+    }
+
+    const options = Array.from(optionsMap.values())
+    const defaultRequiredModel = response.defaults_by_agent.evaluator ?? DEMO_LIVE_DEFAULT_MODEL
+    const defaultResolved = response.options.find(
+      (item) => item.model === defaultRequiredModel && item.available,
+    )?.resolved_model
+    const defaultModelId = normalizeLiveModelOverride(defaultResolved ?? defaultRequiredModel ?? options[0]?.id)
+
+    if (!options.some((opt) => opt.id === defaultModelId)) {
+      options.unshift({ id: defaultModelId, label: defaultRequiredModel })
+    }
+
+    return {
+      options,
+      availableModelIds: Array.from(availableIds).sort(),
+      defaultModelId,
+      error: null,
+    }
+  } catch (error) {
+    return {
+      options: [{ id: DEMO_LIVE_DEFAULT_MODEL, label: DEMO_LIVE_DEFAULT_MODEL }],
+      availableModelIds: [DEMO_LIVE_DEFAULT_MODEL],
+      defaultModelId: DEMO_LIVE_DEFAULT_MODEL,
+      error: toErrorMessage(error),
+    }
+  }
+}
+
+export async function prepareDemoPreview(
+  templateId: string,
+  modeInput: DemoExecutionMode = "fixture",
+  liveModelOverride?: string | null,
+  liveReasoningEffort?: string | null,
+  liveCoDesignBundle?: LiveCoDesignPromptBundle | null,
+): Promise<PrepareDemoPreviewResult> {
+  const mode = modeFromInput(modeInput)
+  const selectedLiveModel = normalizeLiveModelOverride(liveModelOverride)
+  const selectedReasoningEffort = normalizeLiveReasoningEffort(liveReasoningEffort)
+  const diagnostics: DemoStageDiagnostic[] = []
+  try {
+    const client = createMoonshotClientFromEnv()
+    const template = DEMO_CASE_TEMPLATES.find((item) => item.id === templateId)
+    if (!template) {
+      return {
+        mode,
+        caseId: null,
+        taskFamilyId: null,
+        generatedVariantCount: 0,
+        variants: [],
+        rubric: [],
+        diagnostics,
+        error: `Unknown template: ${templateId}`,
+      }
+    }
+
+    const adminToken = await client.issueToken("org_admin", client.config.adminUserId)
+
+    const workerStartedAt = stageStartedAt()
+    const workerReadinessError = await getWorkerReadinessError(client, adminToken.access_token)
+    if (workerReadinessError) {
+      diagnostics.push({
+        stage: "worker_health",
+        status: "error",
+        latency_ms: stageLatencyMs(workerStartedAt),
+        detail: workerReadinessError,
+        job_id: null,
+        request_id: null,
+        model: null,
+      })
+      return {
+        mode,
+        caseId: null,
+        taskFamilyId: null,
+        generatedVariantCount: 0,
+        variants: [],
+        rubric: [],
+        diagnostics,
+        error: workerReadinessError,
+      }
+    }
+    diagnostics.push({
+      stage: "worker_health",
+      status: "ok",
+      latency_ms: stageLatencyMs(workerStartedAt),
+      detail: "Worker pool healthy",
+      job_id: null,
+      request_id: null,
+      model: null,
+    })
+
+    const createStartedAt = stageStartedAt()
+    const createdCase = await client.createCase(
+      adminToken.access_token,
+      buildCaseCreatePayload(template, mode, liveCoDesignBundle),
+    )
+    diagnostics.push({
+      stage: "create_case",
+      status: "ok",
+      latency_ms: stageLatencyMs(createStartedAt),
+      detail: `Case created (${createdCase.id})`,
+      job_id: null,
+      request_id: null,
+      model: null,
+    })
+
+    const generateStartedAt = stageStartedAt()
+    const generateJob = await client.generateCase(
+      adminToken.access_token,
+      createdCase.id,
+      `demo-preview-gen-${randomUUID()}`,
+      {
+        mode,
+        template_id: mode === "fixture" ? templateId : undefined,
+        variant_count: 12,
+        model_override: mode === "live" ? selectedLiveModel : undefined,
+        reasoning_effort: mode === "live" ? selectedReasoningEffort : undefined,
+        thinking_budget_tokens: mode === "live" ? DEMO_LIVE_DEFAULT_THINKING_BUDGET_TOKENS : undefined,
+      },
+    )
+    const generated = await client.waitForJobTerminalResult(
+      adminToken.access_token,
+      generateJob.job_id,
+      jobWaitForMode(mode),
+    )
+
+    if (generated.status !== "completed") {
+      const failure = `Generate job failed: ${generated.status}`
+      diagnostics.push({
+        stage: "generate",
+        status: "error",
+        latency_ms: stageLatencyMs(generateStartedAt),
+        detail: failure,
+        job_id: generateJob.job_id,
+        request_id: null,
+        model: null,
+      })
+      return {
+        mode,
+        caseId: createdCase.id,
+        taskFamilyId: null,
+        generatedVariantCount: 0,
+        variants: [],
+        rubric: [],
+        diagnostics,
+        error: failure,
+      }
+    }
+
+    const resultRecord = asRecord(generated.result)
+    const taskFamily = asRecord(resultRecord?.task_family)
+    const rubric = asRecord(resultRecord?.rubric)
+    const trace = asRecord(resultRecord?.model_trace)
+    const taskFamilyId = typeof taskFamily?.id === "string" ? taskFamily.id : null
+    if (!taskFamilyId) {
+      const failure = "Generate result missing task_family.id"
+      diagnostics.push({
+        stage: "generate",
+        status: "error",
+        latency_ms: stageLatencyMs(generateStartedAt),
+        detail: failure,
+        job_id: generateJob.job_id,
+        request_id: null,
+        model: null,
+      })
+      return {
+        mode,
+        caseId: createdCase.id,
+        taskFamilyId: null,
+        generatedVariantCount: 0,
+        variants: [],
+        rubric: [],
+        diagnostics,
+        error: failure,
+      }
+    }
+
+    const variantsRaw = Array.isArray(taskFamily?.variants) ? taskFamily.variants : []
+    const rubricRaw = Array.isArray(rubric?.dimensions) ? rubric.dimensions : []
+    const model =
+      typeof trace?.provider === "string" && typeof trace?.model === "string"
+        ? `${trace.provider}/${trace.model}`
+        : null
+
+    diagnostics.push({
+      stage: "generate",
+      status: "ok",
+      latency_ms: stageLatencyMs(generateStartedAt),
+      detail: `Generated ${variantsRaw.length} variants`,
+      job_id: generateJob.job_id,
+      request_id: null,
+      model,
+    })
+
+    return {
+      mode,
+      caseId: createdCase.id,
+      taskFamilyId,
+      generatedVariantCount: variantsRaw.length,
+      variants: variantsRaw.map((variant, idx) => toPreviewVariant(idx, variant)),
+      rubric: rubricRaw.map((item) => toPreviewRubric(item)),
+      diagnostics,
+      error: null,
+    }
+  } catch (error) {
+    const failureDetail = toErrorMessage(error)
+    return {
+      mode,
+      caseId: null,
+      taskFamilyId: null,
+      generatedVariantCount: 0,
+      variants: [],
+      rubric: [],
+      diagnostics: appendFailureDiagnostic(diagnostics, failureDetail),
+      error: failureDetail,
+    }
+  }
+}
+
 export interface FastPathResult {
+  mode: DemoExecutionMode
   sessionId: string | null
   candidateUrl: string | null
   taskFamilyId: string | null
   generatedVariantCount: number | null
+  diagnostics: DemoStageDiagnostic[]
   error: string | null
 }
 
-export async function runDemoFastPath(templateId: string): Promise<FastPathResult> {
+interface RunDemoFastPathInput {
+  mode?: DemoExecutionMode
+  preparedCaseId?: string | null
+  preparedTaskFamilyId?: string | null
+  preparedVariantCount?: number | null
+  previewDiagnostics?: DemoStageDiagnostic[] | null
+  liveModelOverride?: string | null
+  liveReasoningEffort?: string | null
+  liveCoDesignBundle?: LiveCoDesignPromptBundle | null
+}
+
+export async function runDemoFastPath(
+  templateId: string,
+  input: RunDemoFastPathInput = {},
+): Promise<FastPathResult> {
+  const mode = modeFromInput(input.mode)
+  const selectedLiveModel = normalizeLiveModelOverride(input.liveModelOverride)
+  const selectedReasoningEffort = normalizeLiveReasoningEffort(input.liveReasoningEffort)
+  const diagnostics: DemoStageDiagnostic[] = Array.isArray(input.previewDiagnostics)
+    ? [...input.previewDiagnostics]
+    : []
   try {
     const client = createMoonshotClientFromEnv()
 
     const template = DEMO_CASE_TEMPLATES.find((item) => item.id === templateId)
     if (!template) {
       return {
+        mode,
         sessionId: null,
         candidateUrl: null,
         taskFamilyId: null,
         generatedVariantCount: null,
+        diagnostics,
         error: `Unknown template: ${templateId}`,
       }
     }
 
-    const adminToken = await client.issueToken("org_admin", client.config.adminUserId)
-    const reviewerToken = await client.issueToken("reviewer", client.config.reviewerUserId)
+    const [adminToken, reviewerToken] = await Promise.all([
+      client.issueToken("org_admin", client.config.adminUserId),
+      client.issueToken("reviewer", client.config.reviewerUserId),
+    ])
 
-    const createdCase = await client.createCase(adminToken.access_token, {
-      title: `[Demo] ${template.title}`,
-      scenario: template.scenario,
-      artifacts: template.artifacts,
-      metrics: [],
-      allowed_tools: ["sql_workspace", "python_workspace", "dashboard_workspace", "copilot"],
+    const workerStartedAt = stageStartedAt()
+    const workerReadinessError = await getWorkerReadinessError(client, adminToken.access_token)
+    if (workerReadinessError) {
+      diagnostics.push({
+        stage: "worker_health",
+        status: "error",
+        latency_ms: stageLatencyMs(workerStartedAt),
+        detail: workerReadinessError,
+        job_id: null,
+        request_id: null,
+        model: null,
+      })
+      return {
+        mode,
+        sessionId: null,
+        candidateUrl: null,
+        taskFamilyId: null,
+        generatedVariantCount: null,
+        diagnostics,
+        error: workerReadinessError,
+      }
+    }
+    diagnostics.push({
+      stage: "worker_health",
+      status: "ok",
+      latency_ms: stageLatencyMs(workerStartedAt),
+      detail: "Worker pool healthy",
+      job_id: null,
+      request_id: null,
+      model: null,
     })
 
-    const generateJob = await client.generateCase(
-      adminToken.access_token,
-      createdCase.id,
-      `demo-fp-gen-${randomUUID()}`,
-      { mode: "fixture", template_id: templateId, variant_count: 12 },
-    )
-    const generated = await client.waitForJobTerminalResult(adminToken.access_token, generateJob.job_id)
-    if (generated.status !== "completed") {
-      return {
-        sessionId: null,
-        candidateUrl: null,
-        taskFamilyId: null,
-        generatedVariantCount: null,
-        error: `Generate job failed: ${generated.status}`,
+    let caseId = input.preparedCaseId ?? null
+    let taskFamilyId = input.preparedTaskFamilyId ?? null
+    let generatedVariantCount = input.preparedVariantCount ?? null
+
+    if (!caseId || !taskFamilyId) {
+      const createStartedAt = stageStartedAt()
+      const createdCase = await client.createCase(
+        adminToken.access_token,
+        buildCaseCreatePayload(template, mode, input.liveCoDesignBundle),
+      )
+      caseId = createdCase.id
+      diagnostics.push({
+        stage: "create_case",
+        status: "ok",
+        latency_ms: stageLatencyMs(createStartedAt),
+        detail: `Case created (${caseId})`,
+        job_id: null,
+        request_id: null,
+        model: null,
+      })
+
+      const generateStartedAt = stageStartedAt()
+      const generateJob = await client.generateCase(
+        adminToken.access_token,
+        caseId,
+        `demo-fp-gen-${randomUUID()}`,
+        {
+          mode,
+          template_id: mode === "fixture" ? templateId : undefined,
+          variant_count: 12,
+          model_override: mode === "live" ? selectedLiveModel : undefined,
+          reasoning_effort: mode === "live" ? selectedReasoningEffort : undefined,
+          thinking_budget_tokens: mode === "live" ? DEMO_LIVE_DEFAULT_THINKING_BUDGET_TOKENS : undefined,
+        },
+      )
+      const generated = await client.waitForJobTerminalResult(
+        adminToken.access_token,
+        generateJob.job_id,
+        jobWaitForMode(mode),
+      )
+      if (generated.status !== "completed") {
+        const failure = `Generate job failed: ${generated.status}`
+        diagnostics.push({
+          stage: "generate",
+          status: "error",
+          latency_ms: stageLatencyMs(generateStartedAt),
+          detail: failure,
+          job_id: generateJob.job_id,
+          request_id: null,
+          model: null,
+        })
+        return {
+          mode,
+          sessionId: null,
+          candidateUrl: null,
+          taskFamilyId: null,
+          generatedVariantCount: null,
+          diagnostics,
+          error: failure,
+        }
       }
+
+      const resultRecord = asRecord(generated.result)
+      const taskFamily = asRecord(resultRecord?.task_family)
+      const trace = asRecord(resultRecord?.model_trace)
+      const resolvedTaskFamilyId = typeof taskFamily?.id === "string" ? taskFamily.id : null
+      if (!resolvedTaskFamilyId) {
+        const failure = "Generate result missing task_family.id"
+        diagnostics.push({
+          stage: "generate",
+          status: "error",
+          latency_ms: stageLatencyMs(generateStartedAt),
+          detail: failure,
+          job_id: generateJob.job_id,
+          request_id: null,
+          model: null,
+        })
+        return {
+          mode,
+          sessionId: null,
+          candidateUrl: null,
+          taskFamilyId: null,
+          generatedVariantCount: null,
+          diagnostics,
+          error: failure,
+        }
+      }
+
+      taskFamilyId = resolvedTaskFamilyId
+      const variants = Array.isArray(taskFamily?.variants) ? taskFamily.variants : []
+      generatedVariantCount = variants.length
+      const model =
+        typeof trace?.provider === "string" && typeof trace?.model === "string"
+          ? `${trace.provider}/${trace.model}`
+          : null
+      diagnostics.push({
+        stage: "generate",
+        status: "ok",
+        latency_ms: stageLatencyMs(generateStartedAt),
+        detail: `Generated ${generatedVariantCount} variants`,
+        job_id: generateJob.job_id,
+        request_id: null,
+        model,
+      })
+    } else {
+      diagnostics.push({
+        stage: "generate",
+        status: "ok",
+        latency_ms: 1,
+        detail: `Reusing prepared preview task family (${taskFamilyId})`,
+        job_id: null,
+        request_id: null,
+        model: null,
+      })
     }
 
-    const taskFamily = generated.result["task_family"] as Record<string, unknown> | undefined
-    const taskFamilyId = String(taskFamily?.["id"] ?? "")
-    const variants = Array.isArray(taskFamily?.["variants"]) ? taskFamily["variants"] : []
-    if (!taskFamilyId) {
-      return {
-        sessionId: null,
-        candidateUrl: null,
-        taskFamilyId: null,
-        generatedVariantCount: null,
-        error: "Generate result missing task_family.id",
-      }
-    }
-
+    const publishStartedAt = stageStartedAt()
     await client.reviewTaskFamily(reviewerToken.access_token, taskFamilyId)
     await client.publishTaskFamily(reviewerToken.access_token, taskFamilyId)
-
-    const session = await client.createSession(reviewerToken.access_token, taskFamilyId, client.config.candidateUserId, {
-      demo_template_id: templateId,
-      sample_script_version: "fixture-v2",
+    diagnostics.push({
+      stage: "publish",
+      status: "ok",
+      latency_ms: stageLatencyMs(publishStartedAt),
+      detail: `Task family published (${taskFamilyId})`,
+      job_id: null,
+      request_id: null,
+      model: null,
     })
+
+    const sessionStartedAt = stageStartedAt()
+    const session = await client.createSession(
+      reviewerToken.access_token,
+      taskFamilyId,
+      client.config.candidateUserId,
+      {
+        demo_template_id: templateId,
+        demo_mode: mode,
+        sample_script_version: mode === "live" ? "live-v1" : "fixture-v2",
+      },
+    )
     await client.setSessionMode(reviewerToken.access_token, session.id, "assessment")
+    diagnostics.push({
+      stage: "create_session",
+      status: "ok",
+      latency_ms: stageLatencyMs(sessionStartedAt),
+      detail: `Session created (${session.id})`,
+      job_id: null,
+      request_id: null,
+      model: null,
+    })
 
     return {
+      mode,
       sessionId: session.id,
       candidateUrl: `/session/${session.id}/start`,
       taskFamilyId,
-      generatedVariantCount: variants.length,
+      generatedVariantCount,
+      diagnostics,
       error: null,
     }
   } catch (error) {
+    const failureDetail = toErrorMessage(error)
     return {
+      mode,
       sessionId: null,
       candidateUrl: null,
       taskFamilyId: null,
       generatedVariantCount: null,
-      error: toErrorMessage(error),
+      diagnostics: appendFailureDiagnostic(diagnostics, failureDetail),
+      error: failureDetail,
     }
   }
 }
 
 export interface AutoCompleteResult {
+  mode: DemoExecutionMode
   sessionId: string
   reportReady: boolean
+  diagnostics: DemoStageDiagnostic[]
   error: string | null
 }
 
 export async function runDemoAutoComplete(
   sessionId: string,
   templateId: string,
+  modeInput: DemoExecutionMode = "fixture",
+  liveModelOverride?: string | null,
+  liveReasoningEffort?: string | null,
 ): Promise<AutoCompleteResult> {
+  // fixture contract marker: { mode: "fixture", template_id: templateId }
+  const mode = modeFromInput(modeInput)
+  const selectedLiveModel = normalizeLiveModelOverride(liveModelOverride)
+  const selectedReasoningEffort = normalizeLiveReasoningEffort(liveReasoningEffort)
+  const diagnostics: DemoStageDiagnostic[] = []
   try {
     const client = createMoonshotClientFromEnv()
+    const adminToken = await client.issueToken("org_admin", client.config.adminUserId)
     const reviewerToken = await client.issueToken("reviewer", client.config.reviewerUserId)
     const candidateToken = await client.issueToken("candidate", client.config.candidateUserId)
 
+    const workerStartedAt = stageStartedAt()
+    const workerReadinessError = await getWorkerReadinessError(client, adminToken.access_token)
+    if (workerReadinessError) {
+      diagnostics.push({
+        stage: "worker_health",
+        status: "error",
+        latency_ms: stageLatencyMs(workerStartedAt),
+        detail: workerReadinessError,
+        job_id: null,
+        request_id: null,
+        model: null,
+      })
+      return { mode, sessionId, reportReady: false, diagnostics, error: workerReadinessError }
+    }
+    diagnostics.push({
+      stage: "worker_health",
+      status: "ok",
+      latency_ms: stageLatencyMs(workerStartedAt),
+      detail: "Worker pool healthy",
+      job_id: null,
+      request_id: null,
+      model: null,
+    })
+
     const fixture = DEMO_FIXTURES[templateId]
     if (!fixture) {
-      return { sessionId, reportReady: false, error: `No fixture data for template: ${templateId}` }
+      return { mode, sessionId, reportReady: false, diagnostics, error: `No fixture data for template: ${templateId}` }
     }
 
     await client.ingestEvents(candidateToken.access_token, sessionId, fixture.sampleEvents)
 
     await client.submitSession(candidateToken.access_token, sessionId, fixture.finalResponse)
 
+    const scoreStartedAt = stageStartedAt()
     const scoreJob = await client.scoreSession(
       reviewerToken.access_token,
       sessionId,
       `demo-score-${randomUUID()}`,
-      { mode: "fixture", template_id: templateId },
+      {
+        mode,
+        template_id: mode === "fixture" ? templateId : undefined,
+        model_override: mode === "live" ? selectedLiveModel : undefined,
+        reasoning_effort: mode === "live" ? selectedReasoningEffort : undefined,
+        thinking_budget_tokens: mode === "live" ? DEMO_LIVE_DEFAULT_THINKING_BUDGET_TOKENS : undefined,
+      },
     )
-    const scored = await client.waitForJobTerminalResult(reviewerToken.access_token, scoreJob.job_id)
+    const scored = await client.waitForJobTerminalResult(
+      reviewerToken.access_token,
+      scoreJob.job_id,
+      jobWaitForMode(mode),
+    )
     if (scored.status !== "completed") {
-      return { sessionId, reportReady: false, error: `Score job failed: ${scored.status}` }
+      const failure = `Score job failed: ${scored.status}`
+      diagnostics.push({
+        stage: "score",
+        status: "error",
+        latency_ms: stageLatencyMs(scoreStartedAt),
+        detail: failure,
+        job_id: scoreJob.job_id,
+        request_id: null,
+        model: null,
+      })
+      return { mode, sessionId, reportReady: false, diagnostics, error: failure }
     }
+    diagnostics.push({
+      stage: "score",
+      status: "ok",
+      latency_ms: stageLatencyMs(scoreStartedAt),
+      detail: "Scoring completed",
+      job_id: scoreJob.job_id,
+      request_id: null,
+      model: mode === "live" ? selectedLiveModel : null,
+    })
 
+    const exportStartedAt = stageStartedAt()
     const exportJob = await client.exportSession(
       reviewerToken.access_token,
       sessionId,
       `demo-export-${randomUUID()}`,
     )
-    const exported = await client.waitForJobTerminalResult(reviewerToken.access_token, exportJob.job_id)
+    const exported = await client.waitForJobTerminalResult(
+      reviewerToken.access_token,
+      exportJob.job_id,
+      jobWaitForMode(mode),
+    )
     if (exported.status !== "completed") {
-      return { sessionId, reportReady: false, error: `Export job failed: ${exported.status}` }
+      const failure = `Export job failed: ${exported.status}`
+      diagnostics.push({
+        stage: "export",
+        status: "error",
+        latency_ms: stageLatencyMs(exportStartedAt),
+        detail: failure,
+        job_id: exportJob.job_id,
+        request_id: null,
+        model: null,
+      })
+      return { mode, sessionId, reportReady: false, diagnostics, error: failure }
     }
+    diagnostics.push({
+      stage: "export",
+      status: "ok",
+      latency_ms: stageLatencyMs(exportStartedAt),
+      detail: "Report export completed",
+      job_id: exportJob.job_id,
+      request_id: null,
+      model: null,
+    })
 
-    return { sessionId, reportReady: true, error: null }
+    return { mode, sessionId, reportReady: true, diagnostics, error: null }
   } catch (error) {
-    return { sessionId, reportReady: false, error: toErrorMessage(error) }
+    const failureDetail = toErrorMessage(error)
+    return {
+      mode,
+      sessionId,
+      reportReady: false,
+      diagnostics: appendFailureDiagnostic(diagnostics, failureDetail),
+      error: failureDetail,
+    }
   }
 }

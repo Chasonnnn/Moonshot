@@ -44,6 +44,7 @@ function runRMock(code: string): RRunResponse {
       stdout: "Generated mock visualization for the selected KPI trend.",
       stderr: null,
       plot_url: "/mock/r-trend-plot.png",
+      artifacts: [],
       runtime_ms: runtimeMs,
       mock: true,
     }
@@ -54,6 +55,7 @@ function runRMock(code: string): RRunResponse {
       stdout: "Residuals:\n Min -0.42  1Q -0.11  Median 0.02  3Q 0.14  Max 0.57",
       stderr: null,
       plot_url: null,
+      artifacts: [],
       runtime_ms: runtimeMs,
       mock: true,
     }
@@ -63,13 +65,14 @@ function runRMock(code: string): RRunResponse {
     stdout: "R mock execution complete.",
     stderr: null,
     plot_url: null,
+    artifacts: [],
     runtime_ms: runtimeMs,
     mock: true,
   }
 }
 
 export function AnalysisWorkspace() {
-  const { api, isSubmitted, isExpired, track, fixtureData, currentRoundIndex } = useSession()
+  const { api, isSubmitted, isExpired, track, fixtureData, currentRoundIndex, session } = useSession()
   const [language, setLanguage] = useState<AnalysisLanguage>("python")
   const [code, setCode] = useState("")
   const [isRunning, setIsRunning] = useState(false)
@@ -86,12 +89,27 @@ export function AnalysisWorkspace() {
 
     try {
       if (language === "python") {
-        const res = await api.runPython(code)
+        const templateId =
+          typeof session?.policy?.demo_template_id === "string"
+            ? session.policy.demo_template_id
+            : undefined
+        const currentRound = fixtureData?.rounds[currentRoundIndex]
+        const datasetId = currentRound?.pythonScripts.find((item) => item.datasetId)?.datasetId
+        const runtimeContext =
+          templateId && currentRound?.id && datasetId
+            ? {
+                template_id: templateId,
+                round_id: currentRound.id,
+                dataset_id: datasetId,
+              }
+            : undefined
+        const res = await api.runPython(code, runtimeContext)
         setResult({ ...res, source: "python_api" })
         track("python_code_run", {
           code_length: code.length,
           runtime_ms: res.runtime_ms,
           has_plot: !!res.plot_url,
+          artifact_count: res.artifacts.length,
         })
       } else {
         const res = runRMock(code)
@@ -154,7 +172,18 @@ export function AnalysisWorkspace() {
     } finally {
       setIsRunning(false)
     }
-  }, [api, code, isExpired, isRunning, isSubmitted, language, track])
+  }, [
+    api,
+    code,
+    currentRoundIndex,
+    fixtureData,
+    isExpired,
+    isRunning,
+    isSubmitted,
+    language,
+    session?.policy?.demo_template_id,
+    track,
+  ])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -331,10 +360,36 @@ export function AnalysisWorkspace() {
                     Plot
                   </p>
                   <div className="flex items-center justify-center rounded-lg bg-[#F5F5F7] p-4">
-                    <div className="flex h-32 w-48 items-center justify-center rounded-md border border-dashed border-[#D2D2D7] text-[12px] text-[#86868B]">
-                      Plot: {result.plot_url}
-                    </div>
+                    {result.plot_url.startsWith("data:image/") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={result.plot_url}
+                        alt="Python runtime plot artifact"
+                        className="max-h-64 w-auto rounded-md border border-[#D2D2D7] bg-white"
+                      />
+                    ) : (
+                      <div className="flex h-32 w-48 items-center justify-center rounded-md border border-dashed border-[#D2D2D7] text-[12px] text-[#86868B]">
+                        Plot: {result.plot_url}
+                      </div>
+                    )}
                   </div>
+                </div>
+              )}
+              {result.artifacts.length > 0 && (
+                <div>
+                  <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">
+                    Artifact List
+                  </p>
+                  <ul className="space-y-1 rounded-lg bg-[#F5F5F7] p-3 text-[12px] text-[#1D1D1F]">
+                    {result.artifacts.map((artifact) => (
+                      <li key={artifact.uri} className="flex items-center justify-between gap-3">
+                        <span className="font-medium">{artifact.name}</span>
+                        <span className="text-[#6E6E73]">
+                          {artifact.kind} · {artifact.bytes} bytes
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               <div className="border-t border-[#D2D2D7] pt-1.5 text-[11px] text-[#86868B]">

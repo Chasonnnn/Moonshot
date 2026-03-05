@@ -6,11 +6,14 @@ import {
   type AuthTokenResponse,
   type CaseSpec,
   type FairnessSmokeRun,
+  type HumanReviewRecord,
+  type HumanReviewUpdateRequest,
   type InterpretationView,
   type JobStatus,
   type JobAccepted,
   type JobResultResponse,
   type MetaVersion,
+  type ModelOptionsResponse,
   MoonshotApiError,
   type MoonshotRole,
   type RedTeamRun,
@@ -21,6 +24,7 @@ import {
   type AuditLogItem,
   type SessionMode,
   type SessionEventsListResponse,
+  type WorkerHealthResponse,
 } from "@/lib/moonshot/types"
 
 function requiredEnv(name: string): string {
@@ -64,7 +68,7 @@ export class MoonshotApiClient {
   private async request<T>(
     path: string,
     options: {
-      method?: "GET" | "POST" | "PATCH"
+      method?: "GET" | "POST" | "PATCH" | "PUT"
       token?: string
       body?: Record<string, unknown>
       idempotencyKey?: string
@@ -128,6 +132,10 @@ export class MoonshotApiClient {
     return this.request<MetaVersion>("/v1/meta/version")
   }
 
+  async getModelOptions(): Promise<ModelOptionsResponse> {
+    return this.request<ModelOptionsResponse>("/v1/meta/model-options")
+  }
+
   async listCases(token: string): Promise<{ items: CaseSpec[] }> {
     return this.request<{ items: CaseSpec[] }>("/v1/cases", { token })
   }
@@ -171,7 +179,14 @@ export class MoonshotApiClient {
     token: string,
     caseId: string,
     idempotencyKey: string,
-    payload?: { mode?: "live" | "fixture"; template_id?: string; variant_count?: number },
+    payload?: {
+      mode?: "live" | "fixture"
+      template_id?: string
+      variant_count?: number
+      model_override?: string
+      reasoning_effort?: string
+      thinking_budget_tokens?: number
+    },
   ): Promise<JobAccepted> {
     return this.request<JobAccepted>(`/v1/cases/${caseId}/generate`, {
       method: "POST",
@@ -310,7 +325,13 @@ export class MoonshotApiClient {
     token: string,
     sessionId: string,
     idempotencyKey: string,
-    payload?: { mode?: "live" | "fixture"; template_id?: string },
+    payload?: {
+      mode?: "live" | "fixture"
+      template_id?: string
+      model_override?: string
+      reasoning_effort?: string
+      thinking_budget_tokens?: number
+    },
   ): Promise<JobAccepted> {
     return this.request<JobAccepted>(`/v1/sessions/${sessionId}/score`, {
       method: "POST",
@@ -337,6 +358,10 @@ export class MoonshotApiClient {
     return this.request<JobStatus>(`/v1/jobs/${jobId}`, { token })
   }
 
+  async getWorkersHealth(token: string): Promise<WorkerHealthResponse> {
+    return this.request<WorkerHealthResponse>("/v1/workers/health", { token })
+  }
+
   async waitForJobTerminalResult(token: string, jobId: string, options: WaitForJobOptions = {}): Promise<JobResultResponse> {
     const timeoutMs = options.timeoutMs ?? 90_000
     let intervalMs = options.initialIntervalMs ?? 750
@@ -361,6 +386,22 @@ export class MoonshotApiClient {
 
   async getReport(token: string, sessionId: string): Promise<Record<string, unknown>> {
     return this.request<Record<string, unknown>>(`/v1/reports/${sessionId}`, { token })
+  }
+
+  async getHumanReview(token: string, sessionId: string): Promise<HumanReviewRecord> {
+    return this.request<HumanReviewRecord>(`/v1/reports/${sessionId}/human-review`, { token })
+  }
+
+  async updateHumanReview(
+    token: string,
+    sessionId: string,
+    payload: HumanReviewUpdateRequest,
+  ): Promise<HumanReviewRecord> {
+    return this.request<HumanReviewRecord>(`/v1/reports/${sessionId}/human-review`, {
+      method: "PUT",
+      token,
+      body: payload as Record<string, unknown>,
+    })
   }
 
   async createInterpretation(

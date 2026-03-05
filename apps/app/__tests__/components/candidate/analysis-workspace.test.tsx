@@ -42,6 +42,7 @@ describe("AnalysisWorkspace", () => {
       stdout: "hello",
       stderr: null,
       plot_url: null,
+      artifacts: [],
       runtime_ms: 12,
     })
   })

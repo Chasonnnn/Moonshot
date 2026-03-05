@@ -132,10 +132,16 @@ export class CandidateApiClient {
     })
   }
 
-  async runPython(code: string): Promise<PythonRunResponse> {
+  async runPython(
+    code: string,
+    runtimeContext?: { template_id?: string; round_id?: string; dataset_id?: string },
+  ): Promise<PythonRunResponse> {
     return this.request<PythonRunResponse>("python/run", {
       method: "POST",
-      body: { code },
+      body: {
+        code,
+        ...(runtimeContext ?? {}),
+      },
     })
   }
 

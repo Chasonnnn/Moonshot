@@ -22,6 +22,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const initialReviewQueueActionState: ReviewQueueActionState = {
   ok: false,
@@ -94,26 +97,32 @@ function ResolveForm({
   return (
     <form ref={formRef} action={formAction} className="mt-3 flex flex-wrap items-center gap-2">
       <input type="hidden" name="session_id" value={sessionId} />
-      <select
-        name="decision"
+      <input type="hidden" name="decision" value={decision} />
+      <Select
         value={decision}
-        onChange={(e) => setDecision(e.target.value)}
-        className="rounded-lg border border-[#D2D2D7] px-2 py-1.5 text-[12px]"
+        onValueChange={(value) => {
+          if (value) setDecision(value)
+        }}
       >
-        <option value="approved">Approved</option>
-        <option value="rejected">Rejected</option>
-      </select>
-      <input
+        <SelectTrigger aria-label="Decision" className="h-8 min-w-[130px] rounded-lg px-2 text-[12px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="approved">Approved</SelectItem>
+          <SelectItem value="rejected">Rejected</SelectItem>
+        </SelectContent>
+      </Select>
+      <Input
         name="reviewer_note"
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="Reviewer note"
-        className="rounded-lg border border-[#D2D2D7] px-2 py-1.5 text-[12px]"
+        className="h-8 max-w-[220px] rounded-lg text-[12px]"
       />
       <AlertDialog>
         <AlertDialogTrigger
           disabled={isPending}
-          className="rounded-full bg-[#1D1D1F] px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-60"
+          render={<Button size="sm" className="text-[12px]" />}
         >
           {isPending ? "Resolving..." : "Resolve"}
         </AlertDialogTrigger>

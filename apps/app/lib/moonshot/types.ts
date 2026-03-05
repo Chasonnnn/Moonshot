@@ -45,6 +45,21 @@ export interface JobResultResponse {
   }
 }
 
+export interface WorkerStatus {
+  worker_id: string
+  last_seen_at: string
+  seconds_since_last_seen: number
+  status: string
+  last_job_id?: string | null
+}
+
+export interface WorkerHealthResponse {
+  overall_status: string
+  workers: WorkerStatus[]
+  stale_leases: number
+  checked_at: string
+}
+
 export interface CaseSpec {
   id: string
   tenant_id: string
@@ -104,6 +119,9 @@ export interface ReportSummary {
   trigger_codes: string[]
   trigger_count: number
   last_scored_at: string | null
+  has_human_review: boolean
+  final_score_source: "model" | "human_override" | null
+  final_confidence: number | null
   scoring_version_lock: {
     scorer_version: string
     rubric_version: string
@@ -112,9 +130,42 @@ export interface ReportSummary {
   } | null
 }
 
+export interface HumanReviewRecord {
+  session_id: string
+  tenant_id: string
+  notes_markdown: string | null
+  tags: string[]
+  override_overall_score: number | null
+  override_confidence: number | null
+  dimension_overrides: Record<string, number>
+  reviewer_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface HumanReviewUpdateRequest {
+  notes_markdown?: string | null
+  tags?: string[] | null
+  override_overall_score?: number | null
+  override_confidence?: number | null
+  dimension_overrides?: Record<string, number> | null
+}
+
 export interface MetaVersion {
   api_version: string
   schema_version: string
+}
+
+export interface ModelOptionStatus {
+  model: string
+  available: boolean
+  resolved_model: string | null
+}
+
+export interface ModelOptionsResponse {
+  required_models: string[]
+  defaults_by_agent: Record<string, string>
+  options: ModelOptionStatus[]
 }
 
 export interface RedTeamRun {
@@ -298,7 +349,16 @@ export interface PythonRunResponse {
   stdout: string | null
   stderr: string | null
   plot_url: string | null
+  artifacts: RuntimeArtifact[]
   runtime_ms: number
+}
+
+export interface RuntimeArtifact {
+  name: string
+  mime_type: string
+  uri: string
+  bytes: number
+  kind: string
 }
 
 export interface PythonHistoryItem {
@@ -307,6 +367,7 @@ export interface PythonHistoryItem {
   stdout: string | null
   stderr: string | null
   plot_url: string | null
+  artifacts: RuntimeArtifact[]
   error: string | null
   runtime_ms: number
   executed_at: string
@@ -317,6 +378,7 @@ export interface RRunResponse {
   stdout: string | null
   stderr: string | null
   plot_url: string | null
+  artifacts: RuntimeArtifact[]
   runtime_ms: number
   mock: true
 }
