@@ -27,6 +27,7 @@ DEFAULT_MODEL_BY_AGENT: dict[str, str] = {
 
 XHIGH_ALLOWED_MODELS: frozenset[str] = frozenset(
     {
+        "gpt-5.3-codex",
         "gpt-5.2",
         "chatgpt/gpt-5.2",
         "gpt-5.2-pro",

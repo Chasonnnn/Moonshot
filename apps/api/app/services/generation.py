@@ -147,61 +147,52 @@ def generate_from_case(
         "Deliver a final decision memo with limitations and next actions.",
     ]
 
-    variant_outputs = []
+    seed_prompt = (
+        f"Case title: {case.title}\n"
+        f"Scenario: {case.scenario}\n"
+        f"Artifacts: {artifact_summary}\n"
+        f"Allowed tools: {case.allowed_tools}\n"
+        "Return one concise (2-3 sentence) simulation prompt template with no answer leakage."
+    )
+    seed_output = provider.generate_variant(seed_prompt)
+    seed_text = " ".join(seed_output.content.split()).strip()
+    if not seed_text:
+        raise RuntimeError("provider_seed_prompt_empty")
+    seed_theme = " ".join(seed_text.split()[:10]).strip()
+    if not seed_theme:
+        seed_theme = "Investigate discrepancy with traceable evidence."
+
+    variants: list[TaskVariant] = []
     for idx in range(resolved_variant_count):
-        seed = objective_plan[idx % len(objective_plan)]
+        objective = objective_plan[idx % len(objective_plan)]
         skill = skill_plan[idx % len(skill_plan)]
         difficulty_level = difficulty_plan[idx % len(difficulty_plan)]
         round_hint = f"round_{(idx % 3) + 1}"
         prompt = (
-            f"Case title: {case.title}\n"
-            f"Scenario: {case.scenario}\n"
-            f"Artifacts: {artifact_summary}\n"
-            f"Allowed tools: {case.allowed_tools}\n"
-            f"Constraints: {case.constraints if hasattr(case, 'constraints') else {}}\n"
-            f"Skill target: {skill}\n"
-            f"Difficulty level: {difficulty_level}\n"
-            f"Round hint: {round_hint}\n"
-            f"Variant objective: {seed}\n"
-            f"Return one safe simulation task prompt."
+            f"Variant {idx + 1}: Theme: {seed_theme}. "
+            f"Focus on {skill} ({difficulty_level}, {round_hint}). "
+            f"Objective: {objective} "
+            f"Use reproducible evidence and avoid answer leakage."
         )
-        output = provider.generate_variant(prompt)
-        variant_outputs.append(
-            (
-                output,
-                skill,
-                difficulty_level,
-                round_hint,
+        variants.append(
+            TaskVariant(
+                prompt=prompt,
+                skill=skill,
+                difficulty_level=difficulty_level,
+                round_hint=round_hint,
+                estimated_minutes=12 + (idx % 4) * 4,
+                deliverables=[
+                    "analysis_summary",
+                    "evidence_table",
+                    "stakeholder_recommendation",
+                ],
+                artifact_refs=[
+                    "orders.csv",
+                    "dashboard_snapshot.png",
+                    "pipeline_log.txt",
+                ],
             )
         )
-
-    variants = [
-        TaskVariant(
-            prompt=f"Variant {index + 1}: {out.content}",
-            skill=skill,
-            difficulty_level=difficulty_level,
-            round_hint=round_hint,
-            estimated_minutes=12 + (index % 4) * 4,
-            deliverables=[
-                "analysis_summary",
-                "evidence_table",
-                "stakeholder_recommendation",
-            ],
-            artifact_refs=[
-                "orders.csv",
-                "dashboard_snapshot.png",
-                "pipeline_log.txt",
-            ],
-        )
-        for index, (out, skill, difficulty_level, round_hint) in enumerate(variant_outputs)
-    ]
-
-    rubric_prompt = (
-        f"Scenario: {case.scenario}\n"
-        f"Required dimensions: problem_framing, sql_quality, evidence_reasoning, communication\n"
-        "Provide anchor descriptions and failure modes without revealing answer keys."
-    )
-    rubric_output = provider.generate_rubric(rubric_prompt)
 
     rubric = Rubric(
         dimensions=[
@@ -237,10 +228,10 @@ def generate_from_case(
     )
 
     trace = ModelInvocationTrace(
-        provider=rubric_output.provider,
-        model=rubric_output.model,
-        prompt_hash=rubric_output.prompt_hash,
-        latency_ms=rubric_output.latency_ms,
+        provider=seed_output.provider,
+        model=seed_output.model,
+        prompt_hash=seed_output.prompt_hash,
+        latency_ms=seed_output.latency_ms,
     )
 
     return GenerationResult(task_family=task_family, rubric=rubric, model_trace=trace)

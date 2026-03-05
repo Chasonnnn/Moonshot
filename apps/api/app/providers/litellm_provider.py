@@ -84,6 +84,7 @@ class LiteLLMProvider(CoDesignProvider, CoachProvider, EvaluatorProvider):
         settings = get_settings()
         self._base_url = (settings.litellm_base_url or "").strip()
         self._api_key = (settings.litellm_api_key or "").strip()
+        self._request_timeout_seconds = max(5.0, float(settings.provider_request_timeout_seconds))
         if not self._base_url:
             raise RuntimeError("provider_litellm_base_url_missing")
         if not self._api_key:
@@ -136,6 +137,7 @@ class LiteLLMProvider(CoDesignProvider, CoachProvider, EvaluatorProvider):
             "messages": [{"role": "user", "content": prompt}],
             "base_url": self._base_url,
             "api_key": self._api_key,
+            "timeout": self._request_timeout_seconds,
             # LiteLLM proxy is OpenAI-compatible; force OpenAI transport for proxy aliases.
             "custom_llm_provider": "openai",
         }

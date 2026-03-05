@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     worker_stale_after_seconds: float = 30.0
 
     model_provider: str = "litellm"
+    provider_request_timeout_seconds: float = 45.0
     litellm_base_url: str | None = None
     litellm_api_key: str | None = None
     gemini_api_key: str | None = None

@@ -9,6 +9,7 @@ def _base_settings(monkeypatch):
     settings = get_settings()
     monkeypatch.setattr(settings, "litellm_base_url", "https://litellm.local/v1")
     monkeypatch.setattr(settings, "litellm_api_key", "sk-test")
+    monkeypatch.setattr(settings, "provider_request_timeout_seconds", 45.0)
     return settings
 
 
@@ -35,6 +36,7 @@ def test_codesign_provider_uses_default_model_and_reasoning_effort(monkeypatch):
     assert captured["reasoning_effort"] == "high"
     assert captured["base_url"] == "https://litellm.local/v1"
     assert captured["api_key"] == "sk-test"
+    assert captured["timeout"] == 45.0
     assert captured["messages"][0]["content"] == "Create a task variant for KPI investigation."
 
 
@@ -66,6 +68,7 @@ def test_xhigh_is_rejected_for_models_not_allowlisted(monkeypatch):
     with pytest.raises(RuntimeError, match="provider_reasoning_effort_not_supported"):
         LiteLLMProvider(
             agent_type="codesign",
+            model_override="gemini/gemini-3.1-pro-preview",
             reasoning_effort="xhigh",
             completion_fn=lambda **kwargs: kwargs,
             available_models=set(REQUIRED_MODEL_IDS),
@@ -160,5 +163,28 @@ def test_chatgpt_52_xhigh_uses_extra_body_pass_through(monkeypatch):
     provider.contextual_hint("Hint")
 
     assert captured["model"] == "openai.gpt-5.2"
+    assert captured["extra_body"] == {"reasoning_effort": "xhigh"}
+    assert "reasoning_effort" not in captured
+
+
+def test_codex_53_xhigh_uses_extra_body_pass_through(monkeypatch):
+    _base_settings(monkeypatch)
+    captured: dict = {}
+
+    def _completion(**kwargs):
+        captured.update(kwargs)
+        return {"choices": [{"message": {"content": "ok"}}]}
+
+    provider = LiteLLMProvider(
+        agent_type="codesign",
+        reasoning_effort="xhigh",
+        completion_fn=_completion,
+        available_models={"openai.gpt-5.3-codex"},
+        resolved_models_by_required={"gpt-5.3-codex": "openai.gpt-5.3-codex"},
+    )
+
+    provider.generate_variant("Generate")
+
+    assert captured["model"] == "openai.gpt-5.3-codex"
     assert captured["extra_body"] == {"reasoning_effort": "xhigh"}
     assert "reasoning_effort" not in captured
