@@ -7,6 +7,27 @@ vi.mock("react", async () => {
   return { ...actual, useActionState: (_action: unknown, initialState: unknown) => [initialState, vi.fn(), false] }
 })
 
+vi.mock("recharts", () => ({
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  RadialBarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  RadialBar: () => null,
+  RadarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Radar: () => null,
+  PolarGrid: () => null,
+  PolarAngleAxis: () => null,
+  PolarRadiusAxis: () => null,
+  AreaChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Area: () => null,
+  BarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Bar: () => null,
+  XAxis: () => null,
+  YAxis: () => null,
+  CartesianGrid: () => null,
+  Tooltip: () => null,
+  Legend: () => null,
+  Cell: () => null,
+}))
+
 import { ReportReviewConsole } from "@/components/employer/report-review-console"
 import type { ReportDetailSnapshot } from "@/actions/reports"
 import type { SessionEvent } from "@/lib/moonshot/types"
@@ -53,6 +74,36 @@ const BASE_SNAPSHOT: ReportDetailSnapshot = {
   fairnessRuns: [],
   interpretation: null,
   human_review: null,
+  demo_template_id: null,
+  co_design_bundle: null,
+  round_blueprint: [],
+  evaluation_bundle: {
+    coDesignAlignment: [
+      { dimension: "Problem Solving", score: 90, note: "Excellent" },
+      { dimension: "Communication", score: 75, note: "Good" },
+      { dimension: "Technical Skill", score: 60, note: "Adequate" },
+    ],
+    roundPerformance: [
+      { round: "Round 1", score: 60, note: "Warming up" },
+      { round: "Round 2", score: 85, note: "Strong finish" },
+    ],
+    toolProficiency: [{ tool: "sql", score: 80 }],
+    triggerRationale: [{ code: "TC-01", rationale: "Pattern detected", impact: "medium" }],
+    agentNarrative: ["Candidate performed well overall."],
+  },
+  computed_analysis: {
+    strengths: [
+      { dimension: "Problem Solving", score: 90, note: "Excellent" },
+      { dimension: "Communication", score: 75, note: "Good" },
+      { dimension: "Technical Skill", score: 60, note: "Adequate" },
+    ],
+    weaknesses: [],
+    trend: "improving",
+    confidenceLevel: "high",
+    hiringSuggestion: "lean-hire",
+    triggerSummary: { count: 1, codes: ["TC-01"] },
+    overallScore: 75,
+  },
   error: null,
   events: MOCK_EVENTS,
   timeline_source: "real",
@@ -77,7 +128,7 @@ describe("ReportReviewConsole tabs", () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
     expect(screen.getByText("Report Summary")).toBeInTheDocument()
-    expect(screen.getByText("Interpretation")).toBeInTheDocument()
+    expect(screen.getByText("AI Analysis")).toBeInTheDocument()
     // Scoring label for assessment_ai_assisted
     expect(screen.getByText("AI-Assisted")).toBeInTheDocument()
   })
@@ -150,5 +201,107 @@ describe("ReportReviewConsole tabs", () => {
 
     expect(screen.getByText(/1\.2\.0/)).toBeInTheDocument()
     expect(screen.getByText(/abc123/)).toBeInTheDocument()
+  })
+
+  it("renders Overall Score section on Overview tab", () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    expect(screen.getByText("Overall Score")).toBeInTheDocument()
+  })
+
+  it("uses human override score in gauge when final score source is human_override", () => {
+    const snapshot = {
+      ...BASE_SNAPSHOT,
+      summary: {
+        ...BASE_SNAPSHOT.summary!,
+        final_score_source: "human_override" as const,
+      },
+      human_review: {
+        session_id: "sess-1",
+        tenant_id: "t-1",
+        notes_markdown: null,
+        tags: [],
+        override_overall_score: 0.62,
+        override_confidence: null,
+        dimension_overrides: {},
+        reviewer_id: "reviewer-1",
+        created_at: "2026-03-01T10:16:00Z",
+        updated_at: "2026-03-01T10:16:00Z",
+      },
+    }
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={snapshot} />)
+
+    expect(screen.getByText("62")).toBeInTheDocument()
+  })
+
+  it("renders Smart Summary section on Overview tab", () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    expect(screen.getByText("Smart Summary")).toBeInTheDocument()
+  })
+
+  it("renders Dimension Radar and Dimension Scores charts when evaluation bundle present", () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    expect(screen.getByText("Dimension Radar")).toBeInTheDocument()
+    expect(screen.getByText("Dimension Scores")).toBeInTheDocument()
+  })
+
+  it("renders Round-by-Round Performance chart when rounds present", () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    expect(screen.getByText("Round-by-Round Performance")).toBeInTheDocument()
+  })
+
+  it("shows smart summary strengths and weaknesses", () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    expect(screen.getByText("Strengths")).toBeInTheDocument()
+    // Top strength from coDesignAlignment appears in smart summary and scorecard
+    expect(screen.getAllByText("Problem Solving").length).toBeGreaterThanOrEqual(1)
+  })
+
+  it("hides charts when no evaluation bundle", () => {
+    const snapshot = {
+      ...BASE_SNAPSHOT,
+      evaluation_bundle: null,
+    }
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={snapshot as ReportDetailSnapshot} />)
+
+    expect(screen.queryByText("Dimension Radar")).not.toBeInTheDocument()
+    expect(screen.queryByText("Dimension Scores")).not.toBeInTheDocument()
+    // Smart Summary and Overall Score should still render (with zero state)
+    expect(screen.getByText("Smart Summary")).toBeInTheDocument()
+    expect(screen.getByText("Overall Score")).toBeInTheDocument()
+  })
+
+  it("shows interpretation from snapshot.interpretation when report payload does not include it", () => {
+    const snapshot = {
+      ...BASE_SNAPSHOT,
+      report: null,
+      interpretation: {
+        view_id: "view-1",
+        session_id: "sess-1",
+        created_at: "2026-03-01T10:16:00Z",
+        focus_dimensions: ["sql_proficiency"],
+        include_sensitivity: true,
+        weight_overrides: {},
+        breakdown: {
+          dimension_scores: {
+            sql_proficiency: 0.72,
+          },
+        },
+        caveats: ["Fresh server interpretation."],
+        scoring_version_lock: {
+          scorer_version: "1.2.0",
+          rubric_version: "2.0.0",
+          task_family_version: "1.0.0",
+          model_hash: "abc123",
+        },
+      },
+    }
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={snapshot} />)
+
+    expect(screen.getByText(/Top dimensions from generated interpretation/i)).toBeInTheDocument()
   })
 })

@@ -15,7 +15,7 @@ vi.mock("@/lib/mock-events", () => ({
   getMockSessionEvents: mockGetMockSessionEvents,
 }))
 
-import { loadReportDetailSnapshot } from "@/actions/reports"
+import { INITIAL_REPORT_ACTION_STATE, loadReportDetailSnapshot, updateHumanReviewAction } from "@/actions/reports"
 
 function buildClient(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -149,5 +149,78 @@ describe("loadReportDetailSnapshot timeline source behavior", () => {
     expect(snapshot.timeline_warning).toBeNull()
     expect(snapshot.events).toHaveLength(0)
     expect(mockGetMockSessionEvents).not.toHaveBeenCalled()
+  })
+
+  it("derives evaluation bundle from report dimension evidence when available", async () => {
+    process.env.MOONSHOT_ALLOW_FIXTURE_TIMELINE = "false"
+    mockCreateMoonshotClientFromEnv.mockReturnValue(
+      buildClient({
+        getReportSummary: vi.fn().mockResolvedValue({
+          session_id: "sess-1",
+          session_status: "submitted",
+          report_available: true,
+          confidence: 0.8,
+          needs_human_review: false,
+          trigger_codes: ["SUM-1"],
+          trigger_count: 1,
+          last_scored_at: "2026-03-01T10:20:00Z",
+          scoring_version_lock: null,
+          has_human_review: false,
+          final_score_source: "model",
+          final_confidence: 0.8,
+        }),
+        getReport: vi.fn().mockResolvedValue({
+          score_result: {
+            dimension_evidence: {
+              problem_framing: { score: 0.81, rationale: "Strong framing" },
+              sql_proficiency: { score: 0.64, rationale: "Window function gap" },
+            },
+            trigger_codes: ["RPT-1"],
+            trigger_impacts: [{ code: "RPT-1", delta: -0.22 }],
+          },
+        }),
+      }),
+    )
+
+    const snapshot = await loadReportDetailSnapshot("sess-1")
+
+    expect(snapshot.error).toBeNull()
+    expect(snapshot.evaluation_bundle?.coDesignAlignment).toEqual([
+      { dimension: "Problem Framing", score: 81, note: "Strong framing" },
+      { dimension: "Sql Proficiency", score: 64, note: "Window function gap" },
+    ])
+    expect(snapshot.evaluation_bundle?.triggerRationale).toEqual([
+      { code: "RPT-1", rationale: "Model impact delta -0.220", impact: "negative" },
+    ])
+  })
+})
+
+describe("updateHumanReviewAction validation", () => {
+  beforeEach(() => {
+    mockCreateMoonshotClientFromEnv.mockReset()
+  })
+
+  it("rejects override_overall_score values outside [0,1]", async () => {
+    const formData = new FormData()
+    formData.set("session_id", "sess-1")
+    formData.set("override_overall_score", "1.3")
+
+    const result = await updateHumanReviewAction(INITIAL_REPORT_ACTION_STATE, formData)
+
+    expect(result.ok).toBe(false)
+    expect(result.error).toBe("override_overall_score must be between 0 and 1")
+    expect(mockCreateMoonshotClientFromEnv).not.toHaveBeenCalled()
+  })
+
+  it("rejects override_confidence values outside [0,1]", async () => {
+    const formData = new FormData()
+    formData.set("session_id", "sess-1")
+    formData.set("override_confidence", "-0.1")
+
+    const result = await updateHumanReviewAction(INITIAL_REPORT_ACTION_STATE, formData)
+
+    expect(result.ok).toBe(false)
+    expect(result.error).toBe("override_confidence must be between 0 and 1")
+    expect(mockCreateMoonshotClientFromEnv).not.toHaveBeenCalled()
   })
 })
