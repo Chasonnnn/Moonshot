@@ -1,5 +1,7 @@
 import { getCsrfToken } from "@/lib/moonshot/csrf"
 import type {
+  CaseDataset,
+  DeliverableRecord,
   SqlRunResponse,
   SqlHistoryItem,
   PythonRunResponse,
@@ -37,7 +39,7 @@ export class CandidateApiClient {
   private async request<T>(
     path: string,
     options: {
-      method?: "GET" | "POST"
+      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
       body?: unknown
       idempotencyKey?: boolean
     } = {}
@@ -47,7 +49,7 @@ export class CandidateApiClient {
       "Content-Type": "application/json",
     }
 
-    if (method === "POST") {
+    if (method !== "GET") {
       const csrf = getCsrfToken()
       if (csrf) {
         headers["X-CSRF-Token"] = csrf
@@ -147,6 +149,49 @@ export class CandidateApiClient {
 
   async getPythonHistory(): Promise<{ items: PythonHistoryItem[] }> {
     return this.request<{ items: PythonHistoryItem[] }>("python/history")
+  }
+
+  async getDatasets(): Promise<{ datasets: CaseDataset[] }> {
+    return this.request<{ datasets: CaseDataset[] }>("datasets")
+  }
+
+  async getDatasetPreview(
+    datasetName: string
+  ): Promise<{ columns: string[]; rows: Record<string, unknown>[] }> {
+    return this.request<{ columns: string[]; rows: Record<string, unknown>[] }>(
+      `datasets/${encodeURIComponent(datasetName)}/preview`
+    )
+  }
+
+  async listDeliverables(): Promise<{ items: DeliverableRecord[] }> {
+    return this.request<{ items: DeliverableRecord[] }>("deliverables")
+  }
+
+  async createDeliverable(
+    contentMarkdown: string,
+    embeddedArtifacts: string[] = []
+  ): Promise<DeliverableRecord> {
+    return this.request<DeliverableRecord>("deliverables", {
+      method: "POST",
+      body: { content_markdown: contentMarkdown, embedded_artifacts: embeddedArtifacts },
+    })
+  }
+
+  async updateDeliverable(
+    deliverableId: string,
+    contentMarkdown: string,
+    embeddedArtifacts: string[] = []
+  ): Promise<DeliverableRecord> {
+    return this.request<DeliverableRecord>(`deliverables/${deliverableId}`, {
+      method: "PUT",
+      body: { content_markdown: contentMarkdown, embedded_artifacts: embeddedArtifacts },
+    })
+  }
+
+  async submitDeliverable(deliverableId: string): Promise<DeliverableRecord> {
+    return this.request<DeliverableRecord>(`deliverables/${deliverableId}/submit`, {
+      method: "POST",
+    })
   }
 
   async ingestEvents(
