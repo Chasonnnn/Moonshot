@@ -19,10 +19,12 @@ from app.models.entities import (
     AdminPolicyModel,
     AuditLogModel,
     BusinessContextPackModel,
+    CaseDatasetModel,
     CaseSpecModel,
     CoachFeedbackModel,
     ContextInjectionTraceModel,
     DashboardStateModel,
+    DeliverableModel,
     EventLogModel,
     ExportRunModel,
     FairnessSmokeRunModel,
@@ -753,6 +755,18 @@ class SQLStore:
             model_cls=WorkerHeartbeatModel,
             key_attr="worker_id",
             uuid_keys=False,
+        )
+        self.case_datasets = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=CaseDatasetModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
+        self.session_deliverables = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=DeliverableModel,
+            key_attr="id",
+            uuid_keys=True,
         )
 
     def ensure_schema(self) -> None:

@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     cases,
     coach,
     context_traces,
+    deliverables,
     exports,
     fairness,
     jobs,
@@ -33,6 +34,7 @@ api_router.include_router(cases.router)
 api_router.include_router(task_families.router)
 api_router.include_router(sessions.router)
 api_router.include_router(simulator_runtime.router)
+api_router.include_router(deliverables.router)
 api_router.include_router(coach.router)
 api_router.include_router(scoring.router)
 api_router.include_router(reports.router)

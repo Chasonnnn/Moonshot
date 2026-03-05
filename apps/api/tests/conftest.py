@@ -12,6 +12,7 @@ os.environ.setdefault("MOONSHOT_LITELLM_API_KEY", "sk-test")
 from fastapi.testclient import TestClient
 import pytest
 
+from app.api.v1.endpoints.simulator_runtime import _matcher_cache, _schema_cache
 from app.core.security import issue_access_token
 from app.main import app
 from app.providers.model_catalog import CatalogSnapshot, DEFAULT_MODEL_BY_AGENT, REQUIRED_MODEL_IDS, clear_model_catalog_cache
@@ -47,6 +48,10 @@ def client() -> TestClient:
     store.context_injection_traces.clear()
     store.fairness_smoke_runs.clear()
     store.worker_heartbeats.clear()
+    store.case_datasets.clear()
+    store.session_deliverables.clear()
+    _matcher_cache.clear()
+    _schema_cache.clear()
     return TestClient(app)
 
 

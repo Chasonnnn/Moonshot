@@ -348,6 +348,33 @@ class FairnessSmokeRunModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 
 
+class CaseDatasetModel(Base):
+    __tablename__ = "case_datasets"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    case_id: Mapped[str] = mapped_column(String(36), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(Text)
+    row_count: Mapped[int] = mapped_column(Integer)
+    file_path: Mapped[str] = mapped_column(String(512))
+    schema_json: Mapped[dict] = mapped_column(JSON)
+    precomputed_queries: Mapped[list] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class DeliverableModel(Base):
+    __tablename__ = "deliverables"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(36), index=True)
+    part_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    content_markdown: Mapped[str] = mapped_column(Text)
+    embedded_artifacts: Mapped[list] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(32))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
 class WorkerHeartbeatModel(Base):
     __tablename__ = "worker_heartbeats"
 

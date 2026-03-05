@@ -1,0 +1,251 @@
+{
+  "name": "doordash_restaurant_data",
+  "description": "Restaurant-level performance data for 100 DoorDash restaurants in Atlanta. Includes managed and unmanaged restaurants with operational metrics, customer engagement data, and sales performance.",
+  "row_count": 100,
+  "columns": [
+    {
+      "name": "restaurant_id",
+      "dtype": "string",
+      "description": "Unique restaurant identifier (R001-R100)",
+      "sample_values": [
+        "R001",
+        "R002",
+        "R003"
+      ]
+    },
+    {
+      "name": "restaurant_name",
+      "dtype": "string",
+      "description": "Restaurant business name",
+      "sample_values": [
+        "Crispy Palace",
+        "Silver Fiesta",
+        "Lucky BBQ"
+      ]
+    },
+    {
+      "name": "cuisine_type",
+      "dtype": "string",
+      "description": "Primary cuisine category",
+      "sample_values": [
+        "Chinese",
+        "Mexican",
+        "BBQ"
+      ]
+    },
+    {
+      "name": "city",
+      "dtype": "string",
+      "description": "City where restaurant is located (all Atlanta)",
+      "sample_values": [
+        "Atlanta"
+      ]
+    },
+    {
+      "name": "zip_code",
+      "dtype": "string",
+      "description": "5-digit ZIP code in the Atlanta metro area",
+      "sample_values": [
+        "30327",
+        "30317",
+        "30306"
+      ]
+    },
+    {
+      "name": "is_managed",
+      "dtype": "integer",
+      "description": "Whether the restaurant has a dedicated account manager (1=managed, 0=unmanaged)",
+      "sample_values": [
+        "1",
+        "0"
+      ]
+    },
+    {
+      "name": "account_manager",
+      "dtype": "string",
+      "description": "Name of assigned account manager (empty for unmanaged restaurants)",
+      "sample_values": [
+        "Emily Chen",
+        "",
+        "Jake Thompson"
+      ]
+    },
+    {
+      "name": "monthly_orders",
+      "dtype": "integer",
+      "description": "Total orders fulfilled in the last 30 days",
+      "sample_values": [
+        "923",
+        "221",
+        "178"
+      ]
+    },
+    {
+      "name": "avg_order_value",
+      "dtype": "float",
+      "description": "Average dollar value per order",
+      "sample_values": [
+        "38.48",
+        "12.0",
+        "27.52"
+      ]
+    },
+    {
+      "name": "monthly_revenue",
+      "dtype": "float",
+      "description": "Gross revenue for the last 30 days (monthly_orders * avg_order_value)",
+      "sample_values": [
+        "35517.04",
+        "2652.0",
+        "4898.56"
+      ]
+    },
+    {
+      "name": "conversion_rate",
+      "dtype": "float",
+      "description": "Ratio of orders to page views (NOTE: a few rows use 0-100 scale instead of 0-1 due to data entry inconsistency)",
+      "sample_values": [
+        "0.08",
+        "0.06",
+        "0.04"
+      ]
+    },
+    {
+      "name": "page_views",
+      "dtype": "integer",
+      "description": "Number of restaurant page views in the last 30 days",
+      "sample_values": [
+        "5023",
+        "864",
+        "1489"
+      ]
+    },
+    {
+      "name": "menu_item_count",
+      "dtype": "integer",
+      "description": "Number of active items on the restaurant menu",
+      "sample_values": [
+        "27",
+        "42",
+        "39"
+      ]
+    },
+    {
+      "name": "has_photos",
+      "dtype": "integer",
+      "description": "Whether the restaurant has uploaded menu photos (1=yes, 0=no)",
+      "sample_values": [
+        "1",
+        "0"
+      ]
+    },
+    {
+      "name": "avg_delivery_time_min",
+      "dtype": "float",
+      "description": "Average delivery time in minutes over the last 30 days",
+      "sample_values": [
+        "31.06",
+        "34.52",
+        "24.42"
+      ]
+    },
+    {
+      "name": "customer_rating",
+      "dtype": "float",
+      "description": "Average customer rating on a 1-5 scale",
+      "sample_values": [
+        "3.93",
+        "3.29",
+        "4.51"
+      ]
+    },
+    {
+      "name": "review_count",
+      "dtype": "integer",
+      "description": "Total number of customer reviews",
+      "sample_values": [
+        "196",
+        "46",
+        "16"
+      ]
+    },
+    {
+      "name": "days_on_platform",
+      "dtype": "integer",
+      "description": "Number of days since the restaurant joined the platform",
+      "sample_values": [
+        "550",
+        "494",
+        "660"
+      ]
+    },
+    {
+      "name": "has_pos_integration",
+      "dtype": "integer",
+      "description": "Whether the restaurant has POS system integration (1=yes, 0=no)",
+      "sample_values": [
+        "1",
+        "0"
+      ]
+    },
+    {
+      "name": "uses_ads",
+      "dtype": "integer",
+      "description": "Whether the restaurant is currently running DoorDash ads (1=yes, 0=no)",
+      "sample_values": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "name": "monthly_ad_spend",
+      "dtype": "float",
+      "description": "Monthly advertising spend in USD (0 if uses_ads=0)",
+      "sample_values": [
+        "0.0",
+        "138.05",
+        "159.65"
+      ]
+    },
+    {
+      "name": "order_method_online_pct",
+      "dtype": "float",
+      "description": "Percentage of orders placed online (0-1 scale)",
+      "sample_values": [
+        "0.43",
+        "0.51",
+        "0.48"
+      ]
+    },
+    {
+      "name": "order_method_phone_pct",
+      "dtype": "float",
+      "description": "Percentage of orders placed by phone (complement of online)",
+      "sample_values": [
+        "0.57",
+        "0.49",
+        "0.52"
+      ]
+    },
+    {
+      "name": "last_menu_update_days_ago",
+      "dtype": "integer",
+      "description": "Days since the restaurant last updated its menu",
+      "sample_values": [
+        "1",
+        "250",
+        "268"
+      ]
+    },
+    {
+      "name": "signup_date",
+      "dtype": "string",
+      "description": "Date the restaurant joined the DoorDash platform (YYYY-MM-DD)",
+      "sample_values": [
+        "2022-02-26",
+        "2023-01-10",
+        "2024-06-23"
+      ]
+    }
+  ]
+}

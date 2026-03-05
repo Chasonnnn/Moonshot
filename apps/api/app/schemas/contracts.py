@@ -44,6 +44,67 @@ class BusinessContextPack(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
+class DatasetColumn(BaseModel):
+    name: str
+    dtype: str
+    description: str = ""
+    sample_values: list[str] = Field(default_factory=list)
+
+
+class DatasetSchema(BaseModel):
+    columns: list[DatasetColumn] = Field(default_factory=list)
+
+
+class PrecomputedQuery(BaseModel):
+    pattern: str
+    normalized: str
+    columns: list[str] = Field(default_factory=list)
+    rows: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class CaseDataset(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    case_id: UUID | None = None
+    name: str
+    description: str = ""
+    row_count: int = 0
+    file_path: str = ""
+    dataset_schema: DatasetSchema = Field(default_factory=DatasetSchema)
+    precomputed_queries: list[PrecomputedQuery] = Field(default_factory=list)
+
+
+class CasePart(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    title: str
+    description: str = ""
+    part_type: str = "exploration"
+    time_limit_minutes: int | None = None
+    deliverable_type: str | None = None
+
+
+AssessmentFormat = Literal["analysis_simulation", "case_study", "sql_proficiency"]
+
+
+class Deliverable(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    session_id: UUID
+    part_id: UUID | None = None
+    content_markdown: str = ""
+    embedded_artifacts: list[str] = Field(default_factory=list)
+    status: str = "draft"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class DeliverableSubmitRequest(BaseModel):
+    content_markdown: str
+    embedded_artifacts: list[str] = Field(default_factory=list)
+
+
+class DeliverableListResponse(BaseModel):
+    items: list[Deliverable] = Field(default_factory=list)
+
+
 class CaseCreate(BaseModel):
     context_pack_id: UUID | None = None
     title: str
@@ -85,6 +146,9 @@ class CaseSpec(BaseModel):
     allowed_tools: list[str] = Field(default_factory=list)
     status: str = "draft"
     version: str = "0.1.0"
+    assessment_format: AssessmentFormat = "analysis_simulation"
+    datasets: list[CaseDataset] = Field(default_factory=list)
+    parts: list[CasePart] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

@@ -1,0 +1,2666 @@
+[
+  {
+    "pattern": "SELECT * FROM restaurants LIMIT 10",
+    "normalized": "select * from restaurants limit 10",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "cuisine_type",
+      "city",
+      "zip_code",
+      "is_managed",
+      "account_manager",
+      "monthly_orders",
+      "avg_order_value",
+      "monthly_revenue",
+      "conversion_rate",
+      "page_views",
+      "menu_item_count",
+      "has_photos",
+      "avg_delivery_time_min",
+      "customer_rating",
+      "review_count",
+      "days_on_platform",
+      "has_pos_integration",
+      "uses_ads",
+      "monthly_ad_spend",
+      "order_method_online_pct",
+      "order_method_phone_pct",
+      "last_menu_update_days_ago",
+      "signup_date"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R001",
+        "restaurant_name": "Crispy Palace",
+        "cuisine_type": "Chinese",
+        "city": "Atlanta",
+        "zip_code": "30327",
+        "is_managed": 1,
+        "account_manager": "Emily Chen",
+        "monthly_orders": 923,
+        "avg_order_value": 38.48,
+        "monthly_revenue": 35517.04,
+        "conversion_rate": 0.08,
+        "page_views": 5023,
+        "menu_item_count": 27,
+        "has_photos": 1,
+        "avg_delivery_time_min": 31.06,
+        "customer_rating": 3.93,
+        "review_count": 196,
+        "days_on_platform": 550,
+        "has_pos_integration": 1,
+        "uses_ads": 0,
+        "monthly_ad_spend": 0.0,
+        "order_method_online_pct": 0.43,
+        "order_method_phone_pct": 0.57,
+        "last_menu_update_days_ago": 1,
+        "signup_date": "2022-02-26"
+      },
+      {
+        "restaurant_id": "R002",
+        "restaurant_name": "Silver Fiesta",
+        "cuisine_type": "Mexican",
+        "city": "Atlanta",
+        "zip_code": "30317",
+        "is_managed": 0,
+        "account_manager": "",
+        "monthly_orders": 221,
+        "avg_order_value": 12.0,
+        "monthly_revenue": 2652.0,
+        "conversion_rate": 0.06,
+        "page_views": 864,
+        "menu_item_count": 42,
+        "has_photos": 1,
+        "avg_delivery_time_min": 34.52,
+        "customer_rating": 3.29,
+        "review_count": 46,
+        "days_on_platform": 494,
+        "has_pos_integration": 0,
+        "uses_ads": 0,
+        "monthly_ad_spend": 0.0,
+        "order_method_online_pct": 0.51,
+        "order_method_phone_pct": 0.49,
+        "last_menu_update_days_ago": 250,
+        "signup_date": "2023-01-10"
+      },
+      {
+        "restaurant_id": "R003",
+        "restaurant_name": "Lucky BBQ",
+        "cuisine_type": "BBQ",
+        "city": "Atlanta",
+        "zip_code": "30306",
+        "is_managed": 0,
+        "account_manager": "",
+        "monthly_orders": 178,
+        "avg_order_value": 27.52,
+        "monthly_revenue": 4898.56,
+        "conversion_rate": 0.04,
+        "page_views": 1489,
+        "menu_item_count": 39,
+        "has_photos": 0,
+        "avg_delivery_time_min": 24.42,
+        "customer_rating": 4.51,
+        "review_count": 16,
+        "days_on_platform": 660,
+        "has_pos_integration": 1,
+        "uses_ads": 0,
+        "monthly_ad_spend": 0.0,
+        "order_method_online_pct": 0.48,
+        "order_method_phone_pct": 0.52,
+        "last_menu_update_days_ago": 268,
+        "signup_date": "2024-06-23"
+      },
+      {
+        "restaurant_id": "R004",
+        "restaurant_name": "Lucky Spice House",
+        "cuisine_type": "Indian",
+        "city": "Atlanta",
+        "zip_code": "30342",
+        "is_managed": 1,
+        "account_manager": "Jake Thompson",
+        "monthly_orders": 603,
+        "avg_order_value": 27.01,
+        "monthly_revenue": 16287.03,
+        "conversion_rate": 0.12,
+        "page_views": 3093,
+        "menu_item_count": 59,
+        "has_photos": 1,
+        "avg_delivery_time_min": 39.36,
+        "customer_rating": 4.29,
+        "review_count": 188,
+        "days_on_platform": 492,
+        "has_pos_integration": 1,
+        "uses_ads": 1,
+        "monthly_ad_spend": 138.05,
+        "order_method_online_pct": 0.48,
+        "order_method_phone_pct": 0.52,
+        "last_menu_update_days_ago": 26,
+        "signup_date": "2021-04-01"
+      },
+      {
+        "restaurant_id": "R005",
+        "restaurant_name": "Urban Ramen House",
+        "cuisine_type": "Japanese",
+        "city": "Atlanta",
+        "zip_code": "30339",
+        "is_managed": 1,
+        "account_manager": "Sarah Johnson",
+        "monthly_orders": 928,
+        "avg_order_value": 37.74,
+        "monthly_revenue": 35022.72,
+        "conversion_rate": 0.08,
+        "page_views": 2661,
+        "menu_item_count": 98,
+        "has_photos": 1,
+        "avg_delivery_time_min": 25.67,
+        "customer_rating": 4.04,
+        "review_count": 117,
+        "days_on_platform": 891,
+        "has_pos_integration": 1,
+        "uses_ads": 0,
+        "monthly_ad_spend": 0.0,
+        "order_method_online_pct": 0.86,
+        "order_method_phone_pct": 0.14,
+        "last_menu_update_days_ago": 29,
+        "signup_date": "2023-08-20"
+      },
+      {
+        "restaurant_id": "R006",
+        "restaurant_name": "Golden Grill",
+        "cuisine_type": "Mediterranean",
+        "city": "Atlanta",
+        "zip_code": "30329",
+        "is_managed": 0,
+        "account_manager": "",
+        "monthly_orders": 174,
+        "avg_order_value": 28.53,
+        "monthly_revenue": 4964.22,
+        "conversion_rate": 0.03,
+        "page_views": 50,
+        "menu_item_count": 79,
+        "has_photos": 1,
+        "avg_delivery_time_min": 47.91,
+        "customer_rating": 3.95,
+        "review_count": 5,
+        "days_on_platform": 835,
+        "has_pos_integration": 0,
+        "uses_ads": 0,
+        "monthly_ad_spend": 0.0,
+        "order_method_online_pct": 0.62,
+        "order_method_phone_pct": 0.38,
+        "last_menu_update_days_ago": 215,
+        "signup_date": "2022-05-17"
+      },
+      {
+        "restaurant_id": "R007",
+        "restaurant_name": "Rustic Pit",
+        "cuisine_type": "BBQ",
+        "city": "Atlanta",
+        "zip_code": "30324",
+        "is_managed": 0,
+        "account_manager": "",
+        "monthly_orders": 92,
+        "avg_order_value": 23.26,
+        "monthly_revenue": 2139.92,
+        "conversion_rate": 0.03,
+        "page_views": 452,
+        "menu_item_count": 59,
+        "has_photos": 0,
+        "avg_delivery_time_min": 42.81,
+        "customer_rating": 3.85,
+        "review_count": 31,
+        "days_on_platform": 572,
+        "has_pos_integration": 1,
+        "uses_ads": 1,
+        "monthly_ad_spend": 159.65,
+        "order_method_online_pct": 0.41,
+        "order_method_phone_pct": 0.59,
+        "last_menu_update_days_ago": 244,
+        "signup_date": "2023-02-14"
+      },
+      {
+        "restaurant_id": "R008",
+        "restaurant_name": "Happy Taverna",
+        "cuisine_type": "Mediterranean",
+        "city": "Atlanta",
+        "zip_code": "30311",
+        "is_managed": 0,
+        "account_manager": "",
+        "monthly_orders": 137,
+        "avg_order_value": 13.76,
+        "monthly_revenue": 1885.12,
+        "conversion_rate": 0.05,
+        "page_views": 1921,
+        "menu_item_count": 75,
+        "has_photos": 1,
+        "avg_delivery_time_min": 25.07,
+        "customer_rating": 4.38,
+        "review_count": 95,
+        "days_on_platform": 745,
+        "has_pos_integration": 0,
+        "uses_ads": 1,
+        "monthly_ad_spend": 170.59,
+        "order_method_online_pct": 0.23,
+        "order_method_phone_pct": 0.77,
+        "last_menu_update_days_ago": 195,
+        "signup_date": "2025-01-11"
+      },
+      {
+        "restaurant_id": "R009",
+        "restaurant_name": "Urban Dragon",
+        "cuisine_type": "Chinese",
+        "city": "Atlanta",
+        "zip_code": "30320",
+        "is_managed": 0,
+        "account_manager": "",
+        "monthly_orders": 220,
+        "avg_order_value": 27.67,
+        "monthly_revenue": 6087.4,
+        "conversion_rate": 0.04,
+        "page_views": 669,
+        "menu_item_count": 37,
+        "has_photos": 1,
+        "avg_delivery_time_min": 31.81,
+        "customer_rating": 4.53,
+        "review_count": 90,
+        "days_on_platform": 626,
+        "has_pos_integration": 0,
+        "uses_ads": 0,
+        "monthly_ad_spend": 0.0,
+        "order_method_online_pct": 0.65,
+        "order_method_phone_pct": 0.35,
+        "last_menu_update_days_ago": 194,
+        "signup_date": "2020-01-09"
+      },
+      {
+        "restaurant_id": "R010",
+        "restaurant_name": "Sweet Noodle House",
+        "cuisine_type": "Thai",
+        "city": "Atlanta",
+        "zip_code": "30322",
+        "is_managed": 0,
+        "account_manager": "",
+        "monthly_orders": 137,
+        "avg_order_value": 44.99,
+        "monthly_revenue": 6163.63,
+        "conversion_rate": 0.03,
+        "page_views": 50,
+        "menu_item_count": 35,
+        "has_photos": 0,
+        "avg_delivery_time_min": 65,
+        "customer_rating": 3.18,
+        "review_count": 23,
+        "days_on_platform": 972,
+        "has_pos_integration": 0,
+        "uses_ads": 0,
+        "monthly_ad_spend": 0.0,
+        "order_method_online_pct": 0.57,
+        "order_method_phone_pct": 0.43,
+        "last_menu_update_days_ago": 275,
+        "signup_date": "2020-11-24"
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT COUNT(*) AS total_restaurants FROM restaurants",
+    "normalized": "select count(*) as total_restaurants from restaurants",
+    "columns": [
+      "total_restaurants"
+    ],
+    "rows": [
+      {
+        "total_restaurants": 100
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT column_name FROM information_schema WHERE table_name = 'restaurants'",
+    "normalized": "select column_name from information_schema where table_name = 'restaurants'",
+    "columns": [
+      "column_name"
+    ],
+    "rows": [
+      {
+        "column_name": "restaurant_id"
+      },
+      {
+        "column_name": "restaurant_name"
+      },
+      {
+        "column_name": "cuisine_type"
+      },
+      {
+        "column_name": "city"
+      },
+      {
+        "column_name": "zip_code"
+      },
+      {
+        "column_name": "is_managed"
+      },
+      {
+        "column_name": "account_manager"
+      },
+      {
+        "column_name": "monthly_orders"
+      },
+      {
+        "column_name": "avg_order_value"
+      },
+      {
+        "column_name": "monthly_revenue"
+      },
+      {
+        "column_name": "conversion_rate"
+      },
+      {
+        "column_name": "page_views"
+      },
+      {
+        "column_name": "menu_item_count"
+      },
+      {
+        "column_name": "has_photos"
+      },
+      {
+        "column_name": "avg_delivery_time_min"
+      },
+      {
+        "column_name": "customer_rating"
+      },
+      {
+        "column_name": "review_count"
+      },
+      {
+        "column_name": "days_on_platform"
+      },
+      {
+        "column_name": "has_pos_integration"
+      },
+      {
+        "column_name": "uses_ads"
+      },
+      {
+        "column_name": "monthly_ad_spend"
+      },
+      {
+        "column_name": "order_method_online_pct"
+      },
+      {
+        "column_name": "order_method_phone_pct"
+      },
+      {
+        "column_name": "last_menu_update_days_ago"
+      },
+      {
+        "column_name": "signup_date"
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT * FROM restaurants WHERE restaurant_id = 'R001'",
+    "normalized": "select * from restaurants where restaurant_id = 'r001'",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "cuisine_type",
+      "city",
+      "zip_code",
+      "is_managed",
+      "account_manager",
+      "monthly_orders",
+      "avg_order_value",
+      "monthly_revenue",
+      "conversion_rate",
+      "page_views",
+      "menu_item_count",
+      "has_photos",
+      "avg_delivery_time_min",
+      "customer_rating",
+      "review_count",
+      "days_on_platform",
+      "has_pos_integration",
+      "uses_ads",
+      "monthly_ad_spend",
+      "order_method_online_pct",
+      "order_method_phone_pct",
+      "last_menu_update_days_ago",
+      "signup_date"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R001",
+        "restaurant_name": "Crispy Palace",
+        "cuisine_type": "Chinese",
+        "city": "Atlanta",
+        "zip_code": "30327",
+        "is_managed": 1,
+        "account_manager": "Emily Chen",
+        "monthly_orders": 923,
+        "avg_order_value": 38.48,
+        "monthly_revenue": 35517.04,
+        "conversion_rate": 0.08,
+        "page_views": 5023,
+        "menu_item_count": 27,
+        "has_photos": 1,
+        "avg_delivery_time_min": 31.06,
+        "customer_rating": 3.93,
+        "review_count": 196,
+        "days_on_platform": 550,
+        "has_pos_integration": 1,
+        "uses_ads": 0,
+        "monthly_ad_spend": 0.0,
+        "order_method_online_pct": 0.43,
+        "order_method_phone_pct": 0.57,
+        "last_menu_update_days_ago": 1,
+        "signup_date": "2022-02-26"
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT is_managed, COUNT(*) AS cnt, AVG(monthly_orders) AS avg_orders, AVG(monthly_revenue) AS avg_revenue FROM restaurants GROUP BY is_managed",
+    "normalized": "select is_managed, count(*) as cnt, avg(monthly_orders) as avg_orders, avg(monthly_revenue) as avg_revenue from restaurants group by is_managed",
+    "columns": [
+      "is_managed",
+      "cnt",
+      "avg_orders",
+      "avg_revenue"
+    ],
+    "rows": [
+      {
+        "is_managed": 0,
+        "cnt": 70,
+        "avg_orders": 173.26,
+        "avg_revenue": 4605.12
+      },
+      {
+        "is_managed": 1,
+        "cnt": 30,
+        "avg_orders": 631.43,
+        "avg_revenue": 17669.07
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT is_managed, AVG(conversion_rate) AS avg_conversion, AVG(customer_rating) AS avg_rating, AVG(avg_delivery_time_min) AS avg_delivery_time FROM restaurants GROUP BY is_managed",
+    "normalized": "select is_managed, avg(conversion_rate) as avg_conversion, avg(customer_rating) as avg_rating, avg(avg_delivery_time_min) as avg_delivery_time from restaurants group by is_managed",
+    "columns": [
+      "is_managed",
+      "avg_conversion",
+      "avg_rating",
+      "avg_delivery_time"
+    ],
+    "rows": [
+      {
+        "is_managed": 0,
+        "avg_conversion": 0.14,
+        "avg_rating": 3.91,
+        "avg_delivery_time": 41.38
+      },
+      {
+        "is_managed": 1,
+        "avg_conversion": 0.35,
+        "avg_rating": 4.29,
+        "avg_delivery_time": 32.55
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT cuisine_type, COUNT(*) AS cnt, AVG(monthly_orders) AS avg_orders, AVG(monthly_revenue) AS avg_revenue FROM restaurants GROUP BY cuisine_type ORDER BY avg_orders DESC",
+    "normalized": "select cuisine_type, count(*) as cnt, avg(monthly_orders) as avg_orders, avg(monthly_revenue) as avg_revenue from restaurants group by cuisine_type order by avg_orders desc",
+    "columns": [
+      "cuisine_type",
+      "cnt",
+      "avg_orders",
+      "avg_revenue"
+    ],
+    "rows": [
+      {
+        "cuisine_type": "Italian",
+        "cnt": 7,
+        "avg_orders": 477.57,
+        "avg_revenue": 13211.46
+      },
+      {
+        "cuisine_type": "Mediterranean",
+        "cnt": 13,
+        "avg_orders": 398.85,
+        "avg_revenue": 11749.58
+      },
+      {
+        "cuisine_type": "Chinese",
+        "cnt": 13,
+        "avg_orders": 375.23,
+        "avg_revenue": 10667.25
+      },
+      {
+        "cuisine_type": "Japanese",
+        "cnt": 13,
+        "avg_orders": 337.85,
+        "avg_revenue": 9385.48
+      },
+      {
+        "cuisine_type": "Indian",
+        "cnt": 10,
+        "avg_orders": 320.3,
+        "avg_revenue": 8412.06
+      },
+      {
+        "cuisine_type": "American",
+        "cnt": 11,
+        "avg_orders": 299.55,
+        "avg_revenue": 7745.41
+      },
+      {
+        "cuisine_type": "Seafood",
+        "cnt": 8,
+        "avg_orders": 279.75,
+        "avg_revenue": 8242.66
+      },
+      {
+        "cuisine_type": "Thai",
+        "cnt": 9,
+        "avg_orders": 225.44,
+        "avg_revenue": 5883.13
+      },
+      {
+        "cuisine_type": "BBQ",
+        "cnt": 9,
+        "avg_orders": 164.89,
+        "avg_revenue": 3828.99
+      },
+      {
+        "cuisine_type": "Mexican",
+        "cnt": 7,
+        "avg_orders": 146.29,
+        "avg_revenue": 3407.13
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT SUM(monthly_orders) AS total_orders, SUM(monthly_revenue) AS total_revenue, SUM(monthly_ad_spend) AS total_ad_spend FROM restaurants",
+    "normalized": "select sum(monthly_orders) as total_orders, sum(monthly_revenue) as total_revenue, sum(monthly_ad_spend) as total_ad_spend from restaurants",
+    "columns": [
+      "total_orders",
+      "total_revenue",
+      "total_ad_spend"
+    ],
+    "rows": [
+      {
+        "total_orders": 31071,
+        "total_revenue": 852430.6,
+        "total_ad_spend": 5266.43
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT is_managed, AVG(page_views) AS avg_page_views, AVG(review_count) AS avg_reviews, AVG(menu_item_count) AS avg_menu_items FROM restaurants GROUP BY is_managed",
+    "normalized": "select is_managed, avg(page_views) as avg_page_views, avg(review_count) as avg_reviews, avg(menu_item_count) as avg_menu_items from restaurants group by is_managed",
+    "columns": [
+      "is_managed",
+      "avg_page_views",
+      "avg_reviews",
+      "avg_menu_items"
+    ],
+    "rows": [
+      {
+        "is_managed": 0,
+        "avg_page_views": 956.13,
+        "avg_reviews": 57.01,
+        "avg_menu_items": 55.77
+      },
+      {
+        "is_managed": 1,
+        "avg_page_views": 2751.33,
+        "avg_reviews": 122.93,
+        "avg_menu_items": 54.3
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT is_managed, SUM(CASE WHEN has_photos = 1 THEN 1 ELSE 0 END) AS with_photos, SUM(CASE WHEN has_pos_integration = 1 THEN 1 ELSE 0 END) AS with_pos, SUM(CASE WHEN uses_ads = 1 THEN 1 ELSE 0 END) AS with_ads FROM restaurants GROUP BY is_managed",
+    "normalized": "select is_managed, sum(case when has_photos = 1 then 1 else 0 end) as with_photos, sum(case when has_pos_integration = 1 then 1 else 0 end) as with_pos, sum(case when uses_ads = 1 then 1 else 0 end) as with_ads from restaurants group by is_managed",
+    "columns": [
+      "is_managed",
+      "with_photos",
+      "with_pos",
+      "with_ads"
+    ],
+    "rows": [
+      {
+        "is_managed": 0,
+        "with_photos": 35,
+        "with_pos": 18,
+        "with_ads": 12
+      },
+      {
+        "is_managed": 1,
+        "with_photos": 27,
+        "with_pos": 28,
+        "with_ads": 22
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, restaurant_name, monthly_orders, monthly_revenue FROM restaurants WHERE is_managed = 0 ORDER BY monthly_orders DESC",
+    "normalized": "select restaurant_id, restaurant_name, monthly_orders, monthly_revenue from restaurants where is_managed = 0 order by monthly_orders desc",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "monthly_orders",
+      "monthly_revenue"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R016",
+        "restaurant_name": "Spicy Spice House",
+        "monthly_orders": 474,
+        "monthly_revenue": 14698.74
+      },
+      {
+        "restaurant_id": "R011",
+        "restaurant_name": "Red Express",
+        "monthly_orders": 408,
+        "monthly_revenue": 10722.24
+      },
+      {
+        "restaurant_id": "R039",
+        "restaurant_name": "Crispy Olive",
+        "monthly_orders": 369,
+        "monthly_revenue": 9309.87
+      },
+      {
+        "restaurant_id": "R045",
+        "restaurant_name": "Rustic Dragon",
+        "monthly_orders": 369,
+        "monthly_revenue": 8778.51
+      },
+      {
+        "restaurant_id": "R064",
+        "restaurant_name": "Little Taverna",
+        "monthly_orders": 357,
+        "monthly_revenue": 13226.85
+      },
+      {
+        "restaurant_id": "R097",
+        "restaurant_name": "Big Spice House",
+        "monthly_orders": 355,
+        "monthly_revenue": 13312.5
+      },
+      {
+        "restaurant_id": "R021",
+        "restaurant_name": "Classic Pier",
+        "monthly_orders": 343,
+        "monthly_revenue": 4726.54
+      },
+      {
+        "restaurant_id": "R020",
+        "restaurant_name": "Lucky Orchid",
+        "monthly_orders": 334,
+        "monthly_revenue": 11352.66
+      },
+      {
+        "restaurant_id": "R040",
+        "restaurant_name": "West Tandoor",
+        "monthly_orders": 305,
+        "monthly_revenue": 5029.45
+      },
+      {
+        "restaurant_id": "R022",
+        "restaurant_name": "Lucky Palace",
+        "monthly_orders": 299,
+        "monthly_revenue": 9463.35
+      },
+      {
+        "restaurant_id": "R025",
+        "restaurant_name": "East Kitchen",
+        "monthly_orders": 289,
+        "monthly_revenue": 9352.04
+      },
+      {
+        "restaurant_id": "R051",
+        "restaurant_name": "Southern Orchid",
+        "monthly_orders": 280,
+        "monthly_revenue": 5611.2
+      },
+      {
+        "restaurant_id": "R079",
+        "restaurant_name": "Sweet Ribs & Wings",
+        "monthly_orders": 280,
+        "monthly_revenue": 8612.8
+      },
+      {
+        "restaurant_id": "R061",
+        "restaurant_name": "Sunny House",
+        "monthly_orders": 274,
+        "monthly_revenue": 6184.18
+      },
+      {
+        "restaurant_id": "R056",
+        "restaurant_name": "Spicy Basil",
+        "monthly_orders": 271,
+        "monthly_revenue": 7232.99
+      },
+      {
+        "restaurant_id": "R044",
+        "restaurant_name": "Midtown Tavern",
+        "monthly_orders": 252,
+        "monthly_revenue": 7229.88
+      },
+      {
+        "restaurant_id": "R077",
+        "restaurant_name": "Southern Ramen House",
+        "monthly_orders": 249,
+        "monthly_revenue": 7181.16
+      },
+      {
+        "restaurant_id": "R059",
+        "restaurant_name": "Atlanta Spice House",
+        "monthly_orders": 236,
+        "monthly_revenue": 7143.72
+      },
+      {
+        "restaurant_id": "R041",
+        "restaurant_name": "Smoky Grill",
+        "monthly_orders": 233,
+        "monthly_revenue": 5109.69
+      },
+      {
+        "restaurant_id": "R068",
+        "restaurant_name": "Spicy Eatery",
+        "monthly_orders": 233,
+        "monthly_revenue": 3243.36
+      },
+      {
+        "restaurant_id": "R074",
+        "restaurant_name": "Little Express",
+        "monthly_orders": 226,
+        "monthly_revenue": 7286.24
+      },
+      {
+        "restaurant_id": "R002",
+        "restaurant_name": "Silver Fiesta",
+        "monthly_orders": 221,
+        "monthly_revenue": 2652.0
+      },
+      {
+        "restaurant_id": "R009",
+        "restaurant_name": "Urban Dragon",
+        "monthly_orders": 220,
+        "monthly_revenue": 6087.4
+      },
+      {
+        "restaurant_id": "R043",
+        "restaurant_name": "Golden Kitchen",
+        "monthly_orders": 203,
+        "monthly_revenue": 5208.98
+      },
+      {
+        "restaurant_id": "R019",
+        "restaurant_name": "Sunny Wok",
+        "monthly_orders": 202,
+        "monthly_revenue": 4516.72
+      },
+      {
+        "restaurant_id": "R067",
+        "restaurant_name": "Sweet Tandoor",
+        "monthly_orders": 199,
+        "monthly_revenue": 4107.36
+      },
+      {
+        "restaurant_id": "R024",
+        "restaurant_name": "Sweet Burgers",
+        "monthly_orders": 198,
+        "monthly_revenue": 6173.64
+      },
+      {
+        "restaurant_id": "R034",
+        "restaurant_name": "East Curry House",
+        "monthly_orders": 190,
+        "monthly_revenue": 7045.2
+      },
+      {
+        "restaurant_id": "R091",
+        "restaurant_name": "Rustic House",
+        "monthly_orders": 190,
+        "monthly_revenue": 5905.2
+      },
+      {
+        "restaurant_id": "R066",
+        "restaurant_name": "Buckhead Fish House",
+        "monthly_orders": 189,
+        "monthly_revenue": 4728.78
+      },
+      {
+        "restaurant_id": "R073",
+        "restaurant_name": "Happy Cantina",
+        "monthly_orders": 181,
+        "monthly_revenue": 4463.46
+      },
+      {
+        "restaurant_id": "R003",
+        "restaurant_name": "Lucky BBQ",
+        "monthly_orders": 178,
+        "monthly_revenue": 4898.56
+      },
+      {
+        "restaurant_id": "R049",
+        "restaurant_name": "Smoky Fish House",
+        "monthly_orders": 178,
+        "monthly_revenue": 5409.42
+      },
+      {
+        "restaurant_id": "R006",
+        "restaurant_name": "Golden Grill",
+        "monthly_orders": 174,
+        "monthly_revenue": 4964.22
+      },
+      {
+        "restaurant_id": "R013",
+        "restaurant_name": "Sweet Wok",
+        "monthly_orders": 171,
+        "monthly_revenue": 3850.92
+      },
+      {
+        "restaurant_id": "R071",
+        "restaurant_name": "Savory Cafe",
+        "monthly_orders": 166,
+        "monthly_revenue": 3222.06
+      },
+      {
+        "restaurant_id": "R048",
+        "restaurant_name": "Green Osteria",
+        "monthly_orders": 161,
+        "monthly_revenue": 4248.79
+      },
+      {
+        "restaurant_id": "R084",
+        "restaurant_name": "Happy Kitchen",
+        "monthly_orders": 156,
+        "monthly_revenue": 5247.84
+      },
+      {
+        "restaurant_id": "R050",
+        "restaurant_name": "Urban Basil",
+        "monthly_orders": 153,
+        "monthly_revenue": 2132.82
+      },
+      {
+        "restaurant_id": "R038",
+        "restaurant_name": "Classic Sushi Bar",
+        "monthly_orders": 143,
+        "monthly_revenue": 2100.67
+      },
+      {
+        "restaurant_id": "R060",
+        "restaurant_name": "Smoky Taqueria",
+        "monthly_orders": 142,
+        "monthly_revenue": 3400.9
+      },
+      {
+        "restaurant_id": "R008",
+        "restaurant_name": "Happy Taverna",
+        "monthly_orders": 137,
+        "monthly_revenue": 1885.12
+      },
+      {
+        "restaurant_id": "R010",
+        "restaurant_name": "Sweet Noodle House",
+        "monthly_orders": 137,
+        "monthly_revenue": 6163.63
+      },
+      {
+        "restaurant_id": "R069",
+        "restaurant_name": "Smoky Orchid",
+        "monthly_orders": 137,
+        "monthly_revenue": 2826.31
+      },
+      {
+        "restaurant_id": "R046",
+        "restaurant_name": "Big Cafe",
+        "monthly_orders": 135,
+        "monthly_revenue": 3724.65
+      },
+      {
+        "restaurant_id": "R088",
+        "restaurant_name": "Sunny Diner",
+        "monthly_orders": 135,
+        "monthly_revenue": 4283.55
+      },
+      {
+        "restaurant_id": "R063",
+        "restaurant_name": "Sunny Palace",
+        "monthly_orders": 133,
+        "monthly_revenue": 3302.39
+      },
+      {
+        "restaurant_id": "R083",
+        "restaurant_name": "Crispy Ramen House",
+        "monthly_orders": 133,
+        "monthly_revenue": 4132.31
+      },
+      {
+        "restaurant_id": "R052",
+        "restaurant_name": "Urban Cocina",
+        "monthly_orders": 124,
+        "monthly_revenue": 2870.6
+      },
+      {
+        "restaurant_id": "R100",
+        "restaurant_name": "Green Pit",
+        "monthly_orders": 113,
+        "monthly_revenue": 2584.31
+      },
+      {
+        "restaurant_id": "R086",
+        "restaurant_name": "Golden Bistro",
+        "monthly_orders": 106,
+        "monthly_revenue": 3273.28
+      },
+      {
+        "restaurant_id": "R027",
+        "restaurant_name": "Royal Spice",
+        "monthly_orders": 98,
+        "monthly_revenue": 3435.88
+      },
+      {
+        "restaurant_id": "R007",
+        "restaurant_name": "Rustic Pit",
+        "monthly_orders": 92,
+        "monthly_revenue": 2139.92
+      },
+      {
+        "restaurant_id": "R033",
+        "restaurant_name": "Blue Spice",
+        "monthly_orders": 85,
+        "monthly_revenue": 3010.7
+      },
+      {
+        "restaurant_id": "R035",
+        "restaurant_name": "Savory Olive",
+        "monthly_orders": 79,
+        "monthly_revenue": 2275.99
+      },
+      {
+        "restaurant_id": "R017",
+        "restaurant_name": "Sizzling Curry House",
+        "monthly_orders": 71,
+        "monthly_revenue": 1530.76
+      },
+      {
+        "restaurant_id": "R075",
+        "restaurant_name": "West Ramen House",
+        "monthly_orders": 70,
+        "monthly_revenue": 2168.6
+      },
+      {
+        "restaurant_id": "R080",
+        "restaurant_name": "Fresh Express",
+        "monthly_orders": 66,
+        "monthly_revenue": 1453.98
+      },
+      {
+        "restaurant_id": "R099",
+        "restaurant_name": "Southern BBQ",
+        "monthly_orders": 54,
+        "monthly_revenue": 1080.0
+      },
+      {
+        "restaurant_id": "R093",
+        "restaurant_name": "Sizzling Trattoria",
+        "monthly_orders": 47,
+        "monthly_revenue": 1353.6
+      },
+      {
+        "restaurant_id": "R062",
+        "restaurant_name": "Green Pier",
+        "monthly_orders": 40,
+        "monthly_revenue": 1195.2
+      },
+      {
+        "restaurant_id": "R031",
+        "restaurant_name": "Classic Taqueria",
+        "monthly_orders": 30,
+        "monthly_revenue": 792.3
+      },
+      {
+        "restaurant_id": "R092",
+        "restaurant_name": "Sunny Taverna",
+        "monthly_orders": 15,
+        "monthly_revenue": 420.15
+      },
+      {
+        "restaurant_id": "R057",
+        "restaurant_name": "Atlanta Pit",
+        "monthly_orders": 10,
+        "monthly_revenue": 381.7
+      },
+      {
+        "restaurant_id": "R023",
+        "restaurant_name": "Sizzling Ribs & Wings",
+        "monthly_orders": 5,
+        "monthly_revenue": 125.05
+      },
+      {
+        "restaurant_id": "R037",
+        "restaurant_name": "Southern Taqueria",
+        "monthly_orders": 5,
+        "monthly_revenue": 130.5
+      },
+      {
+        "restaurant_id": "R042",
+        "restaurant_name": "Sunny Kitchen",
+        "monthly_orders": 5,
+        "monthly_revenue": 213.7
+      },
+      {
+        "restaurant_id": "R047",
+        "restaurant_name": "Silver Izakaya",
+        "monthly_orders": 5,
+        "monthly_revenue": 186.2
+      },
+      {
+        "restaurant_id": "R053",
+        "restaurant_name": "Big Shack",
+        "monthly_orders": 5,
+        "monthly_revenue": 122.45
+      },
+      {
+        "restaurant_id": "R081",
+        "restaurant_name": "Midtown Steakhouse",
+        "monthly_orders": 5,
+        "monthly_revenue": 122.75
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, restaurant_name, monthly_orders, monthly_revenue, conversion_rate FROM restaurants WHERE is_managed = 0 AND monthly_orders > 300 ORDER BY monthly_orders DESC",
+    "normalized": "select restaurant_id, restaurant_name, monthly_orders, monthly_revenue, conversion_rate from restaurants where is_managed = 0 and monthly_orders > 300 order by monthly_orders desc",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "monthly_orders",
+      "monthly_revenue",
+      "conversion_rate"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R016",
+        "restaurant_name": "Spicy Spice House",
+        "monthly_orders": 474,
+        "monthly_revenue": 14698.74,
+        "conversion_rate": 0.08
+      },
+      {
+        "restaurant_id": "R011",
+        "restaurant_name": "Red Express",
+        "monthly_orders": 408,
+        "monthly_revenue": 10722.24,
+        "conversion_rate": 0.06
+      },
+      {
+        "restaurant_id": "R039",
+        "restaurant_name": "Crispy Olive",
+        "monthly_orders": 369,
+        "monthly_revenue": 9309.87,
+        "conversion_rate": 0.07
+      },
+      {
+        "restaurant_id": "R045",
+        "restaurant_name": "Rustic Dragon",
+        "monthly_orders": 369,
+        "monthly_revenue": 8778.51,
+        "conversion_rate": 0.05
+      },
+      {
+        "restaurant_id": "R064",
+        "restaurant_name": "Little Taverna",
+        "monthly_orders": 357,
+        "monthly_revenue": 13226.85,
+        "conversion_rate": 0.07
+      },
+      {
+        "restaurant_id": "R097",
+        "restaurant_name": "Big Spice House",
+        "monthly_orders": 355,
+        "monthly_revenue": 13312.5,
+        "conversion_rate": 0.06
+      },
+      {
+        "restaurant_id": "R021",
+        "restaurant_name": "Classic Pier",
+        "monthly_orders": 343,
+        "monthly_revenue": 4726.54,
+        "conversion_rate": 0.03
+      },
+      {
+        "restaurant_id": "R020",
+        "restaurant_name": "Lucky Orchid",
+        "monthly_orders": 334,
+        "monthly_revenue": 11352.66,
+        "conversion_rate": 0.01
+      },
+      {
+        "restaurant_id": "R040",
+        "restaurant_name": "West Tandoor",
+        "monthly_orders": 305,
+        "monthly_revenue": 5029.45,
+        "conversion_rate": 0.03
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT COUNT(*) AS cnt, is_managed FROM restaurants WHERE has_photos = 0 GROUP BY is_managed",
+    "normalized": "select count(*) as cnt, is_managed from restaurants where has_photos = 0 group by is_managed",
+    "columns": [
+      "cnt",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "cnt": 35,
+        "is_managed": 0
+      },
+      {
+        "cnt": 3,
+        "is_managed": 1
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, page_views, monthly_orders FROM restaurants ORDER BY page_views DESC LIMIT 15",
+    "normalized": "select restaurant_id, page_views, monthly_orders from restaurants order by page_views desc limit 15",
+    "columns": [
+      "restaurant_id",
+      "page_views",
+      "monthly_orders"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R098",
+        "page_views": 5920,
+        "monthly_orders": 935
+      },
+      {
+        "restaurant_id": "R015",
+        "page_views": 5855,
+        "monthly_orders": 815
+      },
+      {
+        "restaurant_id": "R001",
+        "page_views": 5023,
+        "monthly_orders": 923
+      },
+      {
+        "restaurant_id": "R082",
+        "page_views": 4965,
+        "monthly_orders": 849
+      },
+      {
+        "restaurant_id": "R032",
+        "page_views": 4826,
+        "monthly_orders": 710
+      },
+      {
+        "restaurant_id": "R028",
+        "page_views": 4642,
+        "monthly_orders": 538
+      },
+      {
+        "restaurant_id": "R072",
+        "page_views": 4354,
+        "monthly_orders": 1138
+      },
+      {
+        "restaurant_id": "R065",
+        "page_views": 4282,
+        "monthly_orders": 665
+      },
+      {
+        "restaurant_id": "R058",
+        "page_views": 3748,
+        "monthly_orders": 637
+      },
+      {
+        "restaurant_id": "R039",
+        "page_views": 3668,
+        "monthly_orders": 369
+      },
+      {
+        "restaurant_id": "R020",
+        "page_views": 3141,
+        "monthly_orders": 334
+      },
+      {
+        "restaurant_id": "R090",
+        "page_views": 3104,
+        "monthly_orders": 561
+      },
+      {
+        "restaurant_id": "R004",
+        "page_views": 3093,
+        "monthly_orders": 603
+      },
+      {
+        "restaurant_id": "R036",
+        "page_views": 3080,
+        "monthly_orders": 534
+      },
+      {
+        "restaurant_id": "R011",
+        "page_views": 2864,
+        "monthly_orders": 408
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, conversion_rate, monthly_orders, page_views FROM restaurants ORDER BY conversion_rate DESC LIMIT 15",
+    "normalized": "select restaurant_id, conversion_rate, monthly_orders, page_views from restaurants order by conversion_rate desc limit 15",
+    "columns": [
+      "restaurant_id",
+      "conversion_rate",
+      "monthly_orders",
+      "page_views"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R014",
+        "conversion_rate": 8.0,
+        "monthly_orders": 1044,
+        "page_views": 2403
+      },
+      {
+        "restaurant_id": "R066",
+        "conversion_rate": 3.0,
+        "monthly_orders": 189,
+        "page_views": 1424
+      },
+      {
+        "restaurant_id": "R061",
+        "conversion_rate": 2.0,
+        "monthly_orders": 274,
+        "page_views": 2719
+      },
+      {
+        "restaurant_id": "R099",
+        "conversion_rate": 2.0,
+        "monthly_orders": 54,
+        "page_views": 96
+      },
+      {
+        "restaurant_id": "R030",
+        "conversion_rate": 0.13,
+        "monthly_orders": 494,
+        "page_views": 2346
+      },
+      {
+        "restaurant_id": "R054",
+        "conversion_rate": 0.13,
+        "monthly_orders": 856,
+        "page_views": 2529
+      },
+      {
+        "restaurant_id": "R004",
+        "conversion_rate": 0.12,
+        "monthly_orders": 603,
+        "page_views": 3093
+      },
+      {
+        "restaurant_id": "R070",
+        "conversion_rate": 0.12,
+        "monthly_orders": 212,
+        "page_views": 50
+      },
+      {
+        "restaurant_id": "R072",
+        "conversion_rate": 0.12,
+        "monthly_orders": 1138,
+        "page_views": 4354
+      },
+      {
+        "restaurant_id": "R096",
+        "conversion_rate": 0.12,
+        "monthly_orders": 665,
+        "page_views": 2173
+      },
+      {
+        "restaurant_id": "R018",
+        "conversion_rate": 0.11,
+        "monthly_orders": 338,
+        "page_views": 950
+      },
+      {
+        "restaurant_id": "R098",
+        "conversion_rate": 0.11,
+        "monthly_orders": 935,
+        "page_views": 5920
+      },
+      {
+        "restaurant_id": "R012",
+        "conversion_rate": 0.1,
+        "monthly_orders": 321,
+        "page_views": 1616
+      },
+      {
+        "restaurant_id": "R032",
+        "conversion_rate": 0.1,
+        "monthly_orders": 710,
+        "page_views": 4826
+      },
+      {
+        "restaurant_id": "R076",
+        "conversion_rate": 0.1,
+        "monthly_orders": 278,
+        "page_views": 1138
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, restaurant_name, monthly_orders, is_managed FROM restaurants ORDER BY monthly_orders DESC LIMIT 10",
+    "normalized": "select restaurant_id, restaurant_name, monthly_orders, is_managed from restaurants order by monthly_orders desc limit 10",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "monthly_orders",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R072",
+        "restaurant_name": "Blue Pizzeria",
+        "monthly_orders": 1138,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R014",
+        "restaurant_name": "Buckhead Olive",
+        "monthly_orders": 1044,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R098",
+        "restaurant_name": "Southern Kitchen",
+        "monthly_orders": 935,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R005",
+        "restaurant_name": "Urban Ramen House",
+        "monthly_orders": 928,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R001",
+        "restaurant_name": "Crispy Palace",
+        "monthly_orders": 923,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R085",
+        "restaurant_name": "West Kitchen",
+        "monthly_orders": 871,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R054",
+        "restaurant_name": "Green Kitchen",
+        "monthly_orders": 856,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R082",
+        "restaurant_name": "Atlanta Dragon",
+        "monthly_orders": 849,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R015",
+        "restaurant_name": "Sizzling Oyster Bar",
+        "monthly_orders": 815,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R094",
+        "restaurant_name": "Buckhead Kitchen",
+        "monthly_orders": 776,
+        "is_managed": 1
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, restaurant_name, monthly_orders, is_managed FROM restaurants ORDER BY monthly_orders ASC LIMIT 10",
+    "normalized": "select restaurant_id, restaurant_name, monthly_orders, is_managed from restaurants order by monthly_orders asc limit 10",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "monthly_orders",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R023",
+        "restaurant_name": "Sizzling Ribs & Wings",
+        "monthly_orders": 5,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R037",
+        "restaurant_name": "Southern Taqueria",
+        "monthly_orders": 5,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R042",
+        "restaurant_name": "Sunny Kitchen",
+        "monthly_orders": 5,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R047",
+        "restaurant_name": "Silver Izakaya",
+        "monthly_orders": 5,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R053",
+        "restaurant_name": "Big Shack",
+        "monthly_orders": 5,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R081",
+        "restaurant_name": "Midtown Steakhouse",
+        "monthly_orders": 5,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R057",
+        "restaurant_name": "Atlanta Pit",
+        "monthly_orders": 10,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R092",
+        "restaurant_name": "Sunny Taverna",
+        "monthly_orders": 15,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R031",
+        "restaurant_name": "Classic Taqueria",
+        "monthly_orders": 30,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R062",
+        "restaurant_name": "Green Pier",
+        "monthly_orders": 40,
+        "is_managed": 0
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, restaurant_name, monthly_revenue, is_managed FROM restaurants ORDER BY monthly_revenue DESC LIMIT 10",
+    "normalized": "select restaurant_id, restaurant_name, monthly_revenue, is_managed from restaurants order by monthly_revenue desc limit 10",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "monthly_revenue",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R014",
+        "restaurant_name": "Buckhead Olive",
+        "monthly_revenue": 36894.96,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R001",
+        "restaurant_name": "Crispy Palace",
+        "monthly_revenue": 35517.04,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R005",
+        "restaurant_name": "Urban Ramen House",
+        "monthly_revenue": 35022.72,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R072",
+        "restaurant_name": "Blue Pizzeria",
+        "monthly_revenue": 34629.34,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R015",
+        "restaurant_name": "Sizzling Oyster Bar",
+        "monthly_revenue": 30016.45,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R098",
+        "restaurant_name": "Southern Kitchen",
+        "monthly_revenue": 28807.35,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R085",
+        "restaurant_name": "West Kitchen",
+        "monthly_revenue": 22245.34,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R082",
+        "restaurant_name": "Atlanta Dragon",
+        "monthly_revenue": 22006.08,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R094",
+        "restaurant_name": "Buckhead Kitchen",
+        "monthly_revenue": 21417.6,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R054",
+        "restaurant_name": "Green Kitchen",
+        "monthly_revenue": 21211.68,
+        "is_managed": 1
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, restaurant_name, customer_rating, review_count FROM restaurants ORDER BY customer_rating DESC LIMIT 10",
+    "normalized": "select restaurant_id, restaurant_name, customer_rating, review_count from restaurants order by customer_rating desc limit 10",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "customer_rating",
+      "review_count"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R099",
+        "restaurant_name": "Southern BBQ",
+        "customer_rating": 5.0,
+        "review_count": 100
+      },
+      {
+        "restaurant_id": "R098",
+        "restaurant_name": "Southern Kitchen",
+        "customer_rating": 4.79,
+        "review_count": 193
+      },
+      {
+        "restaurant_id": "R068",
+        "restaurant_name": "Spicy Eatery",
+        "customer_rating": 4.77,
+        "review_count": 110
+      },
+      {
+        "restaurant_id": "R100",
+        "restaurant_name": "Green Pit",
+        "customer_rating": 4.7,
+        "review_count": 145
+      },
+      {
+        "restaurant_id": "R051",
+        "restaurant_name": "Southern Orchid",
+        "customer_rating": 4.68,
+        "review_count": 92
+      },
+      {
+        "restaurant_id": "R015",
+        "restaurant_name": "Sizzling Oyster Bar",
+        "customer_rating": 4.66,
+        "review_count": 87
+      },
+      {
+        "restaurant_id": "R018",
+        "restaurant_name": "Atlanta Izakaya",
+        "customer_rating": 4.66,
+        "review_count": 103
+      },
+      {
+        "restaurant_id": "R094",
+        "restaurant_name": "Buckhead Kitchen",
+        "customer_rating": 4.64,
+        "review_count": 138
+      },
+      {
+        "restaurant_id": "R038",
+        "restaurant_name": "Classic Sushi Bar",
+        "customer_rating": 4.63,
+        "review_count": 118
+      },
+      {
+        "restaurant_id": "R077",
+        "restaurant_name": "Southern Ramen House",
+        "customer_rating": 4.61,
+        "review_count": 9
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT cuisine_type, COUNT(*) AS cnt, AVG(monthly_orders) AS avg_orders FROM restaurants GROUP BY cuisine_type HAVING COUNT(*) > 8 ORDER BY cnt DESC",
+    "normalized": "select cuisine_type, count(*) as cnt, avg(monthly_orders) as avg_orders from restaurants group by cuisine_type having count(*) > 8 order by cnt desc",
+    "columns": [
+      "cuisine_type",
+      "cnt",
+      "avg_orders"
+    ],
+    "rows": [
+      {
+        "cuisine_type": "Chinese",
+        "cnt": 13,
+        "avg_orders": 375.23
+      },
+      {
+        "cuisine_type": "Japanese",
+        "cnt": 13,
+        "avg_orders": 337.85
+      },
+      {
+        "cuisine_type": "Mediterranean",
+        "cnt": 13,
+        "avg_orders": 398.85
+      },
+      {
+        "cuisine_type": "American",
+        "cnt": 11,
+        "avg_orders": 299.55
+      },
+      {
+        "cuisine_type": "Indian",
+        "cnt": 10,
+        "avg_orders": 320.3
+      },
+      {
+        "cuisine_type": "BBQ",
+        "cnt": 9,
+        "avg_orders": 164.89
+      },
+      {
+        "cuisine_type": "Thai",
+        "cnt": 9,
+        "avg_orders": 225.44
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT CASE WHEN monthly_orders < 50 THEN '0-49' WHEN monthly_orders < 200 THEN '50-199' WHEN monthly_orders < 500 THEN '200-499' WHEN monthly_orders < 1000 THEN '500-999' ELSE '1000+' END AS order_bucket, COUNT(*) AS cnt, SUM(monthly_revenue) AS total_revenue, AVG(is_managed) AS pct_managed FROM restaurants GROUP BY order_bucket ORDER BY order_bucket",
+    "normalized": "select case when monthly_orders < 50 then '0-49' when monthly_orders < 200 then '50-199' when monthly_orders < 500 then '200-499' when monthly_orders < 1000 then '500-999' else '1000+' end as order_bucket, count(*) as cnt, sum(monthly_revenue) as total_revenue, avg(is_managed) as pct_managed from restaurants group by order_bucket order by order_bucket",
+    "columns": [
+      "order_bucket",
+      "cnt",
+      "total_revenue",
+      "pct_managed"
+    ],
+    "rows": [
+      {
+        "order_bucket": "0-49",
+        "cnt": 11,
+        "total_revenue": 5043.6,
+        "pct_managed": 0.0
+      },
+      {
+        "order_bucket": "50-199",
+        "cnt": 36,
+        "total_revenue": 132320.03,
+        "pct_managed": 0.06
+      },
+      {
+        "order_bucket": "200-499",
+        "cnt": 31,
+        "total_revenue": 242067.37,
+        "pct_managed": 0.19
+      },
+      {
+        "order_bucket": "500-999",
+        "cnt": 20,
+        "total_revenue": 401475.3,
+        "pct_managed": 1.0
+      },
+      {
+        "order_bucket": "1000+",
+        "cnt": 2,
+        "total_revenue": 71524.3,
+        "pct_managed": 1.0
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT zip_code, COUNT(*) AS cnt, AVG(monthly_orders) AS avg_orders, AVG(monthly_revenue) AS avg_revenue FROM restaurants GROUP BY zip_code HAVING COUNT(*) >= 2 ORDER BY avg_orders DESC",
+    "normalized": "select zip_code, count(*) as cnt, avg(monthly_orders) as avg_orders, avg(monthly_revenue) as avg_revenue from restaurants group by zip_code having count(*) >= 2 order by avg_orders desc",
+    "columns": [
+      "zip_code",
+      "cnt",
+      "avg_orders",
+      "avg_revenue"
+    ],
+    "rows": [
+      {
+        "zip_code": "30307",
+        "cnt": 2,
+        "avg_orders": 773.0,
+        "avg_revenue": 22675.79
+      },
+      {
+        "zip_code": "30319",
+        "cnt": 2,
+        "avg_orders": 597.0,
+        "avg_revenue": 15289.5
+      },
+      {
+        "zip_code": "30346",
+        "cnt": 4,
+        "avg_orders": 537.75,
+        "avg_revenue": 16459.4
+      },
+      {
+        "zip_code": "30339",
+        "cnt": 2,
+        "avg_orders": 531.5,
+        "avg_revenue": 19653.14
+      },
+      {
+        "zip_code": "30327",
+        "cnt": 4,
+        "avg_orders": 461.25,
+        "avg_revenue": 15118.57
+      },
+      {
+        "zip_code": "30344",
+        "cnt": 2,
+        "avg_orders": 404.0,
+        "avg_revenue": 8683.07
+      },
+      {
+        "zip_code": "30342",
+        "cnt": 2,
+        "avg_orders": 396.0,
+        "avg_revenue": 10507.91
+      },
+      {
+        "zip_code": "30318",
+        "cnt": 5,
+        "avg_orders": 385.6,
+        "avg_revenue": 11630.47
+      },
+      {
+        "zip_code": "30328",
+        "cnt": 3,
+        "avg_orders": 381.33,
+        "avg_revenue": 11098.8
+      },
+      {
+        "zip_code": "30306",
+        "cnt": 6,
+        "avg_orders": 372.83,
+        "avg_revenue": 9510.96
+      },
+      {
+        "zip_code": "30314",
+        "cnt": 2,
+        "avg_orders": 365.0,
+        "avg_revenue": 10808.07
+      },
+      {
+        "zip_code": "30311",
+        "cnt": 3,
+        "avg_orders": 351.33,
+        "avg_revenue": 8673.1
+      },
+      {
+        "zip_code": "30350",
+        "cnt": 3,
+        "avg_orders": 347.67,
+        "avg_revenue": 9991.64
+      },
+      {
+        "zip_code": "30329",
+        "cnt": 3,
+        "avg_orders": 341.0,
+        "avg_revenue": 9872.99
+      },
+      {
+        "zip_code": "30349",
+        "cnt": 3,
+        "avg_orders": 329.33,
+        "avg_revenue": 7569.81
+      },
+      {
+        "zip_code": "30322",
+        "cnt": 5,
+        "avg_orders": 317.2,
+        "avg_revenue": 8027.21
+      },
+      {
+        "zip_code": "30337",
+        "cnt": 3,
+        "avg_orders": 312.0,
+        "avg_revenue": 6062.64
+      },
+      {
+        "zip_code": "30316",
+        "cnt": 3,
+        "avg_orders": 277.0,
+        "avg_revenue": 7084.28
+      },
+      {
+        "zip_code": "30336",
+        "cnt": 6,
+        "avg_orders": 256.83,
+        "avg_revenue": 5791.29
+      },
+      {
+        "zip_code": "30334",
+        "cnt": 4,
+        "avg_orders": 235.75,
+        "avg_revenue": 6251.47
+      },
+      {
+        "zip_code": "30312",
+        "cnt": 4,
+        "avg_orders": 227.5,
+        "avg_revenue": 7500.47
+      },
+      {
+        "zip_code": "30331",
+        "cnt": 2,
+        "avg_orders": 204.5,
+        "avg_revenue": 5252.54
+      },
+      {
+        "zip_code": "30332",
+        "cnt": 5,
+        "avg_orders": 199.0,
+        "avg_revenue": 4588.91
+      },
+      {
+        "zip_code": "30317",
+        "cnt": 4,
+        "avg_orders": 196.25,
+        "avg_revenue": 5121.62
+      },
+      {
+        "zip_code": "30320",
+        "cnt": 2,
+        "avg_orders": 159.0,
+        "avg_revenue": 4761.64
+      },
+      {
+        "zip_code": "30341",
+        "cnt": 3,
+        "avg_orders": 141.0,
+        "avg_revenue": 3030.48
+      },
+      {
+        "zip_code": "30303",
+        "cnt": 2,
+        "avg_orders": 97.5,
+        "avg_revenue": 3583.82
+      },
+      {
+        "zip_code": "30324",
+        "cnt": 2,
+        "avg_orders": 79.0,
+        "avg_revenue": 1796.95
+      },
+      {
+        "zip_code": "30313",
+        "cnt": 2,
+        "avg_orders": 5.0,
+        "avg_revenue": 168.22
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, restaurant_name, monthly_revenue, monthly_ad_spend, ROUND(monthly_revenue / monthly_ad_spend, 2) AS revenue_per_ad_dollar, is_managed FROM restaurants WHERE uses_ads = 1 ORDER BY revenue_per_ad_dollar DESC LIMIT 10",
+    "normalized": "select restaurant_id, restaurant_name, monthly_revenue, monthly_ad_spend, round(monthly_revenue / monthly_ad_spend, 2) as revenue_per_ad_dollar, is_managed from restaurants where uses_ads = 1 order by revenue_per_ad_dollar desc limit 10",
+    "columns": [
+      "restaurant_id",
+      "restaurant_name",
+      "monthly_revenue",
+      "monthly_ad_spend",
+      "revenue_per_ad_dollar",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R087",
+        "restaurant_name": "Sunny Oyster Bar",
+        "monthly_revenue": 16206.72,
+        "monthly_ad_spend": 10.0,
+        "revenue_per_ad_dollar": 1620.67,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R012",
+        "restaurant_name": "Golden Burritos",
+        "monthly_revenue": 9540.12,
+        "monthly_ad_spend": 10.0,
+        "revenue_per_ad_dollar": 954.01,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R079",
+        "restaurant_name": "Sweet Ribs & Wings",
+        "monthly_revenue": 8612.8,
+        "monthly_ad_spend": 10.0,
+        "revenue_per_ad_dollar": 861.28,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R032",
+        "restaurant_name": "Midtown Kitchen",
+        "monthly_revenue": 17522.8,
+        "monthly_ad_spend": 24.58,
+        "revenue_per_ad_dollar": 712.89,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R089",
+        "restaurant_name": "Modern Pit",
+        "monthly_revenue": 4742.53,
+        "monthly_ad_spend": 10.0,
+        "revenue_per_ad_dollar": 474.25,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R014",
+        "restaurant_name": "Buckhead Olive",
+        "monthly_revenue": 36894.96,
+        "monthly_ad_spend": 126.33,
+        "revenue_per_ad_dollar": 292.05,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R096",
+        "restaurant_name": "Big Sushi Bar",
+        "monthly_revenue": 16817.85,
+        "monthly_ad_spend": 59.72,
+        "revenue_per_ad_dollar": 281.61,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R043",
+        "restaurant_name": "Golden Kitchen",
+        "monthly_revenue": 5208.98,
+        "monthly_ad_spend": 19.73,
+        "revenue_per_ad_dollar": 264.01,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R036",
+        "restaurant_name": "Silver Orchid",
+        "monthly_revenue": 11181.96,
+        "monthly_ad_spend": 43.2,
+        "revenue_per_ad_dollar": 258.84,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R078",
+        "restaurant_name": "Lucky Kitchen",
+        "monthly_revenue": 20520.09,
+        "monthly_ad_spend": 94.61,
+        "revenue_per_ad_dollar": 216.89,
+        "is_managed": 1
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT RANK() OVER (ORDER BY monthly_orders DESC) AS rank, restaurant_id, restaurant_name, monthly_orders, is_managed FROM restaurants WHERE is_managed = 0 ORDER BY rank LIMIT 10",
+    "normalized": "select rank() over (order by monthly_orders desc) as rank, restaurant_id, restaurant_name, monthly_orders, is_managed from restaurants where is_managed = 0 order by rank limit 10",
+    "columns": [
+      "rank",
+      "restaurant_id",
+      "restaurant_name",
+      "monthly_orders",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "restaurant_id": "R016",
+        "restaurant_name": "Spicy Spice House",
+        "monthly_orders": 474,
+        "is_managed": 0
+      },
+      {
+        "rank": 2,
+        "restaurant_id": "R011",
+        "restaurant_name": "Red Express",
+        "monthly_orders": 408,
+        "is_managed": 0
+      },
+      {
+        "rank": 3,
+        "restaurant_id": "R039",
+        "restaurant_name": "Crispy Olive",
+        "monthly_orders": 369,
+        "is_managed": 0
+      },
+      {
+        "rank": 4,
+        "restaurant_id": "R045",
+        "restaurant_name": "Rustic Dragon",
+        "monthly_orders": 369,
+        "is_managed": 0
+      },
+      {
+        "rank": 5,
+        "restaurant_id": "R064",
+        "restaurant_name": "Little Taverna",
+        "monthly_orders": 357,
+        "is_managed": 0
+      },
+      {
+        "rank": 6,
+        "restaurant_id": "R097",
+        "restaurant_name": "Big Spice House",
+        "monthly_orders": 355,
+        "is_managed": 0
+      },
+      {
+        "rank": 7,
+        "restaurant_id": "R021",
+        "restaurant_name": "Classic Pier",
+        "monthly_orders": 343,
+        "is_managed": 0
+      },
+      {
+        "rank": 8,
+        "restaurant_id": "R020",
+        "restaurant_name": "Lucky Orchid",
+        "monthly_orders": 334,
+        "is_managed": 0
+      },
+      {
+        "rank": 9,
+        "restaurant_id": "R040",
+        "restaurant_name": "West Tandoor",
+        "monthly_orders": 305,
+        "is_managed": 0
+      },
+      {
+        "rank": 10,
+        "restaurant_id": "R022",
+        "restaurant_name": "Lucky Palace",
+        "monthly_orders": 299,
+        "is_managed": 0
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT RANK() OVER (ORDER BY monthly_orders DESC) AS rank, restaurant_id, restaurant_name, monthly_orders, is_managed FROM restaurants WHERE is_managed = 1 ORDER BY rank LIMIT 10",
+    "normalized": "select rank() over (order by monthly_orders desc) as rank, restaurant_id, restaurant_name, monthly_orders, is_managed from restaurants where is_managed = 1 order by rank limit 10",
+    "columns": [
+      "rank",
+      "restaurant_id",
+      "restaurant_name",
+      "monthly_orders",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "restaurant_id": "R072",
+        "restaurant_name": "Blue Pizzeria",
+        "monthly_orders": 1138,
+        "is_managed": 1
+      },
+      {
+        "rank": 2,
+        "restaurant_id": "R014",
+        "restaurant_name": "Buckhead Olive",
+        "monthly_orders": 1044,
+        "is_managed": 1
+      },
+      {
+        "rank": 3,
+        "restaurant_id": "R098",
+        "restaurant_name": "Southern Kitchen",
+        "monthly_orders": 935,
+        "is_managed": 1
+      },
+      {
+        "rank": 4,
+        "restaurant_id": "R005",
+        "restaurant_name": "Urban Ramen House",
+        "monthly_orders": 928,
+        "is_managed": 1
+      },
+      {
+        "rank": 5,
+        "restaurant_id": "R001",
+        "restaurant_name": "Crispy Palace",
+        "monthly_orders": 923,
+        "is_managed": 1
+      },
+      {
+        "rank": 6,
+        "restaurant_id": "R085",
+        "restaurant_name": "West Kitchen",
+        "monthly_orders": 871,
+        "is_managed": 1
+      },
+      {
+        "rank": 7,
+        "restaurant_id": "R054",
+        "restaurant_name": "Green Kitchen",
+        "monthly_orders": 856,
+        "is_managed": 1
+      },
+      {
+        "rank": 8,
+        "restaurant_id": "R082",
+        "restaurant_name": "Atlanta Dragon",
+        "monthly_orders": 849,
+        "is_managed": 1
+      },
+      {
+        "rank": 9,
+        "restaurant_id": "R015",
+        "restaurant_name": "Sizzling Oyster Bar",
+        "monthly_orders": 815,
+        "is_managed": 1
+      },
+      {
+        "rank": 10,
+        "restaurant_id": "R094",
+        "restaurant_name": "Buckhead Kitchen",
+        "monthly_orders": 776,
+        "is_managed": 1
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, monthly_orders, monthly_revenue, SUM(monthly_revenue) OVER (ORDER BY monthly_orders DESC ROWS UNBOUNDED PRECEDING) AS running_total_revenue, is_managed FROM restaurants WHERE is_managed = 0 ORDER BY monthly_orders DESC LIMIT 10",
+    "normalized": "select restaurant_id, monthly_orders, monthly_revenue, sum(monthly_revenue) over (order by monthly_orders desc rows unbounded preceding) as running_total_revenue, is_managed from restaurants where is_managed = 0 order by monthly_orders desc limit 10",
+    "columns": [
+      "restaurant_id",
+      "monthly_orders",
+      "monthly_revenue",
+      "running_total_revenue",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R016",
+        "monthly_orders": 474,
+        "monthly_revenue": 14698.74,
+        "running_total_revenue": 14698.74,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R011",
+        "monthly_orders": 408,
+        "monthly_revenue": 10722.24,
+        "running_total_revenue": 25420.98,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R039",
+        "monthly_orders": 369,
+        "monthly_revenue": 9309.87,
+        "running_total_revenue": 34730.85,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R045",
+        "monthly_orders": 369,
+        "monthly_revenue": 8778.51,
+        "running_total_revenue": 43509.36,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R064",
+        "monthly_orders": 357,
+        "monthly_revenue": 13226.85,
+        "running_total_revenue": 56736.21,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R097",
+        "monthly_orders": 355,
+        "monthly_revenue": 13312.5,
+        "running_total_revenue": 70048.71,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R021",
+        "monthly_orders": 343,
+        "monthly_revenue": 4726.54,
+        "running_total_revenue": 74775.25,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R020",
+        "monthly_orders": 334,
+        "monthly_revenue": 11352.66,
+        "running_total_revenue": 86127.91,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R040",
+        "monthly_orders": 305,
+        "monthly_revenue": 5029.45,
+        "running_total_revenue": 91157.36,
+        "is_managed": 0
+      },
+      {
+        "restaurant_id": "R022",
+        "monthly_orders": 299,
+        "monthly_revenue": 9463.35,
+        "running_total_revenue": 100620.71,
+        "is_managed": 0
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, monthly_orders, monthly_revenue, SUM(monthly_revenue) OVER (ORDER BY monthly_orders DESC ROWS UNBOUNDED PRECEDING) AS running_total_revenue, is_managed FROM restaurants WHERE is_managed = 1 ORDER BY monthly_orders DESC LIMIT 10",
+    "normalized": "select restaurant_id, monthly_orders, monthly_revenue, sum(monthly_revenue) over (order by monthly_orders desc rows unbounded preceding) as running_total_revenue, is_managed from restaurants where is_managed = 1 order by monthly_orders desc limit 10",
+    "columns": [
+      "restaurant_id",
+      "monthly_orders",
+      "monthly_revenue",
+      "running_total_revenue",
+      "is_managed"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R072",
+        "monthly_orders": 1138,
+        "monthly_revenue": 34629.34,
+        "running_total_revenue": 34629.34,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R014",
+        "monthly_orders": 1044,
+        "monthly_revenue": 36894.96,
+        "running_total_revenue": 71524.3,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R098",
+        "monthly_orders": 935,
+        "monthly_revenue": 28807.35,
+        "running_total_revenue": 100331.65,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R005",
+        "monthly_orders": 928,
+        "monthly_revenue": 35022.72,
+        "running_total_revenue": 135354.37,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R001",
+        "monthly_orders": 923,
+        "monthly_revenue": 35517.04,
+        "running_total_revenue": 170871.41,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R085",
+        "monthly_orders": 871,
+        "monthly_revenue": 22245.34,
+        "running_total_revenue": 193116.75,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R054",
+        "monthly_orders": 856,
+        "monthly_revenue": 21211.68,
+        "running_total_revenue": 214328.43,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R082",
+        "monthly_orders": 849,
+        "monthly_revenue": 22006.08,
+        "running_total_revenue": 236334.51,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R015",
+        "monthly_orders": 815,
+        "monthly_revenue": 30016.45,
+        "running_total_revenue": 266350.96,
+        "is_managed": 1
+      },
+      {
+        "restaurant_id": "R094",
+        "monthly_orders": 776,
+        "monthly_revenue": 21417.6,
+        "running_total_revenue": 287768.56,
+        "is_managed": 1
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, monthly_orders, is_managed, PERCENT_RANK() OVER (ORDER BY monthly_orders) AS percentile FROM restaurants ORDER BY percentile DESC LIMIT 10",
+    "normalized": "select restaurant_id, monthly_orders, is_managed, percent_rank() over (order by monthly_orders) as percentile from restaurants order by percentile desc limit 10",
+    "columns": [
+      "restaurant_id",
+      "monthly_orders",
+      "is_managed",
+      "percentile"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R072",
+        "monthly_orders": 1138,
+        "is_managed": 1,
+        "percentile": 1.0
+      },
+      {
+        "restaurant_id": "R014",
+        "monthly_orders": 1044,
+        "is_managed": 1,
+        "percentile": 0.99
+      },
+      {
+        "restaurant_id": "R098",
+        "monthly_orders": 935,
+        "is_managed": 1,
+        "percentile": 0.98
+      },
+      {
+        "restaurant_id": "R005",
+        "monthly_orders": 928,
+        "is_managed": 1,
+        "percentile": 0.97
+      },
+      {
+        "restaurant_id": "R001",
+        "monthly_orders": 923,
+        "is_managed": 1,
+        "percentile": 0.96
+      },
+      {
+        "restaurant_id": "R085",
+        "monthly_orders": 871,
+        "is_managed": 1,
+        "percentile": 0.95
+      },
+      {
+        "restaurant_id": "R054",
+        "monthly_orders": 856,
+        "is_managed": 1,
+        "percentile": 0.94
+      },
+      {
+        "restaurant_id": "R082",
+        "monthly_orders": 849,
+        "is_managed": 1,
+        "percentile": 0.93
+      },
+      {
+        "restaurant_id": "R015",
+        "monthly_orders": 815,
+        "is_managed": 1,
+        "percentile": 0.92
+      },
+      {
+        "restaurant_id": "R094",
+        "monthly_orders": 776,
+        "is_managed": 1,
+        "percentile": 0.91
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT restaurant_id, conversion_rate, monthly_orders, page_views FROM restaurants WHERE conversion_rate > 1 ORDER BY conversion_rate DESC",
+    "normalized": "select restaurant_id, conversion_rate, monthly_orders, page_views from restaurants where conversion_rate > 1 order by conversion_rate desc",
+    "columns": [
+      "restaurant_id",
+      "conversion_rate",
+      "monthly_orders",
+      "page_views"
+    ],
+    "rows": [
+      {
+        "restaurant_id": "R014",
+        "conversion_rate": 8.0,
+        "monthly_orders": 1044,
+        "page_views": 2403
+      },
+      {
+        "restaurant_id": "R066",
+        "conversion_rate": 3.0,
+        "monthly_orders": 189,
+        "page_views": 1424
+      },
+      {
+        "restaurant_id": "R061",
+        "conversion_rate": 2.0,
+        "monthly_orders": 274,
+        "page_views": 2719
+      },
+      {
+        "restaurant_id": "R099",
+        "conversion_rate": 2.0,
+        "monthly_orders": 54,
+        "page_views": 96
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT MIN(monthly_orders) AS min_orders, MAX(monthly_orders) AS max_orders, AVG(monthly_orders) AS avg_orders, MEDIAN(monthly_orders) AS median_orders, MIN(monthly_revenue) AS min_revenue, MAX(monthly_revenue) AS max_revenue, AVG(monthly_revenue) AS avg_revenue FROM restaurants",
+    "normalized": "select min(monthly_orders) as min_orders, max(monthly_orders) as max_orders, avg(monthly_orders) as avg_orders, median(monthly_orders) as median_orders, min(monthly_revenue) as min_revenue, max(monthly_revenue) as max_revenue, avg(monthly_revenue) as avg_revenue from restaurants",
+    "columns": [
+      "min_orders",
+      "max_orders",
+      "avg_orders",
+      "median_orders",
+      "min_revenue",
+      "max_revenue",
+      "avg_revenue"
+    ],
+    "rows": [
+      {
+        "min_orders": 5,
+        "max_orders": 1138,
+        "avg_orders": 310.71,
+        "median_orders": 216.0,
+        "min_revenue": 122.45,
+        "max_revenue": 36894.96,
+        "avg_revenue": 8524.31
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT COUNT(*) AS mixed_scale_fields FROM data_dictionary WHERE field_name IN ('conversion_rate','cancellation_rate') AND scale_type IN ('0_to_1','0_to_100')",
+    "normalized": "select count(*) as mixed_scale_fields from data_dictionary where field_name in ('conversion_rate','cancellation_rate') and scale_type in ('0_to_1','0_to_100')",
+    "columns": [
+      "mixed_scale_fields"
+    ],
+    "rows": [
+      {
+        "mixed_scale_fields": 2
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT column_name, COUNT(*) - COUNT(value) AS null_count, ROUND(100.0 * (COUNT(*) - COUNT(value)) / COUNT(*), 1) AS null_pct FROM atl_restaurants_unpivot GROUP BY column_name HAVING null_count > 0 ORDER BY null_pct DESC LIMIT 5",
+    "normalized": "select column_name, count(*) - count(value) as null_count, round(100.0 * (count(*) - count(value)) / count(*), 1) as null_pct from atl_restaurants_unpivot group by column_name having null_count > 0 order by null_pct desc limit 5",
+    "columns": [
+      "column_name",
+      "null_count",
+      "null_pct"
+    ],
+    "rows": [
+      {
+        "column_name": "promo_spend_usd",
+        "null_count": 8,
+        "null_pct": 8.0
+      },
+      {
+        "column_name": "customer_rating",
+        "null_count": 3,
+        "null_pct": 3.0
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT DATE_TRUNC('month', order_date) AS month, SUM(order_value) AS monthly_sales, SUM(SUM(order_value)) OVER (ORDER BY DATE_TRUNC('month', order_date)) AS cumulative_sales FROM delivery_data WHERE store_id IN (SELECT DISTINCT store_id FROM owner_mapping WHERE account_owner IN ('Kevin','Carla')) GROUP BY DATE_TRUNC('month', order_date) ORDER BY month",
+    "normalized": "select date_trunc('month', order_date) as month, sum(order_value) as monthly_sales, sum(sum(order_value)) over (order by date_trunc('month', order_date)) as cumulative_sales from delivery_data where store_id in (select distinct store_id from owner_mapping where account_owner in ('kevin','carla')) group by date_trunc('month', order_date) order by month",
+    "columns": [
+      "month",
+      "monthly_sales",
+      "cumulative_sales"
+    ],
+    "rows": [
+      {
+        "month": "2019-06-01",
+        "monthly_sales": 8421.2,
+        "cumulative_sales": 8421.2
+      },
+      {
+        "month": "2019-07-01",
+        "monthly_sales": 9018.7,
+        "cumulative_sales": 17439.9
+      },
+      {
+        "month": "2019-08-01",
+        "monthly_sales": 9302.4,
+        "cumulative_sales": 26742.3
+      },
+      {
+        "month": "2019-09-01",
+        "monthly_sales": 9815.1,
+        "cumulative_sales": 36557.4
+      },
+      {
+        "month": "2019-10-01",
+        "monthly_sales": 10244.6,
+        "cumulative_sales": 46802.0
+      },
+      {
+        "month": "2019-11-01",
+        "monthly_sales": 10891.3,
+        "cumulative_sales": 57693.3
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT tier, intervention, estimated_order_lift_pct, estimated_cost_per_store_usd, ROUND(estimated_order_lift_pct / estimated_cost_per_store_usd, 4) AS lift_per_dollar FROM intervention_candidates ORDER BY tier, lift_per_dollar DESC",
+    "normalized": "select tier, intervention, estimated_order_lift_pct, estimated_cost_per_store_usd, round(estimated_order_lift_pct / estimated_cost_per_store_usd, 4) as lift_per_dollar from intervention_candidates order by tier, lift_per_dollar desc",
+    "columns": [
+      "tier",
+      "intervention",
+      "estimated_order_lift_pct",
+      "estimated_cost_per_store_usd",
+      "lift_per_dollar"
+    ],
+    "rows": [
+      {
+        "tier": "Tier 1",
+        "intervention": "menu_photo_refresh",
+        "estimated_order_lift_pct": 20,
+        "estimated_cost_per_store_usd": 80,
+        "lift_per_dollar": 0.25
+      },
+      {
+        "tier": "Tier 1",
+        "intervention": "ads_credit",
+        "estimated_order_lift_pct": 35,
+        "estimated_cost_per_store_usd": 150,
+        "lift_per_dollar": 0.2333
+      },
+      {
+        "tier": "Tier 2",
+        "intervention": "ads_credit",
+        "estimated_order_lift_pct": 25,
+        "estimated_cost_per_store_usd": 150,
+        "lift_per_dollar": 0.1667
+      },
+      {
+        "tier": "Tier 3",
+        "intervention": "menu_photo_refresh",
+        "estimated_order_lift_pct": 18,
+        "estimated_cost_per_store_usd": 80,
+        "lift_per_dollar": 0.225
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT support_model, restaurants_supported, variable_cost_per_store_usd, monthly_orders_lift_per_store, aov_usd, take_rate, ROUND(monthly_orders_lift_per_store * aov_usd * take_rate, 2) AS monthly_incremental_rev_per_store, ROUND(monthly_orders_lift_per_store * aov_usd * take_rate * 12 * restaurants_supported, 2) AS annual_incremental_rev FROM pilot_cost_scenarios",
+    "normalized": "select support_model, restaurants_supported, variable_cost_per_store_usd, monthly_orders_lift_per_store, aov_usd, take_rate, round(monthly_orders_lift_per_store * aov_usd * take_rate, 2) as monthly_incremental_rev_per_store, round(monthly_orders_lift_per_store * aov_usd * take_rate * 12 * restaurants_supported, 2) as annual_incremental_rev from pilot_cost_scenarios",
+    "columns": [
+      "support_model",
+      "restaurants_supported",
+      "variable_cost_per_store_usd",
+      "monthly_orders_lift_per_store",
+      "aov_usd",
+      "take_rate",
+      "monthly_incremental_rev_per_store",
+      "annual_incremental_rev"
+    ],
+    "rows": [
+      {
+        "support_model": "shared_team",
+        "restaurants_supported": 20,
+        "variable_cost_per_store_usd": 185,
+        "monthly_orders_lift_per_store": 52,
+        "aov_usd": 15.0,
+        "take_rate": 0.2,
+        "monthly_incremental_rev_per_store": 156.0,
+        "annual_incremental_rev": 37440.0
+      },
+      {
+        "support_model": "dedicated_am",
+        "restaurants_supported": 20,
+        "variable_cost_per_store_usd": 420,
+        "monthly_orders_lift_per_store": 58,
+        "aov_usd": 15.0,
+        "take_rate": 0.2,
+        "monthly_incremental_rev_per_store": 174.0,
+        "annual_incremental_rev": 41760.0
+      },
+      {
+        "support_model": "automation_first",
+        "restaurants_supported": 20,
+        "variable_cost_per_store_usd": 95,
+        "monthly_orders_lift_per_store": 21,
+        "aov_usd": 15.0,
+        "take_rate": 0.2,
+        "monthly_incremental_rev_per_store": 63.0,
+        "annual_incremental_rev": 15120.0
+      }
+    ]
+  },
+  {
+    "pattern": "SELECT 'unmanaged_avg_orders' AS metric, ROUND(AVG(monthly_orders)) AS value FROM atl_restaurants WHERE is_managed = 0 UNION ALL SELECT 'managed_avg_orders', ROUND(AVG(monthly_orders)) FROM atl_restaurants WHERE is_managed = 1 UNION ALL SELECT 'gap_ratio', ROUND(AVG(CASE WHEN is_managed = 1 THEN monthly_orders END)::numeric / AVG(CASE WHEN is_managed = 0 THEN monthly_orders END), 2) FROM atl_restaurants UNION ALL SELECT 'unmanaged_count', COUNT(*) FROM atl_restaurants WHERE is_managed = 0",
+    "normalized": "select 'unmanaged_avg_orders' as metric, round(avg(monthly_orders)) as value from atl_restaurants where is_managed = 0 union all select 'managed_avg_orders', round(avg(monthly_orders)) from atl_restaurants where is_managed = 1 union all select 'gap_ratio', round(avg(case when is_managed = 1 then monthly_orders end)::numeric / avg(case when is_managed = 0 then monthly_orders end), 2) from atl_restaurants union all select 'unmanaged_count', count(*) from atl_restaurants where is_managed = 0",
+    "columns": [
+      "metric",
+      "value"
+    ],
+    "rows": [
+      {
+        "metric": "unmanaged_avg_orders",
+        "value": 198
+      },
+      {
+        "metric": "managed_avg_orders",
+        "value": 842
+      },
+      {
+        "metric": "gap_ratio",
+        "value": 4.25
+      },
+      {
+        "metric": "unmanaged_count",
+        "value": 60
+      }
+    ]
+  }
+]
