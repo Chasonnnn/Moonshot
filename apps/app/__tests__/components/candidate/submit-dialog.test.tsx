@@ -9,6 +9,11 @@ vi.mock("@/actions/session", () => ({
 import { SubmitDialog } from "@/components/candidate/submit-dialog"
 
 const mockSetSubmitted = vi.fn()
+const mockApi = {
+  updateDeliverable: vi.fn(),
+  createDeliverable: vi.fn(),
+  submitDeliverable: vi.fn(),
+}
 let mockFinalResponse = "This is a valid final response for testing"
 let mockIsSubmitted = false
 let mockSession = {
@@ -25,10 +30,17 @@ let mockSession = {
 
 vi.mock("@/components/candidate/session-context", () => ({
   useSession: () => ({
+    api: mockApi,
     session: mockSession,
     isSubmitted: mockIsSubmitted,
     setSubmitted: mockSetSubmitted,
     finalResponse: mockFinalResponse,
+    deliverableContent: "",
+    deliverableArtifacts: [],
+    deliverableId: null,
+    setDeliverableId: vi.fn(),
+    deliverableStatus: null,
+    setDeliverableStatus: vi.fn(),
   }),
 }))
 

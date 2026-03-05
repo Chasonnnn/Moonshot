@@ -12,6 +12,13 @@ import { useSession } from "@/components/candidate/session-context"
 import { getModeRules } from "@/components/candidate/session-preflight"
 import { ChevronRight } from "lucide-react"
 
+function formatTimer(totalSeconds: number | null): string {
+  if (totalSeconds == null) return "--:--"
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+}
+
 export function TaskPanel() {
   const {
     session,
@@ -23,6 +30,11 @@ export function TaskPanel() {
     fixtureData,
     currentRoundIndex,
     totalRounds,
+    parts,
+    activePart,
+    setActivePart,
+    activePartRemainingSeconds,
+    isActivePartExpired,
   } = useSession()
   const rules = getModeRules(mode)
   const currentRound = fixtureData?.rounds[currentRoundIndex] ?? null
@@ -63,6 +75,46 @@ export function TaskPanel() {
                   <li key={deliverable}>{deliverable}</li>
                 ))}
               </ul>
+            </div>
+            <Separator />
+          </>
+        )}
+
+        {parts.length > 0 && (
+          <>
+            <div>
+              <h3 className="text-[13px] font-medium text-[#86868B] uppercase tracking-wide">
+                Assessment Parts
+              </h3>
+              <div className="mt-2 space-y-1">
+                {parts.map((part, i) => (
+                  <button
+                    key={part.id}
+                    onClick={() => setActivePart(i)}
+                    className={`w-full rounded-md px-3 py-2 text-left text-[13px] transition-colors ${
+                      i === activePart
+                        ? "bg-[#0071E3]/10 font-medium text-[#0071E3]"
+                        : "text-[#1D1D1F] hover:bg-[#F5F5F7]"
+                    }`}
+                  >
+                    <span className="text-[11px] text-[#86868B]">Part {i + 1}</span>
+                    <br />
+                    {part.title}
+                  </button>
+                ))}
+              </div>
+              {parts[activePart] && (
+                <>
+                  <p className="mt-2 text-[13px] leading-relaxed text-[#4D4D52]">
+                    {parts[activePart].description}
+                  </p>
+                  {parts[activePart].time_limit_minutes != null && (
+                    <p className={`mt-2 text-[12px] ${isActivePartExpired ? "text-[#FF3B30]" : "text-[#86868B]"}`}>
+                      Part timer: {formatTimer(activePartRemainingSeconds)}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
             <Separator />
           </>

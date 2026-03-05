@@ -12,12 +12,12 @@ describe("DoorDash enablement demo fixture alignment", () => {
     expect(template?.estimatedDuration).toBe("4 weeks")
   })
 
-  it("contains a 4-round fixture program", () => {
+  it("contains an 8-round fixture program (2 per week x 4 weeks)", () => {
     const fixture = DEMO_FIXTURES.tpl_doordash_enablement
     expect(fixture).toBeDefined()
-    expect(fixture.rounds).toHaveLength(4)
+    expect(fixture.rounds).toHaveLength(8)
     expect(fixture.rounds[0]?.title).toContain("Week 1")
-    expect(fixture.rounds[3]?.title).toContain("Week 4")
+    expect(fixture.rounds[7]?.title).toContain("Week 4")
   })
 
   it("keeps rubric and score dimensions aligned", () => {

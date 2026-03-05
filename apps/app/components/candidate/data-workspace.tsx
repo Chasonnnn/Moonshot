@@ -1,0 +1,147 @@
+"use client"
+
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { ChevronRight, Database } from "lucide-react"
+
+export interface DatasetColumn {
+  name: string
+  dtype: string
+  description: string
+  sample_values: string[]
+}
+
+export interface DatasetSchema {
+  columns: DatasetColumn[]
+}
+
+export interface CaseDatasetView {
+  id: string
+  name: string
+  description: string
+  row_count: number
+  schema: DatasetSchema
+  preview_rows: Record<string, unknown>[]
+}
+
+export function DataWorkspace({ datasets }: { datasets: CaseDatasetView[] }) {
+  if (datasets.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <Database className="mx-auto h-8 w-8 text-[#86868B]" />
+          <p className="mt-2 text-[13px] text-[#86868B]">No datasets available</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <ScrollArea className="h-full">
+      <div className="space-y-6 p-4">
+        {datasets.map((dataset) => (
+          <DatasetCard key={dataset.id} dataset={dataset} />
+        ))}
+      </div>
+    </ScrollArea>
+  )
+}
+
+function DatasetCard({ dataset }: { dataset: CaseDatasetView }) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="flex items-center gap-2">
+          <Database className="h-4 w-4 text-[#0071E3]" />
+          <h3 className="text-[14px] font-medium text-[#1D1D1F]">
+            {dataset.name}
+          </h3>
+          <Badge variant="secondary" className="text-[10px]">
+            {dataset.row_count} rows
+          </Badge>
+        </div>
+        <p className="mt-1 text-[13px] text-[#86868B]">
+          {dataset.description}
+        </p>
+      </div>
+
+      <div>
+        <h4 className="text-[12px] font-medium uppercase tracking-wide text-[#86868B]">
+          Schema
+        </h4>
+        <div className="mt-2 space-y-1">
+          {dataset.schema.columns.map((col) => (
+            <Collapsible key={col.name}>
+              <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-[12px] hover:bg-[#F5F5F7]">
+                <ChevronRight className="h-3 w-3 text-[#86868B] transition-transform [[data-state=open]_&]:rotate-90" />
+                <span className="font-mono text-[#1D1D1F]">{col.name}</span>
+                <Badge variant="outline" className="text-[10px]">
+                  {col.dtype}
+                </Badge>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-7">
+                <p className="text-[11px] text-[#86868B]">{col.description}</p>
+                {col.sample_values.length > 0 && (
+                  <p className="mt-0.5 text-[11px] text-[#86868B]">
+                    Sample: {col.sample_values.join(", ")}
+                  </p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+        </div>
+      </div>
+
+      {dataset.preview_rows.length > 0 && (
+        <div>
+          <h4 className="text-[12px] font-medium uppercase tracking-wide text-[#86868B]">
+            Preview
+          </h4>
+          <div className="mt-2 overflow-x-auto rounded-lg border border-[#D2D2D7]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {dataset.schema.columns.map((col) => (
+                    <TableHead
+                      key={col.name}
+                      className="whitespace-nowrap text-[11px]"
+                    >
+                      {col.name}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dataset.preview_rows.map((row, i) => (
+                  <TableRow key={i}>
+                    {dataset.schema.columns.map((col) => (
+                      <TableCell
+                        key={col.name}
+                        className="whitespace-nowrap font-mono text-[11px]"
+                      >
+                        {String(row[col.name] ?? "")}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

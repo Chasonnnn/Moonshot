@@ -373,6 +373,34 @@ export interface PythonHistoryItem {
   executed_at: string
 }
 
+export interface DatasetColumn {
+  name: string
+  dtype: string
+  description: string
+  sample_values: string[]
+}
+
+export interface CaseDataset {
+  id: string
+  name: string
+  description: string
+  row_count: number
+  schema?: { columns: DatasetColumn[] }
+  columns?: DatasetColumn[]
+  preview_rows?: Record<string, unknown>[]
+}
+
+export interface DeliverableRecord {
+  id: string
+  session_id: string
+  part_id: string | null
+  content_markdown: string
+  embedded_artifacts: string[]
+  status: "draft" | "submitted"
+  created_at: string
+  updated_at: string
+}
+
 export interface RRunResponse {
   ok: boolean
   stdout: string | null

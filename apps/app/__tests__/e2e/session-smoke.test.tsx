@@ -7,6 +7,7 @@ import { SessionWorkspace } from "@/components/candidate/session-workspace"
 const mockApi = {
   runSql: vi.fn(),
   getSqlHistory: vi.fn().mockResolvedValue({ items: [] }),
+  getDatasets: vi.fn().mockResolvedValue({ datasets: [] }),
   getDashboardState: vi.fn().mockResolvedValue({ filters: {}, view: "default", annotations: [] }),
   dashboardAction: vi.fn(),
   coachMessage: vi.fn(),
@@ -85,7 +86,7 @@ describe("Session Smoke Test", () => {
     expect(
       screen.getByText("Analyze the sales data and write a summary of your findings.")
     ).toBeInTheDocument()
-    expect(screen.getByText("SQL Workspace")).toBeInTheDocument()
+    expect(screen.getByText("SQL")).toBeInTheDocument()
     expect(screen.getByText("Coach")).toBeInTheDocument()
   })
 
@@ -103,6 +104,9 @@ describe("Session Smoke Test", () => {
 
     render(<SessionWorkspace session={mockSession} />)
     await completePreflight()
+
+    // Switch to SQL tab (Data tab is now default)
+    fireEvent.click(screen.getByText("SQL"))
 
     // Use fireEvent.change for faster state update in integration test
     const sqlTextarea = screen.getByPlaceholderText(/write your sql/i)
@@ -182,6 +186,9 @@ describe("Session Smoke Test", () => {
       expect(screen.getByText("Session time limit reached")).toBeInTheDocument()
     })
     expect(screen.getByPlaceholderText(/write your final response/i)).toBeDisabled()
+
+    // Switch to SQL tab to find the Run button
+    fireEvent.click(screen.getByText("SQL"))
     const runButton = document.querySelector('button[aria-label="Run"]') as HTMLButtonElement | null
     const sendButton = document.querySelector('button[aria-label="Send"]') as HTMLButtonElement | null
     expect(runButton).not.toBeNull()

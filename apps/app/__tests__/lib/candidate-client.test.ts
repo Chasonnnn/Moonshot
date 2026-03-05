@@ -71,6 +71,22 @@ describe("CandidateApiClient", () => {
       const headers = lastFetchCall().init.headers as Record<string, string>
       expect(headers["X-CSRF-Token"]).toBeUndefined()
     })
+
+    it("includes X-CSRF-Token header on PUT requests", async () => {
+      mockFetchResponse({
+        id: "d1",
+        session_id: sessionId,
+        part_id: null,
+        content_markdown: "# v2",
+        embedded_artifacts: [],
+        status: "draft",
+        created_at: "2026-03-05T00:00:00Z",
+        updated_at: "2026-03-05T00:00:00Z",
+      })
+      await client.updateDeliverable("d1", "# v2")
+      const headers = lastFetchCall().init.headers as Record<string, string>
+      expect(headers["X-CSRF-Token"]).toBe("mock-csrf-token")
+    })
   })
 
   describe("Idempotency-Key", () => {
@@ -187,6 +203,35 @@ describe("CandidateApiClient", () => {
       ])
       const body = JSON.parse(lastFetchCall().init.body as string)
       expect(body).toEqual({ events: [{ event_type: "click", payload: { x: 1 } }, { event_type: "view", payload: {} }] })
+    })
+
+    it("getDatasets sends GET to datasets", async () => {
+      mockFetchResponse({ datasets: [] })
+      await client.getDatasets()
+      const { url, init } = lastFetchCall()
+      expect(url).toBe("/api/candidate/test-session-123/datasets")
+      expect(init.method).toBe("GET")
+    })
+
+    it("updateDeliverable sends PUT to deliverables/:id", async () => {
+      mockFetchResponse({
+        id: "d1",
+        session_id: sessionId,
+        part_id: null,
+        content_markdown: "# v2",
+        embedded_artifacts: ["a.png"],
+        status: "draft",
+        created_at: "2026-03-05T00:00:00Z",
+        updated_at: "2026-03-05T00:00:00Z",
+      })
+      await client.updateDeliverable("d1", "# v2", ["a.png"])
+      const { url, init } = lastFetchCall()
+      expect(url).toBe("/api/candidate/test-session-123/deliverables/d1")
+      expect(init.method).toBe("PUT")
+      expect(JSON.parse(init.body as string)).toEqual({
+        content_markdown: "# v2",
+        embedded_artifacts: ["a.png"],
+      })
     })
   })
 })

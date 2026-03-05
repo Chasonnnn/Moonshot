@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect } from "react"
+import { useActionState, useEffect, useRef, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -24,13 +24,28 @@ export function SubmitDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const { session, finalResponse, setSubmitted } = useSession()
+  const {
+    api,
+    session,
+    finalResponse,
+    setSubmitted,
+    deliverableContent,
+    deliverableArtifacts,
+    deliverableId,
+    setDeliverableId,
+    deliverableStatus,
+    setDeliverableStatus,
+  } = useSession()
   const [state, formAction, isPending] = useActionState(
     submitSession,
     initialSubmitState
   )
-
-  const isValid = finalResponse.trim().length >= 10
+  const [isSyncingDeliverable, setIsSyncingDeliverable] = useState(false)
+  const [deliverableError, setDeliverableError] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const allowNativeSubmitRef = useRef(false)
+  const submissionText = deliverableContent.trim() || finalResponse
+  const isValid = submissionText.trim().length >= 10
 
   useEffect(() => {
     if (state.success) {
@@ -39,6 +54,56 @@ export function SubmitDialog({
       toast.success("Assessment submitted")
     }
   }, [state.success, setSubmitted, onOpenChange])
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    if (allowNativeSubmitRef.current) {
+      allowNativeSubmitRef.current = false
+      return
+    }
+    event.preventDefault()
+    if (!isValid || isPending || isSyncingDeliverable) {
+      return
+    }
+
+    setDeliverableError(null)
+    setIsSyncingDeliverable(true)
+    try {
+      const reportMarkdown = deliverableContent.trim()
+      if (reportMarkdown) {
+        let workingId = deliverableId
+        if (workingId) {
+          const updated = await api.updateDeliverable(
+            workingId,
+            reportMarkdown,
+            deliverableArtifacts
+          )
+          setDeliverableStatus(updated.status)
+        } else {
+          const created = await api.createDeliverable(
+            reportMarkdown,
+            deliverableArtifacts
+          )
+          workingId = created.id
+          setDeliverableId(created.id)
+          setDeliverableStatus(created.status)
+        }
+
+        if (workingId && deliverableStatus !== "submitted") {
+          const submitted = await api.submitDeliverable(workingId)
+          setDeliverableStatus(submitted.status)
+        }
+      }
+
+      allowNativeSubmitRef.current = true
+      formRef.current?.requestSubmit()
+    } catch (error) {
+      setDeliverableError(
+        error instanceof Error ? error.message : "Failed to submit deliverable"
+      )
+    } finally {
+      setIsSyncingDeliverable(false)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -62,7 +127,7 @@ export function SubmitDialog({
               Your Response
             </p>
             <p className="mt-1 line-clamp-4 text-[13px] text-[#1D1D1F]">
-              {finalResponse || "(empty)"}
+              {submissionText || "(empty)"}
             </p>
           </div>
 
@@ -75,29 +140,36 @@ export function SubmitDialog({
           {state.error && (
             <p className="text-[12px] text-[#FF3B30]">{state.error}</p>
           )}
+          {deliverableError && (
+            <p className="text-[12px] text-[#FF3B30]">{deliverableError}</p>
+          )}
         </div>
 
         <DialogFooter>
-          <form action={formAction}>
+          <form ref={formRef} action={formAction} onSubmit={handleSubmit}>
             <input type="hidden" name="session_id" value={session.id} />
-            <input type="hidden" name="final_response" value={finalResponse} />
+            <input type="hidden" name="final_response" value={submissionText} />
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={isPending}
+                disabled={isPending || isSyncingDeliverable}
                 className="h-8 text-[13px]"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={!isValid || isPending}
+                disabled={!isValid || isPending || isSyncingDeliverable}
                 className="h-8 bg-[#0071E3] text-[13px] text-white hover:bg-[#0077ED]"
                 aria-label="Confirm"
               >
-                {isPending ? <Spinner className="h-3.5 w-3.5" /> : "Confirm"}
+                {isPending || isSyncingDeliverable ? (
+                  <Spinner className="h-3.5 w-3.5" />
+                ) : (
+                  "Confirm"
+                )}
               </Button>
             </div>
           </form>

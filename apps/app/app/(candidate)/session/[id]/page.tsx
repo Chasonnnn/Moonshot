@@ -41,7 +41,7 @@ export default async function SessionPage({
   const policyTemplateId = typeof result.session.policy?.demo_template_id === "string"
     ? result.session.policy.demo_template_id
     : undefined
-  const fixtureData = isAutoPlay ? resolveFixtureForSession(policyTemplateId) : null
+  const fixtureData = resolveFixtureForSession(policyTemplateId)
   if (isAutoPlay && fixtureData === null) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F5F5F7]">
