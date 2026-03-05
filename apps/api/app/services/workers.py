@@ -25,6 +25,7 @@ def touch_worker_heartbeat(worker_id: str, *, last_job_id: str | None = None) ->
 def get_worker_health(tenant_id: str) -> WorkerHealthResponse:
     now = _now()
     stale_after_seconds = int(get_settings().worker_stale_after_seconds)
+    in_flight_grace_seconds = max(stale_after_seconds, stale_after_seconds * 10)
     worker_rows = sorted(store.worker_heartbeats.values(), key=lambda row: str(row.get("worker_id")))
 
     workers: list[WorkerStatus] = []
@@ -52,7 +53,17 @@ def get_worker_health(tenant_id: str) -> WorkerHealthResponse:
             )
         )
 
-    stale_leases = len(get_stale_leases_for_tenant(tenant_id, limit=500))
-    has_active_worker = any(item.status == "ok" for item in workers)
-    overall_status = "ok" if stale_leases == 0 and has_active_worker else "degraded"
+    recent_worker_ids = {
+        item.worker_id for item in workers if item.seconds_since_last_seen <= in_flight_grace_seconds
+    }
+    stale_lease_rows = get_stale_leases_for_tenant(tenant_id, limit=500)
+    stale_leases = len(
+        [
+            item
+            for item in stale_lease_rows
+            if item.lease_owner is None or item.lease_owner not in recent_worker_ids
+        ]
+    )
+    has_recent_worker = bool(recent_worker_ids)
+    overall_status = "ok" if stale_leases == 0 and has_recent_worker else "degraded"
     return WorkerHealthResponse(overall_status=overall_status, workers=workers, stale_leases=stale_leases, checked_at=now)

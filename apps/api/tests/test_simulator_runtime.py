@@ -259,6 +259,33 @@ def test_python_run_with_doordash_runtime_context_dataset(client, admin_headers,
     assert "avg_conv" in stdout
 
 
+def test_python_run_with_doordash_shared_dataset_in_round_context(
+    client, admin_headers, candidate_headers
+):
+    session_id = _create_live_session(client, admin_headers)
+    run = client.post(
+        f"/v1/sessions/{session_id}/python/run",
+        headers=candidate_headers,
+        json={
+            "template_id": "tpl_doordash_enablement",
+            "round_id": "round_1",
+            "dataset_id": "doordash_restaurant_data",
+            "code": (
+                "import pandas as pd\n"
+                "df = pd.read_csv(DATASET_PATH)\n"
+                "print('rows', len(df))\n"
+                "print('cols', len(df.columns))"
+            ),
+        },
+    )
+    assert run.status_code == 200
+    payload = run.json()
+    assert payload["ok"] is True
+    stdout = payload["stdout"] or ""
+    assert "rows" in stdout
+    assert "cols" in stdout
+
+
 # ── Annotation tests ─────────────────────────────────────────────────
 
 

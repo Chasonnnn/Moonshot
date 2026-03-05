@@ -66,12 +66,19 @@ def resolve_dataset_path(
     round_name = _validate_context_value(round_id, "round_id")
     dataset = _validate_context_value(dataset_id, "dataset_id")
 
-    candidate = DEMO_RUNTIME_ROOT / template / round_name / f"{dataset}.csv"
-    if not candidate.exists() or not candidate.is_file():
-        raise PythonSandboxValidationError(
-            f"runtime_dataset_not_found:{template}:{round_name}:{dataset}"
-        )
-    return candidate
+    # Round-scoped datasets are preferred. If absent, use explicit
+    # template-shared datasets under `datasets/` for cross-round scripts.
+    candidates = [
+        DEMO_RUNTIME_ROOT / template / round_name / f"{dataset}.csv",
+        DEMO_RUNTIME_ROOT / template / "datasets" / f"{dataset}.csv",
+    ]
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_file():
+            return candidate
+
+    raise PythonSandboxValidationError(
+        f"runtime_dataset_not_found:{template}:{round_name}:{dataset}"
+    )
 
 
 def _root_name(node: ast.expr) -> str | None:

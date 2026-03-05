@@ -73,3 +73,48 @@ def test_worker_health_allows_historical_stale_rows_when_active_worker_exists(cl
     assert any(item["worker_id"] == "worker-fresh" and item["status"] == "ok" for item in payload["workers"])
     assert any(item["worker_id"] == "worker-old" and item["status"] == "stale" for item in payload["workers"])
     assert payload["overall_status"] == "ok"
+
+
+def test_worker_health_ignores_expired_lease_owned_by_active_worker(client, admin_headers):
+    job_id = _create_generate_job(client, admin_headers)
+    owner = "worker-active"
+    touch_worker_heartbeat(owner)
+
+    with SessionLocal() as db:
+        row = db.get(JobRunModel, job_id)
+        assert row is not None
+        row.status = "running"
+        row.lease_owner = owner
+        row.lease_expires_at = datetime.now(timezone.utc) - timedelta(seconds=30)
+        db.commit()
+
+    response = client.get("/v1/workers/health", headers=admin_headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["stale_leases"] == 0
+    assert payload["overall_status"] == "ok"
+
+
+def test_worker_health_ignores_expired_lease_owned_by_recent_worker(client, admin_headers):
+    job_id = _create_generate_job(client, admin_headers)
+    owner = "worker-recent"
+    recent_time = datetime.now(timezone.utc) - timedelta(seconds=90)
+    store.worker_heartbeats[owner] = {
+        "worker_id": owner,
+        "last_seen_at": recent_time.isoformat(),
+        "last_job_id": None,
+    }
+
+    with SessionLocal() as db:
+        row = db.get(JobRunModel, job_id)
+        assert row is not None
+        row.status = "running"
+        row.lease_owner = owner
+        row.lease_expires_at = datetime.now(timezone.utc) - timedelta(seconds=30)
+        db.commit()
+
+    response = client.get("/v1/workers/health", headers=admin_headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["stale_leases"] == 0
+    assert payload["overall_status"] == "ok"
