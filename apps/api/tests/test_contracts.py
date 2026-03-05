@@ -43,6 +43,7 @@ EXPECTED_PATHS = {
     "/v1/sessions/{session_id}/score",
     "/v1/reports/{session_id}",
     "/v1/reports/{session_id}/summary",
+    "/v1/reports/{session_id}/human-review",
     "/v1/reports/{session_id}/interpret",
     "/v1/reports/{session_id}/interpretations/{view_id}",
     "/v1/exports",
@@ -136,6 +137,34 @@ def test_openapi_fixture_variant_and_rubric_detail_fields_exist(client):
     assert "estimated_minutes" in task_variant
     assert "deliverables" in task_variant
     assert "artifact_refs" in task_variant
+
+
+def test_openapi_python_runtime_and_report_summary_extensions_exist(client):
+    schema = client.get("/openapi.json").json()
+    components = schema["components"]["schemas"]
+
+    python_run_request = components["PythonRunRequest"]["properties"]
+    assert "template_id" in python_run_request
+    assert "round_id" in python_run_request
+    assert "dataset_id" in python_run_request
+
+    runtime_artifact = components["RuntimeArtifact"]["properties"]
+    assert "name" in runtime_artifact
+    assert "mime_type" in runtime_artifact
+    assert "uri" in runtime_artifact
+    assert "bytes" in runtime_artifact
+    assert "kind" in runtime_artifact
+
+    python_run_response = components["PythonRunResponse"]["properties"]
+    assert "artifacts" in python_run_response
+
+    python_history_item = components["PythonHistoryItem"]["properties"]
+    assert "artifacts" in python_history_item
+
+    report_summary = components["ReportSummary"]["properties"]
+    assert "has_human_review" in report_summary
+    assert "final_score_source" in report_summary
+    assert "final_confidence" in report_summary
 
 
 def test_docs_openapi_file_tracks_required_paths():

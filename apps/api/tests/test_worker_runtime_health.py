@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 from app.db.session import SessionLocal
 from app.models.entities import JobRunModel
+from app.services.store import store
+from app.services.workers import touch_worker_heartbeat
 
 
 def _create_generate_job(client, admin_headers) -> str:
@@ -53,3 +55,21 @@ def test_worker_health_endpoint_reports_overall_health(client, admin_headers):
     assert payload["overall_status"] in {"ok", "degraded"}
     assert "workers" in payload
     assert "stale_leases" in payload
+
+
+def test_worker_health_allows_historical_stale_rows_when_active_worker_exists(client, admin_headers):
+    stale_time = datetime.now(timezone.utc) - timedelta(hours=1)
+    store.worker_heartbeats["worker-old"] = {
+        "worker_id": "worker-old",
+        "last_seen_at": stale_time.isoformat(),
+        "last_job_id": None,
+    }
+    touch_worker_heartbeat("worker-fresh")
+
+    response = client.get("/v1/workers/health", headers=admin_headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["stale_leases"] == 0
+    assert any(item["worker_id"] == "worker-fresh" and item["status"] == "ok" for item in payload["workers"])
+    assert any(item["worker_id"] == "worker-old" and item["status"] == "stale" for item in payload["workers"])
+    assert payload["overall_status"] == "ok"

@@ -33,6 +33,19 @@
 - Added simulator runtime Python endpoints to the public API spec:
   - `POST /v1/sessions/{session_id}/python/run`
   - `GET /v1/sessions/{session_id}/python/history`
+- Expanded simulator runtime Python contract for sandboxed demo execution:
+  - `POST /v1/sessions/{session_id}/python/run` accepts optional runtime context:
+    - `template_id`
+    - `round_id`
+    - `dataset_id`
+  - `PythonRunResponse` and `PythonHistoryItem` now include `artifacts[]` metadata.
+- Added persisted human review APIs for report notes and override workflows:
+  - `GET /v1/reports/{session_id}/human-review`
+  - `PUT /v1/reports/{session_id}/human-review`
+- Expanded report summary contract for effective final scoring context:
+  - `has_human_review`
+  - `final_score_source` (`model` or `human_override`)
+  - `final_confidence`
 - Added demo fixture contract governance gate:
   - `apps/api/scripts/check_demo_fixture_contract.py`
   - included in `make demo-gate`.

@@ -26,6 +26,7 @@ from app.models.entities import (
     EventLogModel,
     ExportRunModel,
     FairnessSmokeRunModel,
+    HumanReviewModel,
     IdempotencyCacheModel,
     InterpretationViewModel,
     JobAttemptModel,
@@ -668,6 +669,12 @@ class SQLStore:
             model_cls=ReportModel,
             key_attr="session_id",
             payload_attr="payload",
+            uuid_keys=True,
+        )
+        self.human_reviews = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=HumanReviewModel,
+            key_attr="session_id",
             uuid_keys=True,
         )
         self.exports = SQLRowMap(

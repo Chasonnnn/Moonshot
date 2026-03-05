@@ -119,6 +119,21 @@ class ReportModel(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 
 
+class HumanReviewModel(Base):
+    __tablename__ = "human_reviews"
+
+    session_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    notes_markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tags: Mapped[list] = mapped_column(JSON, default=list)
+    override_overall_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    override_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    dimension_overrides: Mapped[dict] = mapped_column(JSON, default=dict)
+    reviewer_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
 class ExportRunModel(Base):
     __tablename__ = "export_runs"
 

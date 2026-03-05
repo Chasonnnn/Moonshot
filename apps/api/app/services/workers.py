@@ -53,5 +53,6 @@ def get_worker_health(tenant_id: str) -> WorkerHealthResponse:
         )
 
     stale_leases = len(get_stale_leases_for_tenant(tenant_id, limit=500))
-    overall_status = "ok" if stale_leases == 0 and all(item.status == "ok" for item in workers) else "degraded"
+    has_active_worker = any(item.status == "ok" for item in workers)
+    overall_status = "ok" if stale_leases == 0 and has_active_worker else "degraded"
     return WorkerHealthResponse(overall_status=overall_status, workers=workers, stale_leases=stale_leases, checked_at=now)

@@ -86,6 +86,43 @@ def test_generate_fixture_respects_variant_count(client, admin_headers):
     assert len(payload["task_family"]["variants"]) == 12
 
 
+def test_generate_live_respects_variant_count_and_variant_metadata(client, admin_headers):
+    case = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Live Variant Count",
+            "scenario": "Live generation with deterministic provider mock",
+            "artifacts": [{"type": "csv", "name": "orders.csv"}],
+            "metrics": [],
+            "allowed_tools": ["sql_workspace", "python_workspace", "dashboard_workspace"],
+        },
+    )
+    assert case.status_code == 201
+    case_id = case.json()["id"]
+
+    submit = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "live-variant-count-12"},
+        json={"mode": "live", "variant_count": 12},
+    )
+    assert submit.status_code == 202
+    job_id = submit.json()["job_id"]
+
+    _drain_jobs()
+    result = client.get(f"/v1/jobs/{job_id}/result", headers=admin_headers)
+    assert result.status_code == 200
+    payload = result.json()["result"]
+    variants = payload["task_family"]["variants"]
+    assert len(variants) == 12
+    assert variants[0]["skill"]
+    assert variants[0]["difficulty_level"]
+    assert variants[0]["round_hint"]
+    assert variants[0]["estimated_minutes"] is not None
+    assert isinstance(variants[0]["deliverables"], list)
+    assert isinstance(variants[0]["artifact_refs"], list)
+
+
 def test_score_is_async_and_creates_export_job(client, admin_headers, reviewer_headers, candidate_headers):
     case = client.post(
         "/v1/cases",

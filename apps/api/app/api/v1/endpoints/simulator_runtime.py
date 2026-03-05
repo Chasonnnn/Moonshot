@@ -21,6 +21,10 @@ from app.schemas import (
     SQLRunResponse,
 )
 from app.services.audit import audit
+from app.services.python_sandbox import (
+    PythonSandboxValidationError,
+    run_python_sandbox,
+)
 from app.services.repositories import session_repository
 from app.services.store import store
 
@@ -28,7 +32,8 @@ router = APIRouter(prefix="/v1/sessions", tags=["simulator-runtime"])
 
 DISALLOWED_SQL_PATTERN = re.compile(r"\b(drop|delete|truncate|update|insert|alter|create)\b", re.IGNORECASE)
 DISALLOWED_PYTHON_PATTERN = re.compile(
-    r"\b(import\s+os|import\s+subprocess|open\s*\(|exec\s*\(|eval\s*\(|__import__\s*\()", re.IGNORECASE
+    r"\b(import\s+os|import\s+subprocess|import\s+socket|open\s*\(|exec\s*\(|eval\s*\(|__import__\s*\()",
+    re.IGNORECASE,
 )
 
 
@@ -129,16 +134,61 @@ def run_python_code(
         )
         raise HTTPException(status_code=400, detail="disallowed python operation")
 
-    stdout = "   a\n0  1\n1  2\n2  3" if any(kw in code for kw in ["pandas", "DataFrame", "pd."]) else "hello"
-    plot_url = "/mock/plot.png" if any(kw in code for kw in ["matplotlib", "plt.", "plt.show"]) else None
+    try:
+        sandbox_result = run_python_sandbox(
+            code=code,
+            template_id=payload.template_id,
+            round_id=payload.round_id,
+            dataset_id=payload.dataset_id,
+        )
+    except PythonSandboxValidationError as exc:
+        reason = str(exc)
+        error_item = PythonHistoryItem(
+            code=code,
+            ok=False,
+            error=reason,
+            stderr=reason,
+            runtime_ms=0,
+        )
+        _python_history(session_id).append(error_item.model_dump(mode="json"))
+        session_repository.append_events(
+            session_id,
+            [{"event_type": "python_code_error", "payload": {"reason": reason}}],
+        )
+        raise HTTPException(status_code=400, detail=reason)
 
-    response = PythonRunResponse(ok=True, stdout=stdout, stderr=None, plot_url=plot_url, runtime_ms=38)
+    response = PythonRunResponse(
+        ok=sandbox_result["ok"],
+        stdout=sandbox_result.get("stdout"),
+        stderr=sandbox_result.get("stderr"),
+        plot_url=sandbox_result.get("plot_url"),
+        artifacts=sandbox_result.get("artifacts", []),
+        runtime_ms=int(sandbox_result.get("runtime_ms", 0)),
+    )
 
-    history_item = PythonHistoryItem(code=code, ok=True, stdout=stdout, plot_url=plot_url, runtime_ms=response.runtime_ms)
+    history_item = PythonHistoryItem(
+        code=code,
+        ok=response.ok,
+        stdout=response.stdout,
+        stderr=response.stderr,
+        plot_url=response.plot_url,
+        artifacts=response.artifacts,
+        error=sandbox_result.get("error"),
+        runtime_ms=response.runtime_ms,
+    )
     _python_history(session_id).append(history_item.model_dump(mode="json"))
     session_repository.append_events(
         session_id,
-        [{"event_type": "python_code_run", "payload": {"runtime_ms": response.runtime_ms, "has_plot": plot_url is not None}}],
+        [
+            {
+                "event_type": "python_code_run",
+                "payload": {
+                    "runtime_ms": response.runtime_ms,
+                    "has_plot": response.plot_url is not None,
+                    "artifact_count": len(response.artifacts),
+                },
+            }
+        ],
     )
     audit(user, "run_python", "session", str(session_id), {"runtime_ms": response.runtime_ms})
     return response

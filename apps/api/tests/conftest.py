@@ -29,6 +29,7 @@ def client() -> TestClient:
     store.session_events.clear()
     store.scores.clear()
     store.reports.clear()
+    store.human_reviews.clear()
     store.exports.clear()
     store.redteam_runs.clear()
     store.review_queue.clear()

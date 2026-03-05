@@ -8,6 +8,9 @@ from app.schemas import GenerationResult, ModelInvocationTrace
 from app.schemas.contracts import CaseSpec, Rubric, RubricDimension, TaskFamily, TaskVariant
 
 MIN_VARIANT_JACCARD_DISTANCE = 0.18
+DEFAULT_LIVE_VARIANT_COUNT = 12
+MIN_VARIANT_COUNT = 5
+MAX_VARIANT_COUNT = 20
 RUBRIC_LEAKAGE_PHRASES = {
     "correct answer",
     "final answer",
@@ -83,9 +86,18 @@ def _grounding_coverage_score(case: CaseSpec, prompts: list[str]) -> float:
     return round(sum(1 for hit in checks if hit) / len(checks), 3)
 
 
+def _resolve_variant_count(variant_count: int | None) -> int:
+    if variant_count is None:
+        return DEFAULT_LIVE_VARIANT_COUNT
+    if variant_count < MIN_VARIANT_COUNT or variant_count > MAX_VARIANT_COUNT:
+        raise ValueError(f"variant_count_out_of_range:{variant_count}")
+    return variant_count
+
+
 def generate_from_case(
     case: CaseSpec,
     *,
+    variant_count: int | None = None,
     model_override: str | None = None,
     reasoning_effort: str | None = None,
     thinking_budget_tokens: int | None = None,
@@ -97,27 +109,92 @@ def generate_from_case(
     )
     artifact_summary = _artifact_summary(case)
 
-    variant_seeds = [
+    resolved_variant_count = _resolve_variant_count(variant_count)
+    difficulty_plan = [
+        "foundation",
+        "foundation",
+        "intermediate",
+        "intermediate",
+        "intermediate",
+        "advanced",
+        "advanced",
+        "advanced",
+        "expert",
+        "expert",
+        "expert",
+        "capstone",
+    ]
+    skill_plan = [
+        "sql",
+        "python",
+        "dashboard",
+        "analysis",
+        "communication",
+        "documentation",
+    ]
+    objective_plan = [
         "Prioritize anomaly detection and triage order.",
-        "Focus on root-cause validation and uncertainty tracking.",
-        "Focus on stakeholder communication and escalation rationale.",
+        "Quantify source-versus-dashboard discrepancy with reconciliation checks.",
+        "Validate hypotheses with segmented SQL and confidence caveats.",
+        "Design a reproducible Python analysis for impact estimation.",
+        "Draft a stakeholder-ready narrative with escalation criteria.",
+        "Compare at least two counterfactual explanations before choosing one.",
+        "Prove data quality assumptions using artifact references.",
+        "Translate technical findings into business impact and risk language.",
+        "Address ambiguity explicitly with scoped assumptions and checkpoints.",
+        "Recommend monitoring metrics and owner handoff details.",
+        "Integrate dashboard evidence with SQL/Python traceability.",
+        "Deliver a final decision memo with limitations and next actions.",
     ]
 
     variant_outputs = []
-    for idx, seed in enumerate(variant_seeds, start=1):
+    for idx in range(resolved_variant_count):
+        seed = objective_plan[idx % len(objective_plan)]
+        skill = skill_plan[idx % len(skill_plan)]
+        difficulty_level = difficulty_plan[idx % len(difficulty_plan)]
+        round_hint = f"round_{(idx % 3) + 1}"
         prompt = (
             f"Case title: {case.title}\n"
             f"Scenario: {case.scenario}\n"
             f"Artifacts: {artifact_summary}\n"
             f"Allowed tools: {case.allowed_tools}\n"
             f"Constraints: {case.constraints if hasattr(case, 'constraints') else {}}\n"
+            f"Skill target: {skill}\n"
+            f"Difficulty level: {difficulty_level}\n"
+            f"Round hint: {round_hint}\n"
             f"Variant objective: {seed}\n"
             f"Return one safe simulation task prompt."
         )
         output = provider.generate_variant(prompt)
-        variant_outputs.append(output)
+        variant_outputs.append(
+            (
+                output,
+                skill,
+                difficulty_level,
+                round_hint,
+            )
+        )
 
-    variants = [TaskVariant(prompt=f"Variant {chr(64 + i)}: {out.content}") for i, out in enumerate(variant_outputs, start=1)]
+    variants = [
+        TaskVariant(
+            prompt=f"Variant {index + 1}: {out.content}",
+            skill=skill,
+            difficulty_level=difficulty_level,
+            round_hint=round_hint,
+            estimated_minutes=12 + (index % 4) * 4,
+            deliverables=[
+                "analysis_summary",
+                "evidence_table",
+                "stakeholder_recommendation",
+            ],
+            artifact_refs=[
+                "orders.csv",
+                "dashboard_snapshot.png",
+                "pipeline_log.txt",
+            ],
+        )
+        for index, (out, skill, difficulty_level, round_hint) in enumerate(variant_outputs)
+    ]
 
     rubric_prompt = (
         f"Scenario: {case.scenario}\n"

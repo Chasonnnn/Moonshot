@@ -401,6 +401,9 @@ def _handle_generate_case(job: JobRunModel) -> dict[str, Any]:
             variant_count=normalized_variant_count,
         )
     else:
+        normalized_variant_count = (
+            int(variant_count) if isinstance(variant_count, int) else None
+        )
         normalized_model_override = str(model_override) if isinstance(model_override, str) and model_override.strip() else None
         normalized_reasoning_effort = (
             str(reasoning_effort) if isinstance(reasoning_effort, str) and reasoning_effort.strip() else None
@@ -417,6 +420,8 @@ def _handle_generate_case(job: JobRunModel) -> dict[str, Any]:
             override_kwargs["reasoning_effort"] = normalized_reasoning_effort
         if normalized_thinking_budget is not None:
             override_kwargs["thinking_budget_tokens"] = normalized_thinking_budget
+        if normalized_variant_count is not None:
+            override_kwargs["variant_count"] = normalized_variant_count
         generated = generate_from_case(case, **override_kwargs)
 
     case_repository.save_task_family(generated.task_family)

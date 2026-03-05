@@ -100,6 +100,9 @@ def test_report_summary_for_scored_session(client, admin_headers, reviewer_heade
     assert payload["trigger_count"] == len(payload["trigger_codes"])
     assert isinstance(payload["last_scored_at"], str)
     assert payload["scoring_version_lock"]["scorer_version"] == "0.2.0"
+    assert payload["has_human_review"] is False
+    assert payload["final_score_source"] == "model"
+    assert isinstance(payload["final_confidence"], float)
 
 
 def test_report_summary_for_active_session_without_report(client, admin_headers, reviewer_headers):
@@ -159,3 +162,61 @@ def test_report_summary_for_active_session_without_report(client, admin_headers,
     assert payload["trigger_codes"] == []
     assert payload["trigger_count"] == 0
     assert payload["last_scored_at"] is None
+    assert payload["has_human_review"] is False
+    assert payload["final_score_source"] is None
+    assert payload["final_confidence"] is None
+
+
+def test_report_human_review_crud_and_summary_override(
+    client, admin_headers, reviewer_headers, candidate_headers
+):
+    session_id = _create_scored_session(client, admin_headers, reviewer_headers, candidate_headers)
+
+    initial = client.get(
+        f"/v1/reports/{session_id}/human-review",
+        headers=reviewer_headers,
+    )
+    assert initial.status_code == 200
+    assert initial.json()["session_id"] == session_id
+    assert initial.json()["notes_markdown"] is None
+    assert initial.json()["override_overall_score"] is None
+
+    updated = client.put(
+        f"/v1/reports/{session_id}/human-review",
+        headers=reviewer_headers,
+        json={
+            "notes_markdown": "Candidate solved SQL checks well but escalated late.",
+            "tags": ["late_escalation", "strong_sql"],
+            "override_overall_score": 0.74,
+            "override_confidence": 0.71,
+            "dimension_overrides": {"sql_quality": 0.86, "communication": 0.62},
+        },
+    )
+    assert updated.status_code == 200
+    payload = updated.json()
+    assert payload["session_id"] == session_id
+    assert payload["notes_markdown"].startswith("Candidate solved SQL checks")
+    assert payload["tags"] == ["late_escalation", "strong_sql"]
+    assert payload["override_overall_score"] == 0.74
+    assert payload["override_confidence"] == 0.71
+    assert payload["dimension_overrides"]["communication"] == 0.62
+    assert payload["reviewer_id"] == "reviewer_1"
+
+    summary = client.get(f"/v1/reports/{session_id}/summary", headers=reviewer_headers)
+    assert summary.status_code == 200
+    summary_payload = summary.json()
+    assert summary_payload["has_human_review"] is True
+    assert summary_payload["final_score_source"] == "human_override"
+    assert summary_payload["final_confidence"] == 0.71
+
+
+def test_report_human_review_candidate_forbidden(
+    client, admin_headers, reviewer_headers, candidate_headers
+):
+    session_id = _create_scored_session(client, admin_headers, reviewer_headers, candidate_headers)
+    forbidden = client.put(
+        f"/v1/reports/{session_id}/human-review",
+        headers=candidate_headers,
+        json={"notes_markdown": "attempt"},
+    )
+    assert forbidden.status_code == 403

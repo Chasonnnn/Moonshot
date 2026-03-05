@@ -137,6 +137,7 @@ def test_python_run_valid_code(client, admin_headers, candidate_headers):
     assert payload["ok"] is True
     assert payload["stdout"] is not None
     assert payload["runtime_ms"] >= 0
+    assert isinstance(payload["artifacts"], list)
 
 
 def test_python_run_blocks_destructive_code(client, admin_headers, candidate_headers):
@@ -144,6 +145,7 @@ def test_python_run_blocks_destructive_code(client, admin_headers, candidate_hea
     for dangerous_code in [
         "import os",
         "import subprocess",
+        "import socket",
         "open('file.txt')",
         "exec('code')",
         "eval('1+1')",
@@ -179,6 +181,11 @@ def test_python_run_with_plot(client, admin_headers, candidate_headers):
     payload = run.json()
     assert payload["ok"] is True
     assert payload["plot_url"] is not None
+    assert len(payload["artifacts"]) >= 1
+    first_artifact = payload["artifacts"][0]
+    assert first_artifact["kind"] == "plot"
+    assert first_artifact["uri"].startswith("data:image/png;base64,")
+    assert first_artifact["mime_type"] == "image/png"
 
 
 def test_python_history(client, admin_headers, candidate_headers, reviewer_headers):
@@ -193,12 +200,63 @@ def test_python_history(client, admin_headers, candidate_headers, reviewer_heade
     )
     assert history.status_code == 200
     assert len(history.json()["items"]) == 1
+    assert "artifacts" in history.json()["items"][0]
 
     reviewer_history = client.get(
         f"/v1/sessions/{session_id}/python/history", headers=reviewer_headers
     )
     assert reviewer_history.status_code == 200
     assert len(reviewer_history.json()["items"]) == 1
+
+
+def test_python_run_with_runtime_context_dataset(client, admin_headers, candidate_headers):
+    session_id = _create_live_session(client, admin_headers)
+    run = client.post(
+        f"/v1/sessions/{session_id}/python/run",
+        headers=candidate_headers,
+        json={
+            "template_id": "tpl_data_analyst",
+            "round_id": "round_2",
+            "dataset_id": "conversion_channels_v1",
+            "code": (
+                "import pandas as pd\n"
+                "df = pd.read_csv(DATASET_PATH)\n"
+                "print('rows', len(df))\n"
+                "print('cols', ','.join(df.columns))"
+            ),
+        },
+    )
+    assert run.status_code == 200
+    payload = run.json()
+    assert payload["ok"] is True
+    assert "rows" in (payload["stdout"] or "")
+
+
+def test_python_run_with_doordash_runtime_context_dataset(client, admin_headers, candidate_headers):
+    session_id = _create_live_session(client, admin_headers)
+    run = client.post(
+        f"/v1/sessions/{session_id}/python/run",
+        headers=candidate_headers,
+        json={
+            "template_id": "tpl_doordash_enablement",
+            "round_id": "round_2",
+            "dataset_id": "atl_unmanaged_funnel_v1",
+            "code": (
+                "import pandas as pd\n"
+                "df = pd.read_csv(DATASET_PATH)\n"
+                "print('rows', len(df))\n"
+                "print('avg_views', round(df['weekly_page_views'].mean(), 2))\n"
+                "print('avg_conv', round(df['conversion_rate'].mean(), 4))"
+            ),
+        },
+    )
+    assert run.status_code == 200
+    payload = run.json()
+    assert payload["ok"] is True
+    stdout = payload["stdout"] or ""
+    assert "rows" in stdout
+    assert "avg_views" in stdout
+    assert "avg_conv" in stdout
 
 
 # ── Annotation tests ─────────────────────────────────────────────────

@@ -242,6 +242,17 @@ class SQLHistoryResponse(BaseModel):
 
 class PythonRunRequest(BaseModel):
     code: str
+    template_id: str | None = None
+    round_id: str | None = None
+    dataset_id: str | None = None
+
+
+class RuntimeArtifact(BaseModel):
+    name: str
+    mime_type: str
+    uri: str
+    bytes: int
+    kind: str
 
 
 class PythonHistoryItem(BaseModel):
@@ -250,6 +261,7 @@ class PythonHistoryItem(BaseModel):
     stdout: str | None = None
     stderr: str | None = None
     plot_url: str | None = None
+    artifacts: list[RuntimeArtifact] = Field(default_factory=list)
     error: str | None = None
     runtime_ms: int = 0
     executed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -260,6 +272,7 @@ class PythonRunResponse(BaseModel):
     stdout: str | None = None
     stderr: str | None = None
     plot_url: str | None = None
+    artifacts: list[RuntimeArtifact] = Field(default_factory=list)
     runtime_ms: int
 
 
@@ -375,6 +388,30 @@ class ReportSummary(BaseModel):
     trigger_count: int = 0
     last_scored_at: datetime | None = None
     scoring_version_lock: ScoringVersionLock | None = None
+    has_human_review: bool = False
+    final_score_source: Literal["model", "human_override"] | None = None
+    final_confidence: float | None = None
+
+
+class HumanReviewUpdateRequest(BaseModel):
+    notes_markdown: str | None = None
+    tags: list[str] | None = None
+    override_overall_score: float | None = Field(default=None, ge=0.0, le=1.0)
+    override_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    dimension_overrides: dict[str, float] | None = None
+
+
+class HumanReviewRecord(BaseModel):
+    session_id: UUID
+    tenant_id: str
+    notes_markdown: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    override_overall_score: float | None = None
+    override_confidence: float | None = None
+    dimension_overrides: dict[str, float] = Field(default_factory=dict)
+    reviewer_id: str | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class InterpretationRequest(BaseModel):

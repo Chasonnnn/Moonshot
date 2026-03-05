@@ -1323,6 +1323,69 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/reports/{session_id}/human-review:
+    get:
+      tags:
+      - reports
+      summary: Get Human Review
+      operationId: get_human_review_v1_reports__session_id__human_review_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HumanReviewRecord'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - reports
+      summary: Put Human Review
+      operationId: put_human_review_v1_reports__session_id__human_review_put
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HumanReviewUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HumanReviewRecord'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/reports/{session_id}/interpret:
     post:
       tags:
@@ -2764,6 +2827,97 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    HumanReviewRecord:
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        tenant_id:
+          type: string
+          title: Tenant Id
+        notes_markdown:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes Markdown
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+        override_overall_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Override Overall Score
+        override_confidence:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Override Confidence
+        dimension_overrides:
+          additionalProperties:
+            type: number
+          type: object
+          title: Dimension Overrides
+        reviewer_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reviewer Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - session_id
+      - tenant_id
+      - created_at
+      - updated_at
+      title: HumanReviewRecord
+    HumanReviewUpdateRequest:
+      properties:
+        notes_markdown:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes Markdown
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Tags
+        override_overall_score:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          title: Override Overall Score
+        override_confidence:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          title: Override Confidence
+        dimension_overrides:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Dimension Overrides
+      type: object
+      title: HumanReviewUpdateRequest
     Interpretation:
       properties:
         summary:
@@ -3122,6 +3276,11 @@ components:
           - type: string
           - type: 'null'
           title: Plot Url
+        artifacts:
+          items:
+            $ref: '#/components/schemas/RuntimeArtifact'
+          type: array
+          title: Artifacts
         error:
           anyOf:
           - type: string
@@ -3154,6 +3313,21 @@ components:
         code:
           type: string
           title: Code
+        template_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Id
+        round_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Round Id
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Id
       type: object
       required:
       - code
@@ -3178,6 +3352,11 @@ components:
           - type: string
           - type: 'null'
           title: Plot Url
+        artifacts:
+          items:
+            $ref: '#/components/schemas/RuntimeArtifact'
+          type: array
+          title: Artifacts
         runtime_ms:
           type: integer
           title: Runtime Ms
@@ -3314,6 +3493,23 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ScoringVersionLock'
           - type: 'null'
+        has_human_review:
+          type: boolean
+          title: Has Human Review
+          default: false
+        final_score_source:
+          anyOf:
+          - type: string
+            enum:
+            - model
+            - human_override
+          - type: 'null'
+          title: Final Score Source
+        final_confidence:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Final Confidence
       type: object
       required:
       - session_id
@@ -3435,6 +3631,31 @@ components:
       - key
       - anchor
       title: RubricDimension
+    RuntimeArtifact:
+      properties:
+        name:
+          type: string
+          title: Name
+        mime_type:
+          type: string
+          title: Mime Type
+        uri:
+          type: string
+          title: Uri
+        bytes:
+          type: integer
+          title: Bytes
+        kind:
+          type: string
+          title: Kind
+      type: object
+      required:
+      - name
+      - mime_type
+      - uri
+      - bytes
+      - kind
+      title: RuntimeArtifact
     SLOProbeResponse:
       properties:
         overall_status:
