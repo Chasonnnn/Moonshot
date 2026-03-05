@@ -303,5 +303,7 @@ describe("ReportReviewConsole tabs", () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={snapshot} />)
 
     expect(screen.getByText(/Top dimensions from generated interpretation/i)).toBeInTheDocument()
+    expect(screen.getByText("View ID")).toBeInTheDocument()
+    expect(screen.getByText("Fresh server interpretation.")).toBeInTheDocument()
   })
 })
