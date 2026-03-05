@@ -6,7 +6,10 @@ import {
   useContext,
   useState,
   useMemo,
+  useEffect,
   type ReactNode,
+  type Dispatch,
+  type SetStateAction,
 } from "react"
 import { CandidateApiClient } from "@/lib/moonshot/candidate-client"
 import { useCountdown } from "@/hooks/use-countdown"
@@ -32,9 +35,9 @@ interface SessionContextValue {
   session: CandidateSession
   api: CandidateApiClient
   isSubmitted: boolean
-  setSubmitted: (v: boolean) => void
+  setSubmitted: Dispatch<SetStateAction<boolean>>
   finalResponse: string
-  setFinalResponse: (v: string) => void
+  setFinalResponse: Dispatch<SetStateAction<string>>
   remainingSeconds: number | null
   isExpired: boolean
   track: (eventType: string, payload?: Record<string, unknown>) => void
@@ -47,9 +50,38 @@ interface SessionContextValue {
   currentRoundIndex: number
   setCurrentRoundIndex: (index: number) => void
   totalRounds: number
+  deliverableContent: string
+  setDeliverableContent: Dispatch<SetStateAction<string>>
+  deliverableArtifacts: string[]
+  setDeliverableArtifacts: Dispatch<SetStateAction<string[]>>
+  deliverableId: string | null
+  setDeliverableId: Dispatch<SetStateAction<string | null>>
+  deliverableStatus: "draft" | "submitted" | null
+  setDeliverableStatus: Dispatch<SetStateAction<"draft" | "submitted" | null>>
+  parts: Array<{
+    id: string
+    title: string
+    description: string
+    part_type?: string
+    time_limit_minutes?: number
+    deliverable_type?: string
+  }>
+  activePart: number
+  setActivePart: (index: number) => void
+  activePartRemainingSeconds: number | null
+  isActivePartExpired: boolean
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
+const EMPTY_STRING_ARRAY: string[] = []
+const EMPTY_PARTS: Array<{
+  id: string
+  title: string
+  description: string
+  part_type?: string
+  time_limit_minutes?: number
+  deliverable_type?: string
+}> = []
 
 export function SessionProvider({
   session,
@@ -85,6 +117,87 @@ export function SessionProvider({
   }, [])
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
   const totalRounds = fixtureData?.rounds.length ?? 0
+  const [deliverableContent, setDeliverableContent] = useState(
+    session.final_response ?? ""
+  )
+  const [deliverableArtifacts, setDeliverableArtifacts] = useState<string[]>(EMPTY_STRING_ARRAY)
+  const [deliverableId, setDeliverableId] = useState<string | null>(null)
+  const [deliverableStatus, setDeliverableStatus] = useState<"draft" | "submitted" | null>(null)
+  const parts = useMemo(
+    () => fixtureData?.parts ?? EMPTY_PARTS,
+    [fixtureData?.parts]
+  )
+  const [activePart, setActivePartState] = useState(0)
+  const [partStartTimes, setPartStartTimes] = useState<Record<number, string>>(
+    () => ({ 0: session.created_at })
+  )
+
+  const activePartStart = partStartTimes[activePart] ?? session.created_at
+  const activePartTimeLimit = parts[activePart]?.time_limit_minutes ?? null
+  const {
+    remainingSeconds: activePartRemainingSeconds,
+    isExpired: isActivePartExpired,
+  } = useCountdown(activePartStart, activePartTimeLimit)
+
+  useEffect(() => {
+    let cancelled = false
+    const hydrateDeliverable = async () => {
+      try {
+        const response = await api.listDeliverables()
+        if (cancelled || response.items.length === 0) return
+        const latest = [...response.items].sort((a, b) => {
+          const aTs = new Date(a.updated_at).getTime()
+          const bTs = new Date(b.updated_at).getTime()
+          return bTs - aTs
+        })[0]
+        setDeliverableId(latest.id)
+        setDeliverableStatus(latest.status)
+        setDeliverableArtifacts(latest.embedded_artifacts ?? EMPTY_STRING_ARRAY)
+        setDeliverableContent((prev) => prev.trim() || latest.content_markdown || "")
+      } catch {
+        // Deliverables are optional for non-case sessions.
+      }
+    }
+    void hydrateDeliverable()
+    return () => {
+      cancelled = true
+    }
+  }, [api])
+
+  useEffect(() => {
+    if (parts.length === 0) {
+      if (activePart !== 0) {
+        setActivePartState(0)
+      }
+      return
+    }
+    if (activePart >= parts.length) {
+      setActivePartState(parts.length - 1)
+    }
+  }, [activePart, parts.length])
+
+  const setActivePart = useCallback(
+    (index: number) => {
+      if (parts.length === 0) return
+      const nextIndex = Math.min(Math.max(0, index), parts.length - 1)
+      setPartStartTimes((prev) =>
+        prev[nextIndex] ? prev : { ...prev, [nextIndex]: new Date().toISOString() }
+      )
+      setActivePartState(nextIndex)
+    },
+    [parts.length]
+  )
+
+  useEffect(() => {
+    if (!isActivePartExpired || parts.length === 0) return
+    if (activePart >= parts.length - 1) return
+    const nextIndex = activePart + 1
+    setPartStartTimes((prev) => ({
+      ...prev,
+      [nextIndex]: prev[nextIndex] ?? new Date().toISOString(),
+    }))
+    setActivePartState(nextIndex)
+  }, [activePart, isActivePartExpired, parts.length])
 
   const value = useMemo(
     () => ({
@@ -106,6 +219,19 @@ export function SessionProvider({
       currentRoundIndex,
       setCurrentRoundIndex,
       totalRounds,
+      deliverableContent,
+      setDeliverableContent,
+      deliverableArtifacts,
+      setDeliverableArtifacts,
+      deliverableId,
+      setDeliverableId,
+      deliverableStatus,
+      setDeliverableStatus,
+      parts,
+      activePart,
+      setActivePart,
+      activePartRemainingSeconds,
+      isActivePartExpired,
     }),
     [
       session,
@@ -123,6 +249,15 @@ export function SessionProvider({
       pushCoachMessage,
       currentRoundIndex,
       totalRounds,
+      deliverableContent,
+      deliverableArtifacts,
+      deliverableId,
+      deliverableStatus,
+      parts,
+      activePart,
+      setActivePart,
+      activePartRemainingSeconds,
+      isActivePartExpired,
     ]
   )
 
