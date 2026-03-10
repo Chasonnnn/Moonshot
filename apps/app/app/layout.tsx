@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
+import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-sans" });
 
-const geistMono = Geist_Mono({
+const plexMono = IBM_Plex_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
   title: "Moonshot",
-  description: "Auditable work-sample assessment platform",
+  description: "Evidence-based work simulation platform for analyst, strategy, and support hiring",
 };
 
 export default function RootLayout({
@@ -20,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className={`${geistMono.variable} antialiased`}>
+    <html lang="en" className={spaceGrotesk.variable}>
+      <body className={`${plexMono.variable} antialiased`}>
         {children}
       </body>
     </html>
