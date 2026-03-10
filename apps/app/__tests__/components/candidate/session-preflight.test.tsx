@@ -50,8 +50,11 @@ describe("SessionPreflight", () => {
     const beginBtn = screen.getByRole("button", { name: /begin assessment/i })
     expect(beginBtn).toBeDisabled()
 
-    const checkboxes = screen.getAllByRole("checkbox")
-    expect(checkboxes).toHaveLength(3)
+    const checkboxes = [
+      screen.getByRole("checkbox", { name: /i understand the assessment rules/i }),
+      screen.getByRole("checkbox", { name: /i have a stable internet connection/i }),
+      screen.getByRole("checkbox", { name: /i am ready to begin/i }),
+    ]
 
     // Check first two — still disabled
     await user.click(checkboxes[0])
@@ -74,6 +77,13 @@ describe("SessionPreflight", () => {
 
     await user.click(screen.getByRole("button", { name: /begin assessment/i }))
     expect(onReady).toHaveBeenCalledOnce()
+  })
+
+  it("renders a single main landmark and page heading", () => {
+    render(<SessionPreflight onReady={onReady} />)
+
+    expect(screen.getByRole("main")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1, name: /assessment preflight/i })).toBeInTheDocument()
   })
 
   it("shows time limit", () => {

@@ -28,6 +28,7 @@ import type {
 import type { DemoFixtureData } from "@/lib/moonshot/demo-fixtures"
 
 export interface CoachChatMessage {
+  id?: string
   role: "user" | "coach"
   content: string
   allowed?: boolean
@@ -179,6 +180,14 @@ const ORAL_PROMPT_COPY_BY_TEMPLATE: Partial<Record<string, Record<OralClipType, 
       questionId: "q-2",
     },
   },
+}
+
+function createCoachMessageId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+
+  return `coach-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
 
 function normalizeOralClipType(value: string): OralClipType | null {
@@ -384,7 +393,7 @@ export function SessionProvider({
 
   const [coachMessages, setCoachMessages] = useState<CoachChatMessage[]>([])
   const pushCoachMessage = useCallback((msg: CoachChatMessage) => {
-    setCoachMessages((prev) => [...prev, msg])
+    setCoachMessages((prev) => [...prev, { ...msg, id: msg.id ?? createCoachMessageId() }])
   }, [])
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
   const totalRounds = fixtureData?.rounds.length ?? 0

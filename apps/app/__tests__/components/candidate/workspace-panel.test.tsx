@@ -3,10 +3,10 @@ import { render, screen, waitFor } from "@testing-library/react"
 import { WorkspacePanel } from "@/components/candidate/workspace-panel"
 
 vi.mock("@/components/ui/tabs", () => ({
-  Tabs: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TabsList: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TabsTrigger: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
-  TabsContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Tabs: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
+  TabsList: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
+  TabsTrigger: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
+  TabsContent: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
 }))
 
 vi.mock("@/components/candidate/data-workspace", () => ({
@@ -104,5 +104,15 @@ describe("WorkspacePanel", () => {
     expect(screen.getByText("BI")).toBeInTheDocument()
     expect(screen.getByText("Slides")).toBeInTheDocument()
     expect(screen.getByText("Oral")).toBeInTheDocument()
+  })
+
+  it("renders a focusable tab strip for horizontal scrolling", async () => {
+    render(<WorkspacePanel />)
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Workspace tools")).toBeInTheDocument()
+    })
+
+    expect(screen.getByLabelText("Workspace tools")).toHaveAttribute("tabindex", "0")
   })
 })

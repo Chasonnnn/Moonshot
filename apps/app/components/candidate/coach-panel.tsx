@@ -95,10 +95,10 @@ export function CoachPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-[#D2D2D7] px-3 py-2">
-        <h3 className="text-[13px] font-medium text-[#1D1D1F]">Coach</h3>
+      <div className="border-b border-[var(--ops-border,#d7e0e4)] px-3 py-3 md:py-2">
+        <h2 className="text-[13px] font-medium text-[var(--ops-text,#1d1d1f)]">Coach</h2>
         {fixtureData && totalRounds > 0 && (
-          <p className="mt-0.5 text-[11px] text-[#6E6E73]">
+          <p className="mt-0.5 text-[11px] text-[var(--ops-text-muted,#475569)]">
             Round {currentRoundIndex + 1} / {totalRounds}
           </p>
         )}
@@ -108,32 +108,32 @@ export function CoachPanel() {
         <div className="space-y-3">
           {isAiDisabled && (
             <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-              <Lock className="h-6 w-6 text-[#86868B]" />
-              <p className="text-[13px] text-[#86868B]">
+              <Lock className="h-6 w-6 text-[var(--ops-text-subtle,#64748b)]" />
+              <p className="text-[13px] text-[var(--ops-text-subtle,#64748b)]">
                 AI assistance is disabled for this assessment
               </p>
             </div>
           )}
           {!isAiDisabled && coachMessages.length === 0 && (
-            <p className="text-center text-[12px] text-[#86868B]">
+            <p className="text-center text-[12px] text-[var(--ops-text-muted)]">
               Ask the coach for guidance
             </p>
           )}
 
           {coachMessages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={msg.id ?? `${msg.role}-${msg.content}`} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[85%] rounded-2xl px-3 py-2 text-[13px] ${
                   msg.role === "user"
                     ? "bg-[#0071E3] text-white"
                     : msg.allowed === false
                       ? "border border-[#FF9F0A] bg-[#FF9F0A]/10 text-[#1D1D1F]"
-                      : "border border-[#D2D2D7] bg-white text-[#1D1D1F]"
+                      : "border border-[var(--ops-border,#d7e0e4)] bg-white text-[var(--ops-text,#1d1d1f)]"
                 }`}
               >
                 <p>{msg.content}</p>
                 {msg.role === "coach" && msg.allowed === false && msg.policyReason && (
-                  <p className="mt-1 text-[11px] text-[#86868B]">
+                  <p className="mt-1 text-[11px] text-[var(--ops-text-subtle,#64748b)]">
                     {msg.policyReason}
                   </p>
                 )}
@@ -142,7 +142,7 @@ export function CoachPanel() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className={`h-6 w-6 p-0 ${msg.feedbackGiven === "up" ? "text-[#34C759]" : "text-[#86868B]"}`}
+                      className={`size-11 p-0 md:size-6 ${msg.feedbackGiven === "up" ? "text-[#22c55e]" : "text-[var(--ops-text-subtle,#64748b)]"}`}
                       onClick={() => giveFeedback(i, true)}
                       disabled={msg.feedbackGiven !== null}
                       aria-label="Helpful"
@@ -152,7 +152,7 @@ export function CoachPanel() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className={`h-6 w-6 p-0 ${msg.feedbackGiven === "down" ? "text-[#FF3B30]" : "text-[#86868B]"}`}
+                      className={`size-11 p-0 md:size-6 ${msg.feedbackGiven === "down" ? "text-[#ef4444]" : "text-[var(--ops-text-subtle,#64748b)]"}`}
                       onClick={() => giveFeedback(i, false)}
                       disabled={msg.feedbackGiven !== null}
                       aria-label="Not useful"
@@ -167,7 +167,7 @@ export function CoachPanel() {
 
           {isSending && (
             <div className="flex justify-start">
-              <div className="rounded-2xl border border-[#D2D2D7] bg-white px-3 py-2">
+              <div className="rounded-2xl border border-[var(--ops-border,#d7e0e4)] bg-white px-3 py-2">
                 <Spinner className="h-4 w-4" />
               </div>
             </div>
@@ -176,7 +176,7 @@ export function CoachPanel() {
         </div>
       </ScrollArea>
 
-      <div className="border-t border-[#D2D2D7] p-3">
+      <div className="border-t border-[var(--ops-border,#d7e0e4)] p-3">
         <div className="flex gap-2">
           <Input
             value={input}
@@ -184,13 +184,13 @@ export function CoachPanel() {
             onKeyDown={handleKeyDown}
             placeholder="Ask the coach..."
             disabled={isSubmitted || isExpired || isSending || isAiDisabled}
-            className="h-8 text-[13px]"
+            className="h-11 rounded-2xl text-[13px] md:h-8"
           />
           <Button
             size="sm"
             onClick={sendMessage}
             disabled={isSubmitted || isExpired || isSending || isAiDisabled || !input.trim()}
-            className="h-8 w-8 p-0 bg-[#0071E3] hover:bg-[#0077ED]"
+            className="size-11 rounded-2xl p-0 bg-[var(--ops-accent,#2563eb)] hover:bg-[var(--ops-accent-strong,#1d4ed8)] md:size-8"
             aria-label="Send"
           >
             {isSending ? (

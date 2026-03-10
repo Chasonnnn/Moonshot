@@ -110,9 +110,17 @@ export function WorkspacePanel() {
       onValueChange={(value) => setActiveWorkspace(value as typeof activeWorkspace)}
       className="flex h-full flex-col"
     >
-      <TabsList className="mx-3 mt-2 h-8 w-fit">
+      <TabsList
+        className="mx-3 mt-2 flex h-auto w-auto max-w-[calc(100%-1.5rem)] gap-1 overflow-x-auto rounded-[22px] border border-[var(--ops-border,#d7e0e4)] bg-[var(--ops-surface-subtle,#f8fafc)] p-1 [scrollbar-width:none]"
+        tabIndex={0}
+        aria-label="Workspace tools"
+      >
         {tabs.map((tab) => (
-          <TabsTrigger key={tab.value} value={tab.value} className="text-[12px]">
+          <TabsTrigger
+            key={tab.value}
+            value={tab.value}
+            className="min-h-11 shrink-0 rounded-[18px] px-4 text-[13px] font-semibold md:min-h-8 md:px-3 md:text-[12px]"
+          >
             {tab.label}
           </TabsTrigger>
         ))}
