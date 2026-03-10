@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     exports,
     fairness,
     jobs,
+    memory,
     meta,
     redteam,
     review_queue,
@@ -28,6 +29,7 @@ api_router = APIRouter()
 api_router.include_router(meta.router)
 api_router.include_router(auth.router)
 api_router.include_router(jobs.router)
+api_router.include_router(memory.router)
 api_router.include_router(admin_policies.router)
 api_router.include_router(business_context.router)
 api_router.include_router(cases.router)

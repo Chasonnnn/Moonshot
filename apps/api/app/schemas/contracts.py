@@ -525,6 +525,68 @@ class TaskQualitySignal(BaseModel):
     evaluated_by_role: str | None = None
 
 
+MemoryLayer = Literal["org", "content", "episode"]
+MemorySourceType = Literal["admin_approved", "model_inferred"]
+MemoryStatus = Literal["proposed", "reviewed", "approved", "active", "deprecated"]
+MemoryConsumer = Literal["coach", "evaluator", "codesign"]
+
+
+class MemoryEntry(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    tenant_id: str
+    layer: MemoryLayer
+    source_entity_type: str
+    source_entity_id: str
+    source_type: MemorySourceType
+    status: MemoryStatus
+    visibility_scope: list[str] = Field(default_factory=list)
+    created_by: str | None = None
+    reviewed_by: str | None = None
+    policy_version: str | None = None
+    change_reason: str | None = None
+    text_content: str
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class MemoryEntryListResponse(BaseModel):
+    items: list[MemoryEntry] = Field(default_factory=list)
+
+
+class MemoryChunk(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    memory_entry_id: UUID
+    tenant_id: str
+    chunk_index: int
+    text_content: str
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+    fts_document: str
+    embedding: list[float] = Field(default_factory=list)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SessionMemoryDigest(BaseModel):
+    session_id: UUID
+    tenant_id: str
+    summary_text: str
+    facts_json: dict[str, Any] = Field(default_factory=dict)
+    risk_signals: list[str] = Field(default_factory=list)
+    open_questions: list[str] = Field(default_factory=list)
+    last_event_offset: int = 0
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class MemoryAssemblerRequest(BaseModel):
+    tenant_id: str
+    actor_role: str
+    consumer: MemoryConsumer
+    query_text: str
+    session_id: UUID | None = None
+    token_budget_override: int | None = None
+    max_chunks_override: int | None = None
+
+
 class ContextInjectionTrace(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     session_id: UUID
@@ -544,6 +606,12 @@ class ContextInjectionTrace(BaseModel):
     )
     policy_version: str | None = None
     policy_hash: str | None = None
+    memory_entry_ids: list[UUID] = Field(default_factory=list)
+    chunk_ids: list[UUID] = Field(default_factory=list)
+    ranking_features: dict[str, Any] = Field(default_factory=dict)
+    query_text: str | None = None
+    token_budget: int | None = None
+    assembled_context_hash: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

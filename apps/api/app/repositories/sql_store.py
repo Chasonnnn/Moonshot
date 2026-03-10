@@ -33,12 +33,15 @@ from app.models.entities import (
     InterpretationViewModel,
     JobAttemptModel,
     JobRunModel,
+    MemoryChunkModel,
+    MemoryEntryModel,
     RedTeamRunModel,
     ReportModel,
     ReviewQueueModel,
     RubricModel,
     ScoreResultModel,
     SessionModel,
+    SessionMemoryDigestModel,
     SessionPythonHistoryModel,
     SessionSQLHistoryModel,
     TaskQualitySignalModel,
@@ -742,6 +745,24 @@ class SQLStore:
             session_factory=session_factory,
             model_cls=ContextInjectionTraceModel,
             key_attr="id",
+            uuid_keys=True,
+        )
+        self.memory_entries = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=MemoryEntryModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
+        self.memory_chunks = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=MemoryChunkModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
+        self.session_memory_digests = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=SessionMemoryDigestModel,
+            key_attr="session_id",
             uuid_keys=True,
         )
         self.fairness_smoke_runs = SQLRowMap(

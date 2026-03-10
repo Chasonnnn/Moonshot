@@ -329,7 +329,61 @@ class ContextInjectionTraceModel(Base):
     precedence_order: Mapped[list] = mapped_column(JSON)
     policy_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
     policy_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    memory_entry_ids: Mapped[list] = mapped_column(JSON, default=list)
+    chunk_ids: Mapped[list] = mapped_column(JSON, default=list)
+    ranking_features: Mapped[dict] = mapped_column(JSON, default=dict)
+    query_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    token_budget: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    assembled_context_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class MemoryEntryModel(Base):
+    __tablename__ = "memory_entries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    layer: Mapped[str] = mapped_column(String(32), index=True)
+    source_entity_type: Mapped[str] = mapped_column(String(64), index=True)
+    source_entity_id: Mapped[str] = mapped_column(String(64), index=True)
+    source_type: Mapped[str] = mapped_column(String(32))
+    status: Mapped[str] = mapped_column(String(32), index=True)
+    visibility_scope: Mapped[list] = mapped_column(JSON)
+    created_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    policy_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    change_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    text_content: Mapped[str] = mapped_column(Text)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class MemoryChunkModel(Base):
+    __tablename__ = "memory_chunks"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    memory_entry_id: Mapped[str] = mapped_column(String(36), index=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    chunk_index: Mapped[int] = mapped_column(Integer)
+    text_content: Mapped[str] = mapped_column(Text)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    fts_document: Mapped[str] = mapped_column(Text)
+    embedding: Mapped[list] = mapped_column(JSON, default=list)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class SessionMemoryDigestModel(Base):
+    __tablename__ = "session_memory_digests"
+
+    session_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(100), index=True)
+    summary_text: Mapped[str] = mapped_column(Text)
+    facts_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    risk_signals: Mapped[list] = mapped_column(JSON, default=list)
+    open_questions: Mapped[list] = mapped_column(JSON, default=list)
+    last_event_offset: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 
 
 class FairnessSmokeRunModel(Base):

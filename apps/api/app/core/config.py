@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     provider_request_timeout_seconds: float = 45.0
     litellm_base_url: str | None = None
     litellm_api_key: str | None = None
+    embedding_provider: str = "hash"
+    embedding_dimensions: int = 64
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.0-flash"
     openai_model: str = "gpt-5-mini"
