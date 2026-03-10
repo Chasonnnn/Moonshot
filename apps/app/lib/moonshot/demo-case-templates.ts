@@ -1,3 +1,5 @@
+import type { DemoToolType } from "@/lib/moonshot/demo-fixtures"
+
 export interface DemoCaseTemplate {
   id: string
   role: string
@@ -17,6 +19,9 @@ export interface DemoCaseTemplate {
   trustHighlights: string[]
   teaserStats: Array<{ label: string; value: string }>
   roundHighlights: string[]
+  workspaceModes: DemoToolType[]
+  requiresOralDefense?: boolean
+  oralDefenseLabel?: string
 }
 
 export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
@@ -60,8 +65,11 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
     roundHighlights: [
       "Round 1: isolate the discrepancy in SQL",
       "Round 2: stress-test the hypothesis in analysis tools",
-      "Round 3: deliver the escalation-ready recommendation",
+      "Round 3: deliver the escalation-ready recommendation and defend it live",
     ],
+    workspaceModes: ["sql", "python", "r", "dashboard", "oral"],
+    requiresOralDefense: true,
+    oralDefenseLabel: "Findings readout + follow-up defense",
   },
   {
     id: "tpl_jda_quality",
@@ -75,37 +83,42 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
       { type: "log", name: "etl_log.txt" },
     ],
     description: "Investigate a row count mismatch between source data and a dashboard. Requires systematic data quality investigation and clear documentation of findings.",
-    skillTags: ["SQL", "Data Quality", "ETL Debugging", "Documentation"],
-    estimatedDuration: "12 min",
+    skillTags: ["SQL", "Data Quality", "ETL Debugging", "Documentation", "Slides", "Oral Defense"],
+    estimatedDuration: "15 min",
     priority: "support",
     operatorLabel: "Additional simulation",
     heroHeadline: "Data quality triage with explicit ownership and escalation judgment.",
     heroDescription:
       "A shorter operational scenario that proves the platform can score process rigor and documentation quality, not only analytical insight.",
     candidateAsk:
-      "Resolve the dashboard vs source mismatch, classify the issue, and produce a clear owner-ready escalation note.",
+      "Resolve the dashboard vs source mismatch, classify the issue, produce a 3-slide owner-ready readout, and defend the recommendation out loud.",
     evidenceHighlights: [
       "Duplicate vs missing-record decomposition",
       "Lineage reasoning tied to likely ETL stages",
       "Documentation quality with issue logs and references",
       "Escalation severity with owner clarity",
+      "Short presentation defense tied to the evidence pack",
     ],
     trustHighlights: [
       "Traceable SQL checks and reproducible evidence",
       "Explicit rubric for escalation judgment",
       "Clear route into human review when needed",
       "Report surfaces preserve trigger rationale",
+      "Oral defense requirement makes communication quality inspectable",
     ],
     teaserStats: [
       { label: "Rounds", value: "3" },
       { label: "Focus", value: "Data QA" },
-      { label: "Deliverable", value: "Escalation memo" },
+      { label: "Deliverable", value: "Slides + defense" },
     ],
     roundHighlights: [
       "Reconcile source and dashboard row counts",
       "Trace the mismatch to the likely ETL step",
-      "Document severity, owner, and next checkpoint",
+      "Present severity, owner, and next checkpoint in a 3-slide readout",
     ],
+    workspaceModes: ["sql", "python", "r", "dashboard", "slides", "oral"],
+    requiresOralDefense: true,
+    oralDefenseLabel: "3-slide readout + 60-second defense",
   },
   {
     id: "tpl_jda_ambiguity",
@@ -118,37 +131,138 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
       { type: "csv", name: "metric_dictionary.csv" },
     ],
     description: "Handle an ambiguous request from a VP. Requires identifying ambiguities, stating assumptions explicitly, and responding professionally with a clear deliverable plan.",
-    skillTags: ["Communication", "Assumptions", "Stakeholder Management"],
-    estimatedDuration: "10 min",
+    skillTags: ["Communication", "Assumptions", "Stakeholder Management", "Slides", "Oral Defense"],
+    estimatedDuration: "12 min",
     priority: "support",
     operatorLabel: "Additional simulation",
     heroHeadline: "Stakeholder ambiguity without hiding behind generic communication advice.",
     heroDescription:
       "A lightweight scenario that highlights assumptions, clarification quality, and escalation judgment when requirements are underspecified.",
     candidateAsk:
-      "Respond to a vague stakeholder request by clarifying scope, recording assumptions, and proposing a bounded next-step plan.",
+      "Respond to a vague stakeholder request by clarifying scope, recording assumptions, proposing a bounded next-step plan, and presenting it crisply.",
     evidenceHighlights: [
       "Assumption logging and explicit uncertainty handling",
       "Stakeholder-ready writing with clear next actions",
       "Escalation logic when context is incomplete",
       "Decision quality under ambiguity rather than full datasets",
+      "Candidate can defend assumptions verbally under follow-up pressure",
     ],
     trustHighlights: [
       "Visible communication rubric and failure modes",
       "Timeline evidence for clarification vs overconfidence",
       "Trigger rationale available in the report view",
       "Clear distinction between safe inference and unsupported claims",
+      "Short oral defense reveals whether the recommendation is actually owned",
     ],
     teaserStats: [
-      { label: "Duration", value: "10 min" },
+      { label: "Duration", value: "12 min" },
       { label: "Focus", value: "Ambiguity" },
-      { label: "Primary signal", value: "Judgment" },
+      { label: "Primary signal", value: "Judgment + communication" },
     ],
     roundHighlights: [
       "Identify the missing requirements",
       "State assumptions with confidence levels",
-      "Draft the escalation-ready response",
+      "Deliver a concise scope proposal and oral defense",
     ],
+    workspaceModes: ["sql", "python", "r", "dashboard", "slides", "oral"],
+    requiresOralDefense: true,
+    oralDefenseLabel: "Scope readout + assumption defense",
+  },
+  {
+    id: "tpl_revops_forecast_variance",
+    role: "RevOps / Business Analyst",
+    skills: ["spreadsheet", "bi", "slides", "root_cause", "forecasting"],
+    title: "RevOps Forecast Variance Review",
+    scenario:
+      "Reconcile a forecast miss, isolate the operating drivers, and recommend an executive course correction with a defendable readout.",
+    artifacts: [
+      { type: "xlsx", name: "forecast_variance_model.xlsx" },
+      { type: "dashboard", name: "pipeline_board_snapshot.png" },
+      { type: "slides", name: "forecast_readout_deck.pptx" },
+    ],
+    description:
+      "A business-facing analytics simulation centered on spreadsheet rigor, pipeline inspection, and an executive readout under questioning.",
+    skillTags: ["Spreadsheet", "BI", "Forecasting", "Variance Analysis", "Slides", "Oral Defense"],
+    estimatedDuration: "18 min",
+    priority: "support",
+    operatorLabel: "Additional simulation",
+    heroHeadline: "Spreadsheet-first forecast variance work with an executive defense at the end.",
+    heroDescription:
+      "This scenario broadens the demo beyond SQL-first work. It shows that Moonshot can trace spreadsheet modeling, dashboard review, and presentation quality in one compact analytics flow.",
+    candidateAsk:
+      "Reconcile the quarterly forecast miss, isolate the operating drivers, build a management readout, and defend the recommendation under follow-up questions.",
+    evidenceHighlights: [
+      "Variance bridge built from workbook evidence rather than hand-waving",
+      "BI board filters used to separate segment and rep-level drivers",
+      "Slide storyline turns the analysis into a decision-ready readout",
+      "Oral defense reveals whether the candidate actually owns the recommendation",
+    ],
+    trustHighlights: [
+      "The same evidence model covers spreadsheet, BI, slides, and oral defense",
+      "Evaluation still ties tool usage back to explicit rubric dimensions",
+      "Operators can narrate the trace without needing live third-party integrations",
+      "Governance surfaces remain available even for more business-facing work",
+    ],
+    teaserStats: [
+      { label: "Tool mix", value: "Spreadsheet + BI" },
+      { label: "Readout", value: "Exec deck" },
+      { label: "Defense", value: "Yes" },
+    ],
+    roundHighlights: [
+      "Round 1: reconcile the variance bridge in the workbook",
+      "Round 2: validate the drivers in the BI board and shape the narrative",
+      "Round 3: deliver the executive readout and defend the call",
+    ],
+    workspaceModes: ["spreadsheet", "bi", "slides", "oral"],
+    requiresOralDefense: true,
+    oralDefenseLabel: "Executive readout + follow-up defense",
+  },
+  {
+    id: "tpl_ops_capacity_escalation",
+    role: "Support Operations / Operations Manager",
+    skills: ["spreadsheet", "bi", "slides", "capacity_planning", "judgment"],
+    title: "Ops Capacity Escalation Simulation",
+    scenario:
+      "Rebalance staffing against SLA risk, quantify tradeoffs, and brief leadership on the escalation path before service quality slips.",
+    artifacts: [
+      { type: "xlsx", name: "capacity_rebalance_model.xlsx" },
+      { type: "dashboard", name: "sla_risk_board_snapshot.png" },
+      { type: "slides", name: "capacity_escalation_brief.pptx" },
+    ],
+    description:
+      "An operations simulation focused on staffing tradeoffs, SLA risk, and a concise escalation brief grounded in spreadsheet and BI evidence.",
+    skillTags: ["Spreadsheet", "BI", "Capacity Planning", "Escalation", "Slides"],
+    estimatedDuration: "16 min",
+    priority: "support",
+    operatorLabel: "Additional simulation",
+    heroHeadline: "Operational judgment with a staffing model, SLA board, and leadership brief.",
+    heroDescription:
+      "This path broadens the gallery into ops work without changing the demo posture. It is fully fixture-backed and still shows realistic tool movement.",
+    candidateAsk:
+      "Rebalance staffing against SLA risk, quantify the tradeoffs, and present a crisp escalation recommendation with next actions.",
+    evidenceHighlights: [
+      "Capacity model ties staffing changes to queue and SLA outcomes",
+      "BI board confirms where the risk actually sits before escalation",
+      "Leadership brief compresses the tradeoff into a decision-ready story",
+      "The tool trace shows operational reasoning, not just written output",
+    ],
+    trustHighlights: [
+      "Fixture-backed flow keeps the first demo reliable while still looking broad",
+      "Scoring can still inspect prioritization, risk framing, and communication quality",
+      "The same audit and trigger surfaces remain available to reviewers",
+      "Operators can compare the ops path to analytics paths in one gallery",
+    ],
+    teaserStats: [
+      { label: "Tool mix", value: "Spreadsheet + BI" },
+      { label: "Focus", value: "SLA risk" },
+      { label: "Readout", value: "Leadership brief" },
+    ],
+    roundHighlights: [
+      "Round 1: quantify the staffing gap and identify the SLA hotspots",
+      "Round 2: test rebalance scenarios and pressure-check the tradeoffs",
+      "Round 3: brief leadership with a concrete escalation path",
+    ],
+    workspaceModes: ["spreadsheet", "bi", "slides"],
   },
   {
     id: "tpl_customer_support_judgment",
@@ -195,6 +309,7 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
       "Apply the right policy without overpromising",
       "Draft the escalation-ready customer response",
     ],
+    workspaceModes: ["dashboard"],
   },
   {
     id: "tpl_doordash_enablement",
@@ -242,5 +357,8 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
       "Week 3: model interventions, pilot design, and ROI",
       "Week 4: defend the deck in executive Q&A",
     ],
+    workspaceModes: ["sql", "python", "dashboard", "slides", "oral"],
+    requiresOralDefense: true,
+    oralDefenseLabel: "8-minute deck + executive Q&A",
   },
 ]

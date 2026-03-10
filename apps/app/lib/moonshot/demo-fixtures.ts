@@ -18,6 +18,23 @@ export interface DemoPythonScript {
   datasetId?: string
 }
 
+export type DemoToolType = "sql" | "python" | "r" | "dashboard" | "spreadsheet" | "bi" | "slides" | "oral"
+
+export interface DemoToolAction {
+  tool: DemoToolType
+  label: string
+  detail?: string
+  query?: string
+  code?: string
+  datasetId?: string
+  plotUrl?: string
+  action?: string
+  artifactRefs?: string[]
+  prompt?: string
+  transcriptExcerpt?: string
+  durationSeconds?: number
+}
+
 export interface DemoEventEntry {
   event_type: string
   payload: Record<string, unknown>
@@ -75,14 +92,57 @@ export interface DemoRound {
   dashboardActions: string[]
   coachScript: DemoCoachTurn[]
   mockedArtifacts: string[]
+  toolActions?: DemoToolAction[]
 }
 
 export interface DemoEvaluationBundle {
   coDesignAlignment: Array<{ dimension: string; score: number; note: string }>
   roundPerformance: Array<{ round: string; score: number; note: string }>
-  toolProficiency: Array<{ tool: "sql" | "python" | "r" | "dashboard"; score: number }>
+  toolProficiency: Array<{ tool: DemoToolType; score: number }>
   triggerRationale: Array<{ code: string; rationale: string; impact: string }>
   agentNarrative: string[]
+}
+
+export interface DemoSpreadsheetWorkspace {
+  workbookName: string
+  formulaSummary: string[]
+  sheets: Array<{
+    name: string
+    columns: string[]
+    rows: string[][]
+    highlightedCells?: string[]
+    note?: string
+  }>
+}
+
+export interface DemoBIWorkspace {
+  boardTitle: string
+  filters: string[]
+  kpis: Array<{ label: string; value: string; delta: string }>
+  charts: Array<{ title: string; type: "bar" | "line" | "funnel"; insight: string }>
+  annotations: string[]
+}
+
+export interface DemoSlidesWorkspace {
+  deckTitle: string
+  slides: Array<{
+    title: string
+    bullets: string[]
+    speakerNotes: string
+  }>
+}
+
+export interface DemoOralWorkspace {
+  required: boolean
+  weight: number
+  prompts: Array<{
+    clipType: "presentation" | "follow_up_1" | "follow_up_2"
+    title: string
+    prompt: string
+    questionId?: string
+    maxDurationSeconds: number
+  }>
+  transcriptHighlights: string[]
 }
 
 export interface DemoDatasetColumn {
@@ -130,6 +190,10 @@ export interface DemoFixtureData {
   evaluationBundle: DemoEvaluationBundle
   datasets: DemoDataset[]
   parts: DemoPart[]
+  spreadsheetWorkspace?: DemoSpreadsheetWorkspace | null
+  biWorkspace?: DemoBIWorkspace | null
+  slidesWorkspace?: DemoSlidesWorkspace | null
+  oralWorkspace?: DemoOralWorkspace | null
 }
 
 const DEFAULT_DIFFICULTY_LADDER: DemoDifficultyLevel[] = [
@@ -190,7 +254,7 @@ function buildVariantCatalog(basePrompt: string, skills: string[]): DemoVariantC
 function buildEvaluationBundle(
   coDesignAlignment: Array<{ dimension: string; score: number; note: string }>,
   roundPerformance: Array<{ round: string; score: number; note: string }>,
-  toolProficiency: Array<{ tool: "sql" | "python" | "r" | "dashboard"; score: number }>,
+  toolProficiency: Array<{ tool: DemoToolType; score: number }>,
   triggerRationale: Array<{ code: string; rationale: string; impact: string }>,
   agentNarrative: string[],
 ): DemoEvaluationBundle {
@@ -201,6 +265,44 @@ function buildEvaluationBundle(
     triggerRationale,
     agentNarrative,
   }
+}
+
+function buildLegacyToolActions(round: DemoRound): DemoToolAction[] {
+  return [
+    ...round.sqlQueries.map((query, index) => ({
+      tool: "sql" as const,
+      label: `SQL ${index + 1}`,
+      detail: query.query,
+      query: query.query,
+    })),
+    ...round.pythonScripts.map((script, index) => ({
+      tool: "python" as const,
+      label: `Python ${index + 1}`,
+      detail: script.code.split("\n")[0] ?? script.code,
+      code: script.code,
+      datasetId: script.datasetId,
+      plotUrl: script.plotUrl,
+      artifactRefs: script.plotUrl ? [script.plotUrl] : [],
+    })),
+    ...round.rScripts.map((script, index) => ({
+      tool: "r" as const,
+      label: `R ${index + 1}`,
+      detail: script.code.split("\n")[0] ?? script.code,
+      code: script.code,
+      plotUrl: script.plotUrl,
+      artifactRefs: script.plotUrl ? [script.plotUrl] : [],
+    })),
+    ...round.dashboardActions.map((action, index) => ({
+      tool: "dashboard" as const,
+      label: `Dashboard ${index + 1}`,
+      detail: action,
+      action,
+    })),
+  ]
+}
+
+export function getRoundToolActions(round: DemoRound): DemoToolAction[] {
+  return [...buildLegacyToolActions(round), ...(round.toolActions ?? [])]
 }
 
 const DATA_ANALYST_VARIANTS = buildVariantCatalog(
@@ -226,6 +328,16 @@ const CUSTOMER_SUPPORT_VARIANTS = buildVariantCatalog(
   deliverables: ["priority_queue", "customer_reply", "escalation_note"],
   artifactRefs: ["ticket_queue.csv", "refund_policy.md", "vip_customer_thread.txt"],
 }))
+
+const REVOPS_VARIANTS = buildVariantCatalog(
+  "Reconcile forecast variance, quantify the impact, and prepare an executive readout with clear trade-offs.",
+  ["spreadsheet", "bi", "slides", "communication"],
+)
+
+const OPS_CAPACITY_VARIANTS = buildVariantCatalog(
+  "Rebalance staffing, manage SLA risk, and prepare the escalation brief with explicit operational trade-offs.",
+  ["spreadsheet", "bi", "slides", "risk"],
+)
 
 const DATA_ANALYST_ROUNDS: DemoRound[] = [
   {
@@ -329,6 +441,18 @@ const DATA_ANALYST_ROUNDS: DemoRound[] = [
     pythonScripts: [],
     rScripts: [],
     dashboardActions: ["Draft escalation note", "Create monitor tile: paid_social_quality_guardrail"],
+    toolActions: [
+      {
+        tool: "oral",
+        label: "Recommendation defense",
+        detail: "Present the root cause, recommendation, and main caveat in a concise operator-style readout.",
+        prompt: "Present the root cause, the recommendation, and the biggest caveat you would want the acquisition lead to hear before acting.",
+        transcriptExcerpt:
+          "The evidence points to a paid-social quality problem rather than a platform-wide product issue. I would pause the recent targeting expansion, escalate to the acquisition owner as a P2, and validate campaign-level drift before treating this as a broader regression.",
+        durationSeconds: 72,
+        artifactRefs: ["analyst_oral_defense.txt"],
+      },
+    ],
     coachScript: [
       { role: "user", content: "What should I include in escalation criteria?", allowed: true },
       {
@@ -337,7 +461,152 @@ const DATA_ANALYST_ROUNDS: DemoRound[] = [
         allowed: true,
       },
     ],
-    mockedArtifacts: ["executive_summary.md", "escalation_checklist.md"],
+    mockedArtifacts: ["executive_summary.md", "escalation_checklist.md", "analyst_oral_defense.txt"],
+  },
+]
+
+const REVOPS_ROUNDS: DemoRound[] = [
+  {
+    id: "round_1",
+    title: "Round 1 - Workbook reconciliation",
+    objective: "Reconcile the booked forecast gap and isolate the largest variance drivers in the operating model.",
+    deliverables: ["Variance table", "Driver summary"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: [],
+    toolActions: [
+      {
+        tool: "spreadsheet",
+        label: "Workbook 1",
+        detail: "Reconcile volume, conversion, and ASP assumptions across the regional forecast workbook.",
+        action: "Highlight the cells driving 74% of the miss",
+        artifactRefs: ["forecast_model.xlsx", "variance_bridge.xlsx"],
+      },
+    ],
+    coachScript: [
+      { role: "user", content: "Should I focus on conversion or ASP first?", allowed: true },
+      { role: "coach", content: "Start with the biggest dollar driver, then confirm whether it is volume, mix, or ASP.", allowed: true },
+    ],
+    mockedArtifacts: ["variance_bridge.xlsx"],
+  },
+  {
+    id: "round_2",
+    title: "Round 2 - BI validation",
+    objective: "Pressure-test the workbook story in the funnel and pipeline board before finalizing the call.",
+    deliverables: ["Validated driver narrative", "BI annotations"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: [],
+    toolActions: [
+      {
+        tool: "bi",
+        label: "Pipeline board",
+        detail: "Validate whether the miss is driven by enterprise pipeline quality or mid-market conversion.",
+        action: "Add annotation to the Q3 pipeline-to-win chart",
+        artifactRefs: ["pipeline_variance_board", "conversion_mix_view"],
+      },
+    ],
+    coachScript: [],
+    mockedArtifacts: ["pipeline_variance_notes.md"],
+  },
+  {
+    id: "round_3",
+    title: "Round 3 - Executive readout and oral defense",
+    objective: "Prepare the short exec deck and defend the recommendation in follow-up questions.",
+    deliverables: ["3-slide deck", "Oral defense transcript"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: [],
+    toolActions: [
+      {
+        tool: "slides",
+        label: "Deck draft",
+        detail: "Build the 3-slide executive readout with headline, evidence, and decision.",
+        action: "Draft slide storyline",
+        artifactRefs: ["exec_variance_readout.deck"],
+      },
+      {
+        tool: "oral",
+        label: "Presentation defense",
+        detail: "Defend why the current recommendation favors pipeline quality fixes over quota reallocation.",
+        prompt: "Present the biggest driver of the miss, the recommendation, and the main risk if leadership delays the decision.",
+        transcriptExcerpt:
+          "The miss is primarily a conversion-quality problem in enterprise pipeline, not a simple coverage issue. I would tighten qualification and redirect enablement resources before moving quota, because the current pipeline volume is overstating true revenue capacity.",
+        durationSeconds: 74,
+        artifactRefs: ["revops_oral_defense.txt"],
+      },
+    ],
+    coachScript: [],
+    mockedArtifacts: ["exec_variance_readout.deck", "revops_oral_defense.txt"],
+  },
+]
+
+const OPS_CAPACITY_ROUNDS: DemoRound[] = [
+  {
+    id: "round_1",
+    title: "Round 1 - Capacity modeling",
+    objective: "Map the staffing gap against backlog growth and identify where SLA risk becomes unacceptable.",
+    deliverables: ["Capacity model", "Risk assumptions"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: [],
+    toolActions: [
+      {
+        tool: "spreadsheet",
+        label: "Capacity plan",
+        detail: "Model shift coverage, backlog absorption, and escalation thresholds for the support org.",
+        action: "Rebalance the weekend staffing plan",
+        artifactRefs: ["staffing_capacity_plan.xlsx"],
+      },
+    ],
+    coachScript: [],
+    mockedArtifacts: ["capacity_assumptions.md"],
+  },
+  {
+    id: "round_2",
+    title: "Round 2 - SLA board review",
+    objective: "Validate which queue mix and backlog segments create the highest near-term operational risk.",
+    deliverables: ["Priority queue order", "SLA annotation"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: [],
+    toolActions: [
+      {
+        tool: "bi",
+        label: "SLA risk board",
+        detail: "Review queue mix, backlog age, and breach probability before escalating.",
+        action: "Mark the enterprise support queue as highest-risk",
+        artifactRefs: ["sla_risk_board"],
+      },
+    ],
+    coachScript: [],
+    mockedArtifacts: ["sla_priority_notes.md"],
+  },
+  {
+    id: "round_3",
+    title: "Round 3 - Escalation brief",
+    objective: "Prepare the escalation brief with explicit trade-offs, owner requests, and next checkpoints.",
+    deliverables: ["Escalation brief", "Owner requests"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: [],
+    toolActions: [
+      {
+        tool: "slides",
+        label: "Brief deck",
+        detail: "Summarize the staffing trade-off, the queues at risk, and the requested leadership decision.",
+        action: "Draft three-slide operations brief",
+        artifactRefs: ["ops_escalation_brief.deck"],
+      },
+    ],
+    coachScript: [],
+    mockedArtifacts: ["ops_escalation_brief.deck"],
   },
 ]
 
@@ -407,13 +676,32 @@ const JDA_QUALITY_ROUNDS: DemoRound[] = [
   },
   {
     id: "round_3",
-    title: "Round 3 - Escalation-ready final pack",
-    objective: "Finalize recommendation, risk, and owner handoff.",
-    deliverables: ["Escalation memo", "Owner/action plan"],
+    title: "Round 3 - Escalation-ready final pack and readout",
+    objective: "Finalize recommendation, package it into a short slide readout, and defend the escalation call.",
+    deliverables: ["Escalation memo", "Owner/action plan", "3-slide readout", "60-second oral defense"],
     sqlQueries: [],
     pythonScripts: [],
     rScripts: [],
     dashboardActions: ["Open stakeholder dashboard", "Publish annotation: P2 ETL dedupe defect"],
+    toolActions: [
+      {
+        tool: "slides",
+        label: "Slides 1",
+        detail: "Build a 3-slide stakeholder readout covering issue, impact, and owner/action plan.",
+        action: "Draft 3-slide stakeholder readout",
+        artifactRefs: ["stakeholder_summary_round3.md", "owner_handoff.md", "jda_quality_readout_v1.pptx"],
+      },
+      {
+        tool: "oral",
+        label: "Oral 1",
+        detail: "Defend why this is a P2 ETL issue and what still needs verification.",
+        prompt: "Explain why you are escalating this as a P2 issue, what evidence supports that call, and what remains unresolved.",
+        transcriptExcerpt:
+          "I am escalating this as a P2 because the discrepancy is systematic, customer-facing in downstream dashboards, and already reproducible. The dedupe defect is the confirmed root issue, while null-customer filtering remains a policy question that still needs owner input.",
+        durationSeconds: 58,
+        artifactRefs: ["jda_quality_oral_defense.txt"],
+      },
+    ],
     coachScript: [
       {
         role: "user",
@@ -426,7 +714,7 @@ const JDA_QUALITY_ROUNDS: DemoRound[] = [
         allowed: true,
       },
     ],
-    mockedArtifacts: ["stakeholder_summary_round3.md", "owner_handoff.md"],
+    mockedArtifacts: ["stakeholder_summary_round3.md", "owner_handoff.md", "jda_quality_readout_v1.pptx", "jda_quality_oral_defense.txt"],
   },
 ]
 
@@ -491,13 +779,32 @@ const JDA_AMBIGUITY_ROUNDS: DemoRound[] = [
   },
   {
     id: "round_3",
-    title: "Round 3 - Stakeholder-ready final response",
-    objective: "Deliver concise final response and escalation path.",
-    deliverables: ["Final message", "Escalation trigger list"],
+    title: "Round 3 - Stakeholder-ready final response and defense",
+    objective: "Deliver a concise final response, package the scope proposal into slides, and defend the assumptions out loud.",
+    deliverables: ["Final message", "Escalation trigger list", "3-slide scope readout", "60-second oral defense"],
     sqlQueries: [],
     pythonScripts: [],
     rScripts: [],
     dashboardActions: ["Publish recommended response", "Log escalation trigger checklist"],
+    toolActions: [
+      {
+        tool: "slides",
+        label: "Slides 1",
+        detail: "Create a 3-slide scope proposal with assumptions, default path, and open questions.",
+        action: "Draft scope proposal slides",
+        artifactRefs: ["jda_scope_readout_v1.pptx", "final_response_round3.md"],
+      },
+      {
+        tool: "oral",
+        label: "Oral 1",
+        detail: "Defend the default scope and explain which assumptions are riskiest.",
+        prompt: "Walk through your default scope, your riskiest assumption, and the trigger that would make you escalate instead of proceeding.",
+        transcriptExcerpt:
+          "My default scope is a Q4 KPI summary with explicit assumptions because it provides value quickly without pretending the request is fully specified. The riskiest assumption is the KPI set itself, so I would escalate immediately if the VP is actually asking for channel-level attribution or a board-facing format.",
+        durationSeconds: 57,
+        artifactRefs: ["jda_ambiguity_oral_defense.txt"],
+      },
+    ],
     coachScript: [
       { role: "user", content: "Can you write the final answer for me?", allowed: false, policyReason: "Direct answer generation is not allowed in assessment mode." },
       {
@@ -506,7 +813,7 @@ const JDA_AMBIGUITY_ROUNDS: DemoRound[] = [
         allowed: true,
       },
     ],
-    mockedArtifacts: ["final_response_round3.md"],
+    mockedArtifacts: ["final_response_round3.md", "jda_scope_readout_v1.pptx", "jda_ambiguity_oral_defense.txt"],
   },
 ]
 
@@ -1275,6 +1582,7 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
       { event_type: "copilot_invoked", payload: { source: "coach" } },
       { event_type: "verification_step_completed", payload: { step: "cross_channel_check" } },
       { event_type: "verification_step_completed", payload: { step: "time_series_validation" } },
+      { event_type: "oral_response_recorded", payload: { clip_type: "presentation", duration_seconds: 72, round: "round_3" } },
     ],
     mockScoreResult: {
       confidence: 0.87,
@@ -1303,6 +1611,7 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
         { tool: "python", score: 84 },
         { tool: "r", score: 77 },
         { tool: "dashboard", score: 85 },
+        { tool: "oral", score: 84 },
       ],
       [
         { code: "strong_evidence_chain", rationale: "Used multi-step validation across channels and time.", impact: "positive" },
@@ -1315,6 +1624,37 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
     ),
     datasets: [],
     parts: [],
+    oralWorkspace: {
+      required: true,
+      weight: 0.15,
+      prompts: [
+        {
+          clipType: "presentation",
+          title: "Present the findings",
+          prompt: "Present the root cause, the recommendation, and the main caveat in a concise three-minute readout.",
+          questionId: "analyst_presentation",
+          maxDurationSeconds: 180,
+        },
+        {
+          clipType: "follow_up_1",
+          title: "Defend the root cause",
+          prompt: "What is the single strongest piece of evidence supporting the paid-social conclusion?",
+          questionId: "analyst_followup_1",
+          maxDurationSeconds: 60,
+        },
+        {
+          clipType: "follow_up_2",
+          title: "State the next validation",
+          prompt: "What would you validate next before scaling the recommendation?",
+          questionId: "analyst_followup_2",
+          maxDurationSeconds: 60,
+        },
+      ],
+      transcriptHighlights: [
+        "Candidate led with the recommendation instead of burying the conclusion.",
+        "Follow-up answers preserved uncertainty while keeping ownership clear.",
+      ],
+    },
   },
 
   tpl_jda_quality: {
@@ -1393,6 +1733,8 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
       { event_type: "analysis_r_run", payload: { runtime_ms: 31, source: "mock" } },
       { event_type: "python_code_run", payload: { runtime_ms: 33, has_plot: false } },
       { event_type: "dashboard_action", payload: { action: "annotate" } },
+      { event_type: "slides_action", payload: { action: "draft_stakeholder_readout", round: "round_3" } },
+      { event_type: "oral_response_recorded", payload: { clip_type: "presentation", duration_seconds: 58, round: "round_3" } },
       { event_type: "copilot_invoked", payload: { source: "coach" } },
       { event_type: "verification_step_completed", payload: { step: "duplicate_check" } },
       { event_type: "verification_step_completed", payload: { step: "lineage_validation" } },
@@ -1424,13 +1766,67 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
         { tool: "python", score: 78 },
         { tool: "r", score: 74 },
         { tool: "dashboard", score: 83 },
+        { tool: "slides", score: 81 },
+        { tool: "oral", score: 79 },
       ],
       [{ code: "systematic_investigation", rationale: "Candidate executed clear RCA sequence.", impact: "positive" }],
       [
         "Agent evaluator observed consistent process discipline with strong escalation framing.",
+        "The short readout translated the RCA into a clean owner-ready story.",
         "Further depth on quantitative impact confidence would improve overall score.",
       ],
     ),
+    slidesWorkspace: {
+      deckTitle: "JDA Quality Triage Readout",
+      slides: [
+        {
+          title: "Issue summary",
+          bullets: ["255-row discrepancy confirmed", "Duplicate records in ETL merge stage", "Null-customer filter remains policy decision"],
+          speakerNotes: "Lead with the fact pattern and avoid over-claiming unresolved policy decisions.",
+        },
+        {
+          title: "Impact and owner",
+          bullets: ["Dashboard count inflated", "Revenue totals unaffected", "Data platform owns dedupe fix"],
+          speakerNotes: "Keep the impact separated from the owner/action path.",
+        },
+        {
+          title: "Next actions",
+          bullets: ["Escalate as P2", "Add reconciliation guardrail", "Resolve null-customer handling policy"],
+          speakerNotes: "End with the owner, action, and next checkpoint.",
+        },
+      ],
+    },
+    oralWorkspace: {
+      required: true,
+      weight: 0.2,
+      prompts: [
+        {
+          clipType: "presentation",
+          title: "Present the readout",
+          prompt: "Walk through your 3-slide RCA readout in under 60 seconds.",
+          questionId: "jda_quality_presentation",
+          maxDurationSeconds: 60,
+        },
+        {
+          clipType: "follow_up_1",
+          title: "Defend the escalation",
+          prompt: "Explain why this is a P2 issue and what evidence justifies escalation now.",
+          questionId: "jda_quality_followup_1",
+          maxDurationSeconds: 60,
+        },
+        {
+          clipType: "follow_up_2",
+          title: "State what is unresolved",
+          prompt: "What remains uncertain and what owner would you ask to resolve it?",
+          questionId: "jda_quality_followup_2",
+          maxDurationSeconds: 60,
+        },
+      ],
+      transcriptHighlights: [
+        "Candidate clearly separated the confirmed ETL defect from the still-open policy question.",
+        "Presentation stayed evidence-first and owner-specific.",
+      ],
+    },
     datasets: [],
     parts: [],
   },
@@ -1510,6 +1906,8 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
       { event_type: "python_code_run", payload: { runtime_ms: 26, has_plot: false } },
       { event_type: "analysis_r_run", payload: { runtime_ms: 31, source: "mock" } },
       { event_type: "dashboard_action", payload: { action: "annotate" } },
+      { event_type: "slides_action", payload: { action: "draft_scope_readout", round: "round_3" } },
+      { event_type: "oral_response_recorded", payload: { clip_type: "presentation", duration_seconds: 57, round: "round_3" } },
       { event_type: "copilot_invoked", payload: { source: "coach" } },
       { event_type: "verification_step_completed", payload: { step: "assumption_check" } },
     ],
@@ -1540,6 +1938,8 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
         { tool: "python", score: 72 },
         { tool: "r", score: 68 },
         { tool: "dashboard", score: 80 },
+        { tool: "slides", score: 84 },
+        { tool: "oral", score: 87 },
       ],
       [
         { code: "strong_communication", rationale: "Candidate produced concise executive-ready framing.", impact: "positive" },
@@ -1547,11 +1947,395 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
       ],
       [
         "Agent evaluator observed strong ambiguity handling and communication discipline.",
+        "The slide readout made the default scope and escalation trigger easier to inspect.",
         "Additional quantitative framing could improve analytical depth for mixed-role panels.",
+      ],
+    ),
+    slidesWorkspace: {
+      deckTitle: "JDA Scope Proposal",
+      slides: [
+        {
+          title: "Requested ask",
+          bullets: ["VP request is underspecified", "Metric set and audience are unclear", "Need a safe default scope"],
+          speakerNotes: "Start by naming what is ambiguous rather than pretending it is clear.",
+        },
+        {
+          title: "Default scope",
+          bullets: ["Q4 KPI summary", "QoQ comparison", "Assumptions logged for KPI set and audience"],
+          speakerNotes: "Show that the candidate can move work forward while remaining explicit about assumptions.",
+        },
+        {
+          title: "Escalation trigger",
+          bullets: ["Escalate if board-facing", "Escalate if attribution detail is required", "Escalate if turnaround expectation changes materially"],
+          speakerNotes: "Make the escalation threshold explicit and reviewable.",
+        },
+      ],
+    },
+    oralWorkspace: {
+      required: true,
+      weight: 0.2,
+      prompts: [
+        {
+          clipType: "presentation",
+          title: "Present the scope proposal",
+          prompt: "Walk through your default scope and the assumptions behind it in under 60 seconds.",
+          questionId: "jda_ambiguity_presentation",
+          maxDurationSeconds: 60,
+        },
+        {
+          clipType: "follow_up_1",
+          title: "Defend the default path",
+          prompt: "Why is this the right default path before the VP clarifies the request?",
+          questionId: "jda_ambiguity_followup_1",
+          maxDurationSeconds: 60,
+        },
+        {
+          clipType: "follow_up_2",
+          title: "Explain your escalation trigger",
+          prompt: "What specific signal would make you stop and escalate instead of proceeding?",
+          questionId: "jda_ambiguity_followup_2",
+          maxDurationSeconds: 60,
+        },
+      ],
+      transcriptHighlights: [
+        "Candidate defended a default scope without acting overconfident.",
+        "Escalation trigger was specific instead of generic stakeholder hedging.",
+      ],
+    },
+    datasets: [],
+    parts: [],
+  },
+
+  tpl_revops_forecast_variance: {
+    jobDescription:
+      "RevOps / Business Analyst: Reconcile forecast variance, isolate the largest drivers, and prepare an executive recommendation with a short oral defense.",
+    taskPrompt:
+      "This quarter will miss plan by 11%. Reconcile the miss, identify the main driver, and recommend the next action with a clear executive narrative.",
+    coDesignBundle: {
+      roleStatement: "The role tests business analytics judgment across spreadsheet reconciliation, BI review, and executive communication.",
+      objectives: [
+        "Assess workbook reconciliation rigor",
+        "Assess whether BI evidence supports the variance narrative",
+        "Assess whether the candidate can communicate the decision in executive language",
+      ],
+      sampleTasks: [
+        "Reconcile the miss across volume, conversion, and ASP",
+        "Validate the story in the BI board",
+        "Prepare a concise executive readout and defend it",
+      ],
+      rubricBlueprint: ["Reconciliation rigor", "Driver validation", "Executive communication"],
+      difficultyLadder: DEFAULT_DIFFICULTY_LADDER,
+      agentNotes: [
+        "Strong candidates should reconcile the workbook before jumping to recommendation.",
+        "Reward concise executive framing with explicit trade-off language.",
+      ],
+    },
+    rubric: [
+      {
+        key: "reconciliation_rigor",
+        anchor: "Reconciles the forecast miss with traceable workbook logic.",
+        evaluationPoints: ["Driver isolation", "Formula traceability", "Impact quantification"],
+        evidenceSignals: ["variance bridge", "highlighted assumptions"],
+        commonFailureModes: ["unreconciled totals", "assumption drift"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "driver_validation",
+        anchor: "Validates the narrative in BI before recommending action.",
+        evaluationPoints: ["Cross-checks workbook story", "Finds conflicting evidence", "Explains uncertainty"],
+        evidenceSignals: ["board annotation", "funnel validation"],
+        commonFailureModes: ["single-source claim"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "communication_story",
+        anchor: "Delivers an executive-ready recommendation with explicit trade-offs.",
+        evaluationPoints: ["Leads with a decision", "Uses business language", "Names the main risk"],
+        evidenceSignals: ["deck structure", "decision headline"],
+        commonFailureModes: ["buried recommendation", "spreadsheet dump"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "oral_communication",
+        anchor: "Defends the recommendation clearly under follow-up questions.",
+        evaluationPoints: ["Concise presentation", "Evidence-linked answers", "Controlled uncertainty"],
+        evidenceSignals: ["oral defense transcript"],
+        commonFailureModes: ["rambling answer", "cannot defend key recommendation"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+    ],
+    variantCatalog: REVOPS_VARIANTS,
+    rounds: REVOPS_ROUNDS,
+    sqlQueries: [],
+    pythonScripts: [],
+    coachScript: REVOPS_ROUNDS.flatMap((round) => round.coachScript),
+    finalResponse:
+      "The forecast miss is primarily driven by enterprise pipeline conversion quality, not raw coverage. I recommend tightening qualification and redirecting enablement resources before reallocating quota, while monitoring whether mid-market conversion stabilizes over the next two weeks.",
+    sampleEvents: [
+      { event_type: "session_started", payload: { time_to_first_action_ms: 720 } },
+      { event_type: "spreadsheet_action", payload: { action: "reconcile_variance" } },
+      { event_type: "bi_action", payload: { action: "annotate_pipeline_board" } },
+      { event_type: "slides_action", payload: { action: "draft_exec_readout" } },
+      { event_type: "oral_response_recorded", payload: { duration_seconds: 74 } },
+      { event_type: "verification_step_completed", payload: { step: "driver_reconciliation" } },
+    ],
+    mockScoreResult: {
+      confidence: 0.86,
+      dimensionScores: {
+        reconciliation_rigor: 0.9,
+        driver_validation: 0.84,
+        communication_story: 0.87,
+        oral_communication: 0.83,
+      },
+      triggerCodes: ["variance_reconciled", "exec_story_clear"],
+    },
+    evaluationBundle: buildEvaluationBundle(
+      [
+        { dimension: "JD coverage", score: 92, note: "Spreadsheet, BI, slides, and oral defense all represented." },
+        { dimension: "Task realism", score: 90, note: "Mirrors common quarterly variance reviews." },
+      ],
+      [
+        { round: "Round 1", score: 88, note: "Workbook reconciliation was strong." },
+        { round: "Round 2", score: 84, note: "BI validation closed the main uncertainty gap." },
+        { round: "Round 3", score: 87, note: "Executive story was concise and defensible." },
+      ],
+      [
+        { tool: "spreadsheet", score: 91 },
+        { tool: "bi", score: 84 },
+        { tool: "slides", score: 86 },
+        { tool: "oral", score: 83 },
+      ],
+      [
+        { code: "variance_reconciled", rationale: "The workbook and BI story converged on the same driver.", impact: "positive" },
+        { code: "exec_story_clear", rationale: "The candidate led with a decision and explicit risk framing.", impact: "positive" },
+      ],
+      [
+        "Agent evaluator observed clear workbook discipline before recommendation.",
+        "Oral defense held up under executive-style follow-up questions.",
       ],
     ),
     datasets: [],
     parts: [],
+    spreadsheetWorkspace: {
+      workbookName: "FY26 Q3 Forecast Model",
+      formulaSummary: ["Bookings bridge", "Conversion sensitivity", "ASP assumption audit"],
+      sheets: [
+        {
+          name: "Variance Bridge",
+          columns: ["Segment", "Plan", "Actual", "Variance", "Driver"],
+          rows: [
+            ["Enterprise", "$14.2M", "$11.5M", "-$2.7M", "Conversion quality"],
+            ["Mid-market", "$8.6M", "$8.0M", "-$0.6M", "Late-stage slippage"],
+          ],
+          highlightedCells: ["D2", "E2"],
+          note: "Enterprise conversion quality explains the majority of the miss.",
+        },
+      ],
+    },
+    biWorkspace: {
+      boardTitle: "Pipeline Variance Board",
+      filters: ["Quarter = Q3", "Region = NA", "Segment = Enterprise"],
+      kpis: [
+        { label: "Plan attainment", value: "89%", delta: "-11 pts vs plan" },
+        { label: "Stage 3 conversion", value: "24%", delta: "-8 pts vs prior quarter" },
+        { label: "Coverage ratio", value: "3.1x", delta: "Above target" },
+      ],
+      charts: [
+        { title: "Pipeline-to-win conversion", type: "line", insight: "Coverage remained healthy while conversion quality deteriorated." },
+        { title: "Segment variance bridge", type: "bar", insight: "Enterprise carries most of the miss in dollar terms." },
+      ],
+      annotations: ["Do not shift quota until qualification quality is addressed."],
+    },
+    slidesWorkspace: {
+      deckTitle: "Q3 Forecast Variance Readout",
+      slides: [
+        {
+          title: "The miss is mostly conversion quality, not pipeline coverage",
+          bullets: [
+            "Enterprise pipeline conversion drove 74% of the dollar miss.",
+            "Coverage is above target, so quota reallocation would not fix the current issue.",
+          ],
+          speakerNotes: "Lead with the main driver and pre-empt the common coverage question.",
+        },
+        {
+          title: "Recommendation",
+          bullets: [
+            "Tighten qualification and redirect enablement to enterprise deal inspection.",
+            "Review quota changes only if conversion does not recover within two weeks.",
+          ],
+          speakerNotes: "Keep the trade-off explicit and time-bound.",
+        },
+      ],
+    },
+    oralWorkspace: {
+      required: true,
+      weight: 0.15,
+      prompts: [
+        {
+          clipType: "presentation",
+          title: "Present the forecast readout",
+          prompt: "Walk leadership through the forecast miss, the main driver, and the corrective action plan.",
+          questionId: "revops_forecast_presentation",
+          maxDurationSeconds: 180,
+        },
+        {
+          clipType: "follow_up_1",
+          title: "Forecast vs execution",
+          prompt: "Why do you believe this is more execution variance than forecast-model failure?",
+          questionId: "revops_forecast_followup_1",
+          maxDurationSeconds: 60,
+        },
+        {
+          clipType: "follow_up_2",
+          title: "Next-quarter trust",
+          prompt: "What would increase your confidence in the next-quarter forecast?",
+          questionId: "revops_forecast_followup_2",
+          maxDurationSeconds: 60,
+        },
+      ],
+      transcriptHighlights: [
+        "Candidate clearly separated model quality from operating execution.",
+        "Readout translated the bridge into an action plan leadership could own.",
+      ],
+    },
+  },
+
+  tpl_ops_capacity_escalation: {
+    jobDescription:
+      "Operations Manager: Rebalance staffing, quantify SLA risk, and prepare the escalation brief with explicit trade-offs.",
+    taskPrompt:
+      "Support backlog is growing 18% week over week. Rebalance staffing, identify the highest-risk queues, and prepare the escalation recommendation.",
+    coDesignBundle: {
+      roleStatement: "The role emphasizes operational judgment across spreadsheets, BI, and structured escalation communication.",
+      objectives: [
+        "Assess whether the candidate models staffing trade-offs realistically",
+        "Assess whether the SLA risk narrative is evidence-backed",
+        "Assess whether the escalation ask is concise and actionable",
+      ],
+      sampleTasks: [
+        "Rebalance shift coverage",
+        "Identify the highest-risk queue mix in the BI board",
+        "Draft the escalation brief and owner asks",
+      ],
+      rubricBlueprint: ["Prioritization", "Operational risk judgment", "Briefing clarity"],
+      difficultyLadder: DEFAULT_DIFFICULTY_LADDER,
+      agentNotes: ["Reward explicit trade-offs and owner requests instead of vague staffing requests."],
+    },
+    rubric: [
+      {
+        key: "capacity_modeling",
+        anchor: "Builds a realistic staffing plan against backlog and SLA constraints.",
+        evaluationPoints: ["Staffing trade-offs", "Capacity assumptions", "Risk thresholds"],
+        evidenceSignals: ["shift model", "coverage assumptions"],
+        commonFailureModes: ["unrealistic staffing math"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "risk_prioritization",
+        anchor: "Prioritizes the queues with the highest operational risk.",
+        evaluationPoints: ["Queue ordering", "SLA breach reasoning", "Customer impact framing"],
+        evidenceSignals: ["risk board notes"],
+        commonFailureModes: ["FIFO prioritization"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "briefing_clarity",
+        anchor: "Prepares an escalation brief with clear owner requests and next checkpoints.",
+        evaluationPoints: ["Decision clarity", "Owner asks", "Next checkpoints"],
+        evidenceSignals: ["brief deck"],
+        commonFailureModes: ["vague ask", "missing owner"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+    ],
+    variantCatalog: OPS_CAPACITY_VARIANTS,
+    rounds: OPS_CAPACITY_ROUNDS,
+    sqlQueries: [],
+    pythonScripts: [],
+    coachScript: OPS_CAPACITY_ROUNDS.flatMap((round) => round.coachScript),
+    finalResponse:
+      "Reallocate weekend staffing into the enterprise support queue, freeze lower-risk backlog work for 72 hours, and escalate for temporary contractor coverage only if breach probability remains above 15% after the rebalance.",
+    sampleEvents: [
+      { event_type: "session_started", payload: { time_to_first_action_ms: 690 } },
+      { event_type: "spreadsheet_action", payload: { action: "rebalance_staffing" } },
+      { event_type: "bi_action", payload: { action: "review_sla_risk" } },
+      { event_type: "slides_action", payload: { action: "prepare_ops_brief" } },
+      { event_type: "verification_step_completed", payload: { step: "sla_threshold_check" } },
+    ],
+    mockScoreResult: {
+      confidence: 0.84,
+      dimensionScores: {
+        capacity_modeling: 0.86,
+        risk_prioritization: 0.85,
+        briefing_clarity: 0.82,
+      },
+      triggerCodes: ["risk_tradeoff_visible"],
+    },
+    evaluationBundle: buildEvaluationBundle(
+      [
+        { dimension: "JD coverage", score: 89, note: "Spreadsheet, BI, and briefing artifacts are all represented." },
+        { dimension: "Task realism", score: 90, note: "Mirrors staffing and SLA triage work." },
+      ],
+      [
+        { round: "Round 1", score: 84, note: "Capacity assumptions were defensible." },
+        { round: "Round 2", score: 85, note: "Risk prioritization was explicit." },
+        { round: "Round 3", score: 82, note: "Briefing clarity was solid but could be shorter." },
+      ],
+      [
+        { tool: "spreadsheet", score: 86 },
+        { tool: "bi", score: 84 },
+        { tool: "slides", score: 82 },
+      ],
+      [{ code: "risk_tradeoff_visible", rationale: "The candidate made staffing trade-offs explicit instead of implicit.", impact: "positive" }],
+      [
+        "Agent evaluator observed clear operational trade-off framing.",
+        "A stronger owner ask would make the escalation brief even tighter.",
+      ],
+    ),
+    datasets: [],
+    parts: [],
+    spreadsheetWorkspace: {
+      workbookName: "Support Capacity Plan",
+      formulaSummary: ["Queue coverage", "Breach probability", "Backlog aging"],
+      sheets: [
+        {
+          name: "Shift Plan",
+          columns: ["Queue", "Agents", "Backlog", "Breach risk"],
+          rows: [
+            ["Enterprise support", "14", "382", "18%"],
+            ["Billing", "8", "141", "7%"],
+            ["General support", "10", "219", "5%"],
+          ],
+          highlightedCells: ["D2"],
+          note: "Enterprise support is the only queue above the emergency breach threshold.",
+        },
+      ],
+    },
+    biWorkspace: {
+      boardTitle: "SLA Risk Board",
+      filters: ["Window = next 72h", "Region = NA"],
+      kpis: [
+        { label: "Breach probability", value: "18%", delta: "Above threshold" },
+        { label: "Backlog aging", value: "2.6 days", delta: "+0.4 days WoW" },
+        { label: "Weekend coverage", value: "71%", delta: "-9 pts vs target" },
+      ],
+      charts: [
+        { title: "Queue breach probability", type: "bar", insight: "Enterprise support is materially above the intervention threshold." },
+      ],
+      annotations: ["Freeze lower-risk work for 72h if enterprise queue is not stabilized."],
+    },
+    slidesWorkspace: {
+      deckTitle: "Operations Escalation Brief",
+      slides: [
+        {
+          title: "The enterprise queue is the only urgent risk",
+          bullets: [
+            "Breach probability is 18% in the next 72 hours.",
+            "Weekend coverage is the main bottleneck, not weekday throughput.",
+          ],
+          speakerNotes: "Lead with the risk threshold and the narrowest intervention that works.",
+        },
+      ],
+    },
   },
 
   tpl_customer_support_judgment: {
