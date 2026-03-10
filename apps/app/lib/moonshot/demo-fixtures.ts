@@ -218,6 +218,15 @@ const JDA_AMBIGUITY_VARIANTS = buildVariantCatalog(
   ["communication", "assumptions", "escalation", "analysis"],
 )
 
+const CUSTOMER_SUPPORT_VARIANTS = buildVariantCatalog(
+  "Prioritize a ticket queue, apply policy correctly, and communicate a calm escalation path under time pressure.",
+  ["prioritization", "policy", "escalation", "writing"],
+).map((item) => ({
+  ...item,
+  deliverables: ["priority_queue", "customer_reply", "escalation_note"],
+  artifactRefs: ["ticket_queue.csv", "refund_policy.md", "vip_customer_thread.txt"],
+}))
+
 const DATA_ANALYST_ROUNDS: DemoRound[] = [
   {
     id: "round_1",
@@ -498,6 +507,78 @@ const JDA_AMBIGUITY_ROUNDS: DemoRound[] = [
       },
     ],
     mockedArtifacts: ["final_response_round3.md"],
+  },
+]
+
+const CUSTOMER_SUPPORT_ROUNDS: DemoRound[] = [
+  {
+    id: "round_1",
+    title: "Round 1 - Queue prioritization under SLA pressure",
+    objective: "Prioritize a mixed queue using urgency, customer impact, and policy constraints.",
+    deliverables: ["Priority ordering", "Reason-code notes"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: ["Sort queue by SLA risk", "Flag VIP outage ticket", "Annotate policy exception candidate"],
+    coachScript: [
+      {
+        role: "user",
+        content: "One customer is VIP but another has a larger refund amount. Which ticket should move first?",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content: "Start with customer harm and SLA breach risk, then apply VIP handling as a tie-breaker rather than the only rule.",
+        allowed: true,
+      },
+    ],
+    mockedArtifacts: ["queue_priority_round1.csv"],
+  },
+  {
+    id: "round_2",
+    title: "Round 2 - Policy judgment and customer reply",
+    objective: "Draft a clear reply that applies policy correctly without sounding robotic.",
+    deliverables: ["Customer response draft", "Policy citation notes"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: ["Open refund policy", "Log edge-case note", "Preview customer reply"],
+    coachScript: [
+      {
+        role: "user",
+        content: "The policy says no refund after 30 days, but the outage was on our side. Should I still deny the request?",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content: "Use the standard policy as the baseline, then document why this case may justify a supervised exception.",
+        allowed: true,
+      },
+    ],
+    mockedArtifacts: ["customer_reply_round2.md"],
+  },
+  {
+    id: "round_3",
+    title: "Round 3 - Escalation and decision revision",
+    objective: "Revise the recommendation when new context arrives and hand off cleanly to a specialist.",
+    deliverables: ["Escalation summary", "Revised customer plan"],
+    sqlQueries: [],
+    pythonScripts: [],
+    rScripts: [],
+    dashboardActions: ["Attach outage timeline", "Escalate to payments specialist", "Publish revised handoff"],
+    coachScript: [
+      {
+        role: "user",
+        content: "New evidence shows the duplicate charge was caused by a backend retry. Do I change the recommendation?",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content: "Yes. Update the decision explicitly, note what changed, and make the handoff crisp enough that the next owner can act immediately.",
+        allowed: true,
+      },
+    ],
+    mockedArtifacts: ["escalation_handoff_round3.md"],
   },
 ]
 
@@ -1470,6 +1551,149 @@ export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
       ],
     ),
     datasets: [],
+    parts: [],
+  },
+
+  tpl_customer_support_judgment: {
+    jobDescription:
+      "Customer Support Specialist: Triage a live queue, apply policy with judgment, communicate clearly under pressure, and escalate only when the evidence justifies it.",
+    taskPrompt:
+      "Handle a mixed queue of outage, refund, and duplicate-charge tickets. Prioritize the work, write the customer response, and revise the decision when new evidence arrives.",
+    coDesignBundle: {
+      roleStatement:
+        "The role tests queue prioritization, policy judgment, empathy, and escalation quality under changing context.",
+      objectives: [
+        "Assess whether the candidate prioritizes by customer harm and SLA risk",
+        "Assess whether policy is applied with defensible exception logic",
+        "Assess whether written responses stay clear, calm, and actionable",
+      ],
+      sampleTasks: [
+        "Order a mixed queue with explicit rationale",
+        "Draft a customer-facing response using policy plus empathy",
+        "Revise the recommendation when backend evidence changes the root cause",
+      ],
+      rubricBlueprint: [
+        "Do not escalate without a stated trigger",
+        "Do not cite policy without translating it into customer-safe language",
+        "Reward decision revision when new evidence materially changes the case",
+      ],
+      difficultyLadder: DEFAULT_DIFFICULTY_LADDER,
+      agentNotes: [
+        "Strong responses balance policy adherence with customer impact rather than defaulting to denial.",
+        "Penalize escalation notes that lack a clean owner, reason code, or next action.",
+      ],
+    },
+    rubric: [
+      {
+        key: "queue_prioritization",
+        anchor: "Orders work using customer harm, SLA risk, and business impact.",
+        evaluationPoints: ["SLA-aware ordering", "rationale for priority shifts", "harm-based triage"],
+        evidenceSignals: ["priority queue", "reason-code notes"],
+        commonFailureModes: ["FIFO thinking", "VIP-only prioritization", "ignores outage severity"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "policy_judgment",
+        anchor: "Applies policy correctly while documenting when exceptions are justified.",
+        evaluationPoints: ["baseline policy read", "exception logic", "documented risk"],
+        evidenceSignals: ["policy citation notes", "exception rationale"],
+        commonFailureModes: ["misreads policy", "grants exception without basis", "rigid denial despite platform fault"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "escalation_quality",
+        anchor: "Escalates with clean handoff details and a clear reason to involve another owner.",
+        evaluationPoints: ["trigger logic", "next owner clarity", "handoff completeness"],
+        evidenceSignals: ["escalation summary", "reason codes"],
+        commonFailureModes: ["vague handoff", "no owner", "escalates too early"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "customer_empathy",
+        anchor: "Keeps the customer response calm, specific, and respectful.",
+        evaluationPoints: ["tone control", "ownership language", "clear next steps"],
+        evidenceSignals: ["customer response draft"],
+        commonFailureModes: ["robotic tone", "defensive language", "no next step"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+      {
+        key: "written_clarity",
+        anchor: "Communicates the decision and rationale with concise, reviewable writing.",
+        evaluationPoints: ["structure", "brevity", "decision visibility"],
+        evidenceSignals: ["reply structure", "handoff structure"],
+        commonFailureModes: ["rambling note", "missing decision", "buried rationale"],
+        scoreBands: { "1": "Weak", "3": "Moderate", "5": "Strong" },
+      },
+    ],
+    variantCatalog: CUSTOMER_SUPPORT_VARIANTS,
+    rounds: CUSTOMER_SUPPORT_ROUNDS,
+    sqlQueries: [],
+    pythonScripts: [],
+    coachScript: CUSTOMER_SUPPORT_ROUNDS.flatMap((round) => round.coachScript),
+    finalResponse:
+      "Priority order:\n1) Duplicate-charge outage ticket at SLA risk\n2) VIP refund request with possible platform-caused failure\n3) General billing question\n\nCustomer plan:\n- Acknowledge the duplicate charge and confirm we are escalating to payments because new backend evidence points to a retry issue.\n- Offer a supervised exception path on the refund because the failure appears platform-caused.\n- Give the customer a clear next update window and avoid quoting policy without explaining the decision.",
+    sampleEvents: [
+      { event_type: "session_started", payload: { time_to_first_action_ms: 580 } },
+      { event_type: "dashboard_action", payload: { action: "sort_queue_by_sla_risk" } },
+      { event_type: "copilot_invoked", payload: { source: "coach" } },
+      { event_type: "verification_step_completed", payload: { step: "policy_exception_check" } },
+      { event_type: "dashboard_action", payload: { action: "attach_backend_retry_timeline" } },
+      { event_type: "verification_step_completed", payload: { step: "escalation_handoff_check" } },
+    ],
+    mockScoreResult: {
+      confidence: 0.9,
+      dimensionScores: {
+        queue_prioritization: 0.92,
+        policy_judgment: 0.9,
+        escalation_quality: 0.88,
+        customer_empathy: 0.91,
+        written_clarity: 0.87,
+      },
+      triggerCodes: ["harm_based_triage", "policy_exception_documented", "decision_revised_with_new_evidence"],
+    },
+    evaluationBundle: buildEvaluationBundle(
+      [
+        { dimension: "JD coverage", score: 92, note: "Matches customer-support queue triage, empathy, and escalation work." },
+        { dimension: "Task realism", score: 89, note: "Uses common ticketing and exception-handling pressure points." },
+        { dimension: "Rubric depth", score: 90, note: "Scores concrete behaviors instead of generic soft-skill labels." },
+        { dimension: "Difficulty progression", score: 88, note: "Escalates from queue ordering to policy judgment to decision revision." },
+      ],
+      [
+        { round: "Round 1", score: 90, note: "Prioritization logic was clear and harm-based." },
+        { round: "Round 2", score: 88, note: "Policy language stayed accurate while preserving empathy." },
+        { round: "Round 3", score: 91, note: "Recommendation changed cleanly when new evidence arrived." },
+      ],
+      [{ tool: "dashboard", score: 86 }],
+      [
+        { code: "harm_based_triage", rationale: "Candidate prioritized by SLA risk and customer impact instead of queue order.", impact: "positive" },
+        { code: "policy_exception_documented", rationale: "Exception logic was explicit and reviewable.", impact: "positive" },
+        { code: "decision_revised_with_new_evidence", rationale: "Candidate updated the recommendation when backend evidence changed the case.", impact: "positive" },
+      ],
+      [
+        "Agent evaluator observed strong policy judgment and escalation discipline.",
+        "This simulation demonstrates reviewable soft-skill evidence rather than relying on generic communication scoring.",
+      ],
+    ),
+    datasets: [
+      {
+        id: "support_ticket_queue",
+        name: "Support Ticket Queue",
+        description: "Mixed refund, outage, and duplicate-charge tickets with SLA timers and customer-tier metadata.",
+        row_count: 6,
+        schema: {
+          columns: [
+            { name: "ticket_id", dtype: "string", description: "Ticket identifier", sample_values: ["T-1042", "T-1043"] },
+            { name: "issue_type", dtype: "string", description: "Primary issue category", sample_values: ["duplicate_charge", "refund_request"] },
+            { name: "sla_minutes_remaining", dtype: "integer", description: "Minutes until SLA breach", sample_values: ["8", "42"] },
+            { name: "customer_tier", dtype: "string", description: "Customer segment", sample_values: ["VIP", "Standard"] },
+          ],
+        },
+        preview_rows: [
+          { ticket_id: "T-1042", issue_type: "duplicate_charge", sla_minutes_remaining: 8, customer_tier: "Standard" },
+          { ticket_id: "T-1043", issue_type: "refund_request", sla_minutes_remaining: 42, customer_tier: "VIP" },
+        ],
+      },
+    ],
     parts: [],
   },
 

@@ -10,8 +10,8 @@ interface CaseTemplatesProps {
 export function CaseTemplates({ onSelect }: CaseTemplatesProps) {
   return (
     <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-      <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Templates</h2>
-      <p className="mt-1 text-[12px] text-[#6E6E73]">Start from a pre-built case template. Click to pre-fill the form below.</p>
+      <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Work Simulation Templates</h2>
+      <p className="mt-1 text-[12px] text-[#6E6E73]">Start from a pre-built role simulation. Click to pre-fill the form below.</p>
       <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
         {DEMO_CASE_TEMPLATES.map((tpl) => (
           <button

@@ -11,42 +11,66 @@ interface DemoTemplateCardProps {
 }
 
 export function DemoTemplateCard({ template, selected, onSelect, disabled }: DemoTemplateCardProps) {
+  const priorityStyles =
+    template.priority === "flagship"
+      ? "border-[#2563EB]/25 bg-[#2563EB]/[0.06] text-[#1E3A8A]"
+      : template.priority === "teaser"
+        ? "border-[#0F766E]/25 bg-[#0F766E]/[0.06] text-[#115E59]"
+        : "border-[#CBD5E1] bg-[#F8FAFC] text-[#475569]"
+
   return (
     <button
       type="button"
       onClick={onSelect}
       disabled={disabled}
+      aria-pressed={selected}
       className={`w-full rounded-2xl border-2 p-5 text-left transition-all ${
         selected
-          ? "border-[#0071E3] bg-[#0071E3]/5 shadow-sm"
-          : "border-[#E5E5EA] bg-white hover:border-[#D2D2D7] hover:shadow-sm"
+          ? "border-[#2563EB] bg-[#EFF6FF] shadow-[0_20px_40px_rgba(37,99,235,0.12)]"
+          : "border-[#E2E8F0] bg-white hover:border-[#94A3B8] hover:shadow-[0_18px_32px_rgba(15,23,42,0.08)]"
       } ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">
-            {template.role}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#64748B]">
+              {template.role} Work Simulation
+            </p>
+            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${priorityStyles}`}>
+              {template.operatorLabel}
+            </span>
+          </div>
           <h3 className="mt-1 text-[15px] font-semibold text-[#1D1D1F]">
             {template.title}
           </h3>
+          <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-[#0F172A]">
+            {template.heroHeadline}
+          </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-[#6E6E73]">
             {template.description}
           </p>
-          <p className="mt-2 text-[12px] text-[#4D4D52]">
-            Includes co-design loop, multi-round candidate simulation, and detailed evaluation dashboard.
+          <p className="mt-2 text-[12px] leading-relaxed text-[#475569]">
+            {template.heroDescription}
           </p>
         </div>
-        <span className="shrink-0 text-[12px] text-[#86868B]">
+        <span className="shrink-0 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1 text-[12px] text-[#475569]">
           {template.estimatedDuration}
         </span>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        {template.teaserStats.map((stat) => (
+          <div key={stat.label} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#64748B]">{stat.label}</p>
+            <p className="mt-1 text-[13px] font-semibold text-[#0F172A]">{stat.value}</p>
+          </div>
+        ))}
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {template.skillTags.map((tag) => (
           <Badge
             key={tag}
             variant="outline"
-            className="text-[11px] font-normal"
+            className="border-[#CBD5E1] bg-white text-[11px] font-normal text-[#334155]"
           >
             {tag}
           </Badge>
