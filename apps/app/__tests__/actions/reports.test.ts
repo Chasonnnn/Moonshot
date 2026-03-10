@@ -20,7 +20,7 @@ import { INITIAL_REPORT_ACTION_STATE } from "@/lib/report-action-state"
 
 function buildClient(overrides: Partial<Record<string, unknown>> = {}) {
   return {
-    config: { reviewerUserId: "reviewer_1" },
+    config: { reviewerUserId: "reviewer_1", adminUserId: "admin_1" },
     issueToken: vi.fn().mockResolvedValue({ access_token: "reviewer-token" }),
     getSession: vi.fn().mockResolvedValue({
       id: "sess-1",
@@ -61,6 +61,31 @@ function buildClient(overrides: Partial<Record<string, unknown>> = {}) {
     }),
     listRedteamRuns: vi.fn().mockResolvedValue({ items: [] }),
     listFairnessSmokeRuns: vi.fn().mockResolvedValue({ items: [] }),
+    getContextInjectionTraces: vi.fn().mockResolvedValue({
+      items: [
+        {
+          agent_type: "coach",
+          context_keys: ["case_scenario", "policy_constraints", "coach_policy"],
+        },
+        {
+          agent_type: "evaluator",
+          context_keys: ["task_rubric", "score_result"],
+        },
+      ],
+    }),
+    getAuditChainVerification: vi.fn().mockResolvedValue({
+      valid: true,
+      checked_entries: 8,
+      error_code: null,
+      error_detail: null,
+    }),
+    listAuditLogs: vi.fn().mockResolvedValue({
+      items: [
+        { resource_id: "sess-1" },
+        { resource_id: "sess-1" },
+        { resource_id: "other-session" },
+      ],
+    }),
     listSessionEvents: vi.fn().mockResolvedValue({
       items: [{ event_type: "session_started", payload: {}, timestamp: "2026-03-01T10:00:00Z" }],
       next_cursor: null,
@@ -193,6 +218,89 @@ describe("loadReportDetailSnapshot timeline source behavior", () => {
     expect(snapshot.evaluation_bundle?.triggerRationale).toEqual([
       { code: "RPT-1", rationale: "Model impact delta -0.220", impact: "negative" },
     ])
+  })
+
+  it("builds an approach narrative and governance trace for employer reports", async () => {
+    process.env.MOONSHOT_ALLOW_FIXTURE_TIMELINE = "false"
+    mockCreateMoonshotClientFromEnv.mockReturnValue(
+      buildClient({
+        getSession: vi.fn().mockResolvedValue({
+          id: "sess-1",
+          tenant_id: "tenant_a",
+          task_family_id: "tf-1",
+          candidate_id: "candidate_1",
+          status: "scored",
+          policy: { coach_mode: "assessment_ai_assisted", demo_template_id: "tpl_jda_quality" },
+          final_response: "Escalate the dashboard mismatch as P1, isolate the ETL break, and restore trust with a verified recount.",
+          created_at: "2026-03-01T10:00:00Z",
+          updated_at: "2026-03-01T10:10:00Z",
+        }),
+        getReportSummary: vi.fn().mockResolvedValue({
+          session_id: "sess-1",
+          session_status: "scored",
+          report_available: true,
+          confidence: 0.84,
+          needs_human_review: false,
+          trigger_codes: ["RPT-2"],
+          trigger_count: 1,
+          last_scored_at: "2026-03-01T10:20:00Z",
+          scoring_version_lock: {
+            scorer_version: "0.2.0",
+            rubric_version: "0.1.0",
+            task_family_version: "0.1.0",
+            model_hash: "abc123",
+          },
+          has_human_review: false,
+          final_score_source: "model",
+          final_confidence: 0.84,
+        }),
+        getReport: vi.fn().mockResolvedValue({
+          interpretation: {
+            summary: "The candidate showed strong judgment by validating the discrepancy before escalating.",
+          },
+          score_result: {
+            dimension_evidence: {
+              escalation_judgment: { score: 0.86, rationale: "Escalated only after validation." },
+            },
+            trigger_codes: ["RPT-2"],
+            trigger_impacts: [],
+          },
+        }),
+        listSessionEvents: vi.fn().mockResolvedValue({
+          items: [
+            { event_type: "sql_query_run", payload: { row_count: 255 }, timestamp: "2026-03-01T10:01:00Z" },
+            { event_type: "copilot_invoked", payload: { source: "coach" }, timestamp: "2026-03-01T10:03:00Z" },
+            {
+              event_type: "verification_step_completed",
+              payload: { step: "dashboard_recount" },
+              timestamp: "2026-03-01T10:06:00Z",
+            },
+          ],
+          next_cursor: null,
+          limit: 250,
+          total: 3,
+        }),
+        listRedteamRuns: vi.fn().mockResolvedValue({ items: [{ id: "rt-1" }] }),
+        listFairnessSmokeRuns: vi.fn().mockResolvedValue({ items: [{ id: "fair-1" }] }),
+      }),
+    )
+
+    const snapshot = await loadReportDetailSnapshot("sess-1")
+
+    expect(snapshot.approach_narrative?.headline).toContain("moved from exploration")
+    expect(snapshot.approach_narrative?.summary).toContain("validating the discrepancy")
+    expect(snapshot.approach_narrative?.final_recommendation).toContain("Escalate the dashboard mismatch")
+    expect(snapshot.approach_narrative?.key_evidence_moments).toHaveLength(4)
+    expect(snapshot.approach_narrative?.key_evidence_moments[0]?.event_type).toBe("sql_query_run")
+
+    expect(snapshot.governance_trace?.audit_chain_status).toBe("verified")
+    expect(snapshot.governance_trace?.audit_checked_entries).toBe(8)
+    expect(snapshot.governance_trace?.audit_entry_count).toBe(2)
+    expect(snapshot.governance_trace?.context_trace_count).toBe(2)
+    expect(snapshot.governance_trace?.context_agents).toEqual(["coach", "evaluator"])
+    expect(snapshot.governance_trace?.human_review_status).toBe("clear")
+    expect(snapshot.governance_trace?.redteam_run_count).toBe(1)
+    expect(snapshot.governance_trace?.fairness_run_count).toBe(1)
   })
 })
 

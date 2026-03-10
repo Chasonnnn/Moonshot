@@ -57,6 +57,8 @@ function makeSnapshot(overrides: Partial<ReportDetailSnapshot> = {}): ReportDeta
     demo_template_id: null,
     co_design_bundle: null,
     round_blueprint: [],
+    approach_narrative: null,
+    governance_trace: null,
     evaluation_bundle: {
       coDesignAlignment: [
         { dimension: "Problem Solving", score: 90, note: "Excellent" },

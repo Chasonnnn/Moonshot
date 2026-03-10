@@ -1,10 +1,54 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+
+let dynamicMode: "resolved" | "loading" = "resolved"
 
 vi.mock("react", async () => {
   const actual = await vi.importActual("react")
   return { ...actual, useActionState: (_action: unknown, initialState: unknown) => [initialState, vi.fn(), false] }
+})
+
+vi.mock("next/dynamic", async () => {
+  const React = await vi.importActual<typeof import("react")>("react")
+
+  return {
+    default: (
+      loader: () => Promise<{ default: React.ComponentType<Record<string, unknown>> } | React.ComponentType<Record<string, unknown>>>,
+      options?: { loading?: React.ComponentType },
+    ) => {
+      function DynamicComponent(props: Record<string, unknown>) {
+        const [Loaded, setLoaded] = React.useState<React.ComponentType<Record<string, unknown>> | null>(null)
+
+        React.useEffect(() => {
+          if (dynamicMode === "loading") {
+            return
+          }
+
+          let cancelled = false
+          void Promise.resolve(loader()).then((mod) => {
+            const resolved = typeof mod === "function" ? mod : mod.default
+            if (!cancelled) {
+              setLoaded(() => resolved)
+            }
+          })
+
+          return () => {
+            cancelled = true
+          }
+        }, [])
+
+        if (dynamicMode === "loading" || !Loaded) {
+          const Loading = options?.loading
+          return Loading ? <Loading /> : null
+        }
+
+        return <Loaded {...props} />
+      }
+
+      return DynamicComponent
+    },
+  }
 })
 
 vi.mock("recharts", () => ({
@@ -104,6 +148,38 @@ const BASE_SNAPSHOT: ReportDetailSnapshot = {
     triggerSummary: { count: 1, codes: ["TC-01"] },
     overallScore: 75,
   },
+  approach_narrative: {
+    headline: "The candidate moved from exploration to verification before delivering a scoped recommendation.",
+    summary: "They started with structured analysis, validated a key assumption, and then framed a decision-ready response.",
+    final_recommendation: "Escalate with a verified recount and a bounded remediation plan.",
+    key_evidence_moments: [
+      {
+        title: "Exploration",
+        detail: "Started with a structured review of the available evidence.",
+        event_type: "session_started",
+        timestamp: "2026-03-01T10:00:00Z",
+      },
+      {
+        title: "Verification",
+        detail: "Completed an explicit validation step before finalizing the recommendation.",
+        event_type: "session_submitted",
+        timestamp: "2026-03-01T10:12:00Z",
+      },
+    ],
+  },
+  governance_trace: {
+    audit_chain_status: "verified",
+    audit_chain_detail: "Audit chain verified across 8 tenant entries.",
+    audit_checked_entries: 8,
+    audit_entry_count: 2,
+    context_trace_count: 2,
+    context_agents: ["coach", "evaluator"],
+    context_keys: ["case_scenario", "task_rubric", "score_result"],
+    human_review_status: "clear",
+    redteam_run_count: 0,
+    fairness_run_count: 0,
+    timeline_source: "real",
+  },
   error: null,
   events: MOCK_EVENTS,
   timeline_source: "real",
@@ -113,6 +189,7 @@ const BASE_SNAPSHOT: ReportDetailSnapshot = {
 describe("ReportReviewConsole tabs", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    dynamicMode = "resolved"
   })
 
   it("renders all 4 tab triggers", () => {
@@ -124,13 +201,47 @@ describe("ReportReviewConsole tabs", () => {
     expect(screen.getByRole("tab", { name: /provenance/i })).toBeInTheDocument()
   })
 
-  it("shows Overview tab content by default including scoring label", () => {
+  it("shows Overview tab content by default including scoring label", async () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
     expect(screen.getByText("Report Summary")).toBeInTheDocument()
-    expect(screen.getByText("AI Analysis")).toBeInTheDocument()
+    expect(screen.getByText("Why this score is credible")).toBeInTheDocument()
+    expect(screen.getByText("Approach Narrative")).toBeInTheDocument()
+    expect(screen.getByText("Governance Trace")).toBeInTheDocument()
     // Scoring label for assessment_ai_assisted
     expect(screen.getByText("AI-Assisted")).toBeInTheDocument()
+    expect(await screen.findByText("AI Analysis")).toBeInTheDocument()
+  })
+
+  it("renders the compact credibility block on overview", () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    const block = screen.getByTestId("credibility-block")
+    expect(block).toBeInTheDocument()
+    expect(block).toHaveTextContent("Audit chain")
+    expect(block).toHaveTextContent("Human review")
+    expect(block).toHaveTextContent("Fairness runs")
+    expect(block).toHaveTextContent("Red-team runs")
+    expect(within(block).getByText(/Audit chain verified across 8 tenant entries/i)).toBeInTheDocument()
+  })
+
+  it("keeps summary content visible while analytics are loading", () => {
+    dynamicMode = "loading"
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    expect(screen.getByText("Report Summary")).toBeInTheDocument()
+    expect(screen.getByText("Approach Narrative")).toBeInTheDocument()
+    expect(screen.getByText("Governance Trace")).toBeInTheDocument()
+    expect(screen.getByText("Loading report analytics...")).toBeInTheDocument()
+    expect(screen.queryByText("Overall Score")).not.toBeInTheDocument()
+  })
+
+  it("shows final recommendation and evidence moments in the approach narrative", () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    expect(screen.getByText(/Escalate with a verified recount/i)).toBeInTheDocument()
+    expect(screen.getByText("Exploration")).toBeInTheDocument()
+    expect(screen.getByText("Verification")).toBeInTheDocument()
   })
 
   it("switches to Output tab and shows final response", async () => {
@@ -163,7 +274,7 @@ describe("ReportReviewConsole tabs", () => {
 
     // EventTimeline renders event badges
     expect(screen.getAllByTestId("event-badge")).toHaveLength(2)
-    expect(screen.getByText("real")).toBeInTheDocument()
+    expect(screen.getAllByText("real").length).toBeGreaterThan(0)
   })
 
   it("shows fixture warning and source badge when timeline is fixture", async () => {
@@ -199,17 +310,19 @@ describe("ReportReviewConsole tabs", () => {
 
     await user.click(screen.getByRole("tab", { name: /provenance/i }))
 
-    expect(screen.getByText(/1\.2\.0/)).toBeInTheDocument()
-    expect(screen.getByText(/abc123/)).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Scoring Version Lock" })).toBeInTheDocument()
+    expect(screen.getAllByText(/1\.2\.0/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/abc123/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Audit chain verified across 8 tenant entries/i).length).toBeGreaterThan(0)
   })
 
-  it("renders Overall Score section on Overview tab", () => {
+  it("renders Overall Score section on Overview tab", async () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
-    expect(screen.getByText("Overall Score")).toBeInTheDocument()
+    expect(await screen.findByText("Overall Score")).toBeInTheDocument()
   })
 
-  it("uses human override score in gauge when final score source is human_override", () => {
+  it("uses human override score in gauge when final score source is human_override", async () => {
     const snapshot = {
       ...BASE_SNAPSHOT,
       summary: {
@@ -231,37 +344,37 @@ describe("ReportReviewConsole tabs", () => {
     }
     render(<ReportReviewConsole sessionId="sess-1" snapshot={snapshot} />)
 
-    expect(screen.getByText("62")).toBeInTheDocument()
+    expect(await screen.findByText("62")).toBeInTheDocument()
   })
 
-  it("renders Smart Summary section on Overview tab", () => {
+  it("renders Smart Summary section on Overview tab", async () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
-    expect(screen.getByText("Smart Summary")).toBeInTheDocument()
+    expect(await screen.findByText("Smart Summary")).toBeInTheDocument()
   })
 
-  it("renders Dimension Radar and Dimension Scores charts when evaluation bundle present", () => {
+  it("renders Dimension Radar and Dimension Scores charts when evaluation bundle present", async () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
-    expect(screen.getByText("Dimension Radar")).toBeInTheDocument()
-    expect(screen.getByText("Dimension Scores")).toBeInTheDocument()
+    expect(await screen.findByText("Dimension Radar")).toBeInTheDocument()
+    expect(await screen.findByText("Dimension Scores")).toBeInTheDocument()
   })
 
-  it("renders Round-by-Round Performance chart when rounds present", () => {
+  it("renders Round-by-Round Performance chart when rounds present", async () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
-    expect(screen.getByText("Round-by-Round Performance")).toBeInTheDocument()
+    expect(await screen.findByText("Round-by-Round Performance")).toBeInTheDocument()
   })
 
-  it("shows smart summary strengths and weaknesses", () => {
+  it("shows smart summary strengths and weaknesses", async () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
-    expect(screen.getByText("Strengths")).toBeInTheDocument()
+    expect(await screen.findByText("Strengths")).toBeInTheDocument()
     // Top strength from coDesignAlignment appears in smart summary and scorecard
     expect(screen.getAllByText("Problem Solving").length).toBeGreaterThanOrEqual(1)
   })
 
-  it("hides charts when no evaluation bundle", () => {
+  it("hides charts when no evaluation bundle", async () => {
     const snapshot = {
       ...BASE_SNAPSHOT,
       evaluation_bundle: null,
@@ -271,11 +384,11 @@ describe("ReportReviewConsole tabs", () => {
     expect(screen.queryByText("Dimension Radar")).not.toBeInTheDocument()
     expect(screen.queryByText("Dimension Scores")).not.toBeInTheDocument()
     // Smart Summary and Overall Score should still render (with zero state)
-    expect(screen.getByText("Smart Summary")).toBeInTheDocument()
-    expect(screen.getByText("Overall Score")).toBeInTheDocument()
+    expect(await screen.findByText("Smart Summary")).toBeInTheDocument()
+    expect(await screen.findByText("Overall Score")).toBeInTheDocument()
   })
 
-  it("shows interpretation from snapshot.interpretation when report payload does not include it", () => {
+  it("shows interpretation from snapshot.interpretation when report payload does not include it", async () => {
     const snapshot = {
       ...BASE_SNAPSHOT,
       report: null,
@@ -302,8 +415,8 @@ describe("ReportReviewConsole tabs", () => {
     }
     render(<ReportReviewConsole sessionId="sess-1" snapshot={snapshot} />)
 
-    expect(screen.getByText(/Top dimensions from generated interpretation/i)).toBeInTheDocument()
-    expect(screen.getByText("View ID")).toBeInTheDocument()
-    expect(screen.getByText("Fresh server interpretation.")).toBeInTheDocument()
+    expect(await screen.findByText(/Top dimensions from generated interpretation/i)).toBeInTheDocument()
+    expect(await screen.findByText("View ID")).toBeInTheDocument()
+    expect(await screen.findByText("Fresh server interpretation.")).toBeInTheDocument()
   })
 })
