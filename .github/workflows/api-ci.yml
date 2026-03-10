@@ -33,6 +33,8 @@ jobs:
         run: uv run python apps/api/scripts/check_export_schema.py
       - name: Score drift baseline check
         run: uv run python apps/api/scripts/check_score_drift.py
+      - name: Memory benchmark check
+        run: uv run python apps/api/scripts/check_memory_eval.py
 
   release-gate:
     runs-on: ubuntu-latest

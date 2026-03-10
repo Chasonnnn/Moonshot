@@ -15,3 +15,4 @@ def test_makefile_has_demo_gate_target():
     assert "check_report_summary_consistency.py" in makefile
     assert "check_export_schema.py" in makefile
     assert "check_score_drift.py" in makefile
+    assert "check_memory_eval.py" in makefile

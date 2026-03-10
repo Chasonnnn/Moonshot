@@ -9,6 +9,7 @@ from app.db.session import SessionLocal
 from app.schemas import SLOProbeResponse, SLOProbeResult
 from app.services.audit_integrity import verify_audit_chain
 from app.services.jobs import get_queue_runtime_metrics
+from app.services.memory_eval import run_memory_benchmark_fixture
 from app.services.score_drift import run_benchmark_fixture
 from app.services.store import store
 
@@ -57,6 +58,26 @@ def _probe_score_drift() -> SLOProbeResult:
     )
 
 
+def _probe_memory_eval() -> SLOProbeResult:
+    started = perf_counter()
+    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "memory_benchmark.json"
+    result = run_memory_benchmark_fixture(fixture_path)
+    latency_ms = max(1, int((perf_counter() - started) * 1000))
+    status = "ok" if bool(result.get("pass")) else "degraded"
+    return SLOProbeResult(
+        status=status,
+        latency_ms=latency_ms,
+        detail={
+            "pass": bool(result.get("pass")),
+            "checked_cases": int(result.get("checked_cases", 0)),
+            "retrieval_precision_avg": float(result.get("retrieval_precision_avg", 0.0)),
+            "retrieval_recall_avg": float(result.get("retrieval_recall_avg", 0.0)),
+            "grounding_coverage_avg": float(result.get("grounding_coverage_avg", 0.0)),
+            "grounding_leakage_count": int(result.get("grounding_leakage_count", 0)),
+        },
+    )
+
+
 def _probe_queue_runtime(tenant_id: str) -> SLOProbeResult:
     started = perf_counter()
     metrics = get_queue_runtime_metrics(tenant_id)
@@ -70,6 +91,7 @@ def run_slo_probes(tenant_id: str) -> SLOProbeResponse:
         "database": _probe_database(),
         "audit_chain": _probe_audit_chain(tenant_id),
         "score_drift": _probe_score_drift(),
+        "memory_eval": _probe_memory_eval(),
         "queue_runtime": _probe_queue_runtime(tenant_id),
     }
     overall_status = "ok" if all(item.status == "ok" for item in probes.values()) else "degraded"

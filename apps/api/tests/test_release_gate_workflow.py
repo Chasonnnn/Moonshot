@@ -11,6 +11,7 @@ def test_api_ci_workflow_has_strict_release_gates():
     assert "check_openapi_sync.py" in content
     assert "check_frontend_contract_sync.py" in content
     assert "check_score_drift.py" in content
+    assert "check_memory_eval.py" in content
     assert "staging_smoke.py" in content
     assert "load_pilot.py" in content
     assert "check_api_examples.py" in content

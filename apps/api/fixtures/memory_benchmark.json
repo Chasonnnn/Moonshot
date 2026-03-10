@@ -1,0 +1,303 @@
+{
+  "thresholds": {
+    "retrieval_precision_min": 0.95,
+    "retrieval_recall_min": 0.95,
+    "reciprocal_rank_min": 0.5,
+    "grounding_coverage_min": 0.95,
+    "forbidden_hits_max": 0
+  },
+  "cases": {
+    "coach_candidate_context": {
+      "tenant_id": "tenant_a",
+      "consumer": "coach",
+      "actor_role": "candidate",
+      "query_text": "What should I verify before escalating the retention anomaly?",
+      "session_id": "10000000-0000-0000-0000-000000000001",
+      "token_budget": 1500,
+      "max_chunks": 5,
+      "memory_entries": [
+        {
+          "id": "00000000-0000-0000-0000-000000000101",
+          "tenant_id": "tenant_a",
+          "layer": "org",
+          "source_entity_type": "business_context_pack",
+          "source_entity_id": "org-pack-1",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "admin_1",
+          "reviewed_by": "admin_1",
+          "policy_version": "1.0.0",
+          "change_reason": "activate",
+          "text_content": "Org policy: verify retention impact before recommending spend."
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000102",
+          "tenant_id": "tenant_a",
+          "layer": "content",
+          "source_entity_type": "task_family",
+          "source_entity_id": "task-family-1",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "reviewer_1",
+          "reviewed_by": "reviewer_1",
+          "policy_version": "1.0.0",
+          "change_reason": "publish",
+          "text_content": "Task exemplar: compare source-versus-dashboard discrepancy before escalation."
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000103",
+          "tenant_id": "tenant_a",
+          "layer": "episode",
+          "source_entity_type": "session_digest",
+          "source_entity_id": "10000000-0000-0000-0000-000000000001",
+          "source_type": "model_inferred",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "system",
+          "change_reason": "session_digest_refresh",
+          "text_content": "Episode summary: learner already checked instrumentation drift.",
+          "metadata_json": {
+            "session_id": "10000000-0000-0000-0000-000000000001"
+          }
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000104",
+          "tenant_id": "tenant_a",
+          "layer": "episode",
+          "source_entity_type": "human_review",
+          "source_entity_id": "10000000-0000-0000-0000-000000000001",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["reviewer", "org_admin"],
+          "created_by": "reviewer_1",
+          "reviewed_by": "reviewer_1",
+          "policy_version": "1.0.0",
+          "change_reason": "review",
+          "text_content": "Human review: reviewer-only note about a scoring edge case.",
+          "metadata_json": {
+            "session_id": "10000000-0000-0000-0000-000000000001"
+          }
+        }
+      ],
+      "expected_retrieved_entry_ids": [
+        "00000000-0000-0000-0000-000000000101",
+        "00000000-0000-0000-0000-000000000102",
+        "00000000-0000-0000-0000-000000000103"
+      ],
+      "forbidden_entry_ids": [
+        "00000000-0000-0000-0000-000000000104"
+      ],
+      "expected_grounding_phrases": [
+        "verify retention impact",
+        "source-versus-dashboard discrepancy",
+        "instrumentation drift"
+      ],
+      "forbidden_grounding_phrases": [
+        "reviewer-only note"
+      ],
+      "expected_layer_sequence": [
+        "Layer: org",
+        "Layer: content",
+        "Layer: episode"
+      ]
+    },
+    "evaluator_reviewer_context": {
+      "tenant_id": "tenant_a",
+      "consumer": "evaluator",
+      "actor_role": "reviewer",
+      "query_text": "How should we score the retention anomaly investigation with review evidence?",
+      "session_id": "20000000-0000-0000-0000-000000000001",
+      "token_budget": 4000,
+      "max_chunks": 10,
+      "memory_entries": [
+        {
+          "id": "00000000-0000-0000-0000-000000000201",
+          "tenant_id": "tenant_a",
+          "layer": "org",
+          "source_entity_type": "business_context_pack",
+          "source_entity_id": "org-pack-2",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "admin_1",
+          "reviewed_by": "admin_1",
+          "policy_version": "1.0.0",
+          "change_reason": "activate",
+          "text_content": "Org policy: tie score decisions to verification evidence."
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000202",
+          "tenant_id": "tenant_a",
+          "layer": "content",
+          "source_entity_type": "task_family",
+          "source_entity_id": "task-family-2",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "reviewer_1",
+          "reviewed_by": "reviewer_1",
+          "policy_version": "1.0.0",
+          "change_reason": "publish",
+          "text_content": "Published exemplar: quantify anomaly drivers before escalation."
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000203",
+          "tenant_id": "tenant_a",
+          "layer": "content",
+          "source_entity_type": "task_quality_signal",
+          "source_entity_id": "task-family-2",
+          "source_type": "model_inferred",
+          "status": "active",
+          "visibility_scope": ["reviewer", "org_admin"],
+          "created_by": "system",
+          "change_reason": "quality_evaluated",
+          "text_content": "Quality score 0.91. Diversity 0.88. Realism 0.90. Leakage detected False."
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000204",
+          "tenant_id": "tenant_a",
+          "layer": "episode",
+          "source_entity_type": "session_digest",
+          "source_entity_id": "20000000-0000-0000-0000-000000000001",
+          "source_type": "model_inferred",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "system",
+          "change_reason": "session_digest_refresh",
+          "text_content": "Session digest: candidate validated event tracking and segmented retention.",
+          "metadata_json": {
+            "session_id": "20000000-0000-0000-0000-000000000001"
+          }
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000205",
+          "tenant_id": "tenant_a",
+          "layer": "episode",
+          "source_entity_type": "human_review",
+          "source_entity_id": "20000000-0000-0000-0000-000000000001",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["reviewer", "org_admin"],
+          "created_by": "reviewer_1",
+          "reviewed_by": "reviewer_1",
+          "policy_version": "1.0.0",
+          "change_reason": "review",
+          "text_content": "Human review: strong SQL checks but tighten business impact framing.",
+          "metadata_json": {
+            "session_id": "20000000-0000-0000-0000-000000000001"
+          }
+        }
+      ],
+      "expected_retrieved_entry_ids": [
+        "00000000-0000-0000-0000-000000000201",
+        "00000000-0000-0000-0000-000000000202",
+        "00000000-0000-0000-0000-000000000203",
+        "00000000-0000-0000-0000-000000000204",
+        "00000000-0000-0000-0000-000000000205"
+      ],
+      "expected_grounding_phrases": [
+        "tie score decisions to verification evidence",
+        "quantify anomaly drivers before escalation",
+        "segmented retention",
+        "tighten business impact framing"
+      ],
+      "forbidden_grounding_phrases": [
+        "nonexistent leakage marker"
+      ],
+      "expected_layer_sequence": [
+        "Layer: org",
+        "Layer: content",
+        "Layer: episode"
+      ]
+    },
+    "codesign_generation_seed": {
+      "tenant_id": "tenant_a",
+      "consumer": "codesign",
+      "actor_role": "reviewer",
+      "query_text": "Generate a grounded retention anomaly scenario with escalation policy context.",
+      "token_budget": 5000,
+      "max_chunks": 12,
+      "memory_entries": [
+        {
+          "id": "00000000-0000-0000-0000-000000000301",
+          "tenant_id": "tenant_a",
+          "layer": "org",
+          "source_entity_type": "business_context_pack",
+          "source_entity_id": "org-pack-3",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "admin_1",
+          "reviewed_by": "admin_1",
+          "policy_version": "1.0.0",
+          "change_reason": "activate",
+          "text_content": "Org memory: scenarios must foreground retention and escalation policy."
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000302",
+          "tenant_id": "tenant_a",
+          "layer": "content",
+          "source_entity_type": "task_family",
+          "source_entity_id": "task-family-3",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "reviewer_1",
+          "reviewed_by": "reviewer_1",
+          "policy_version": "1.0.0",
+          "change_reason": "publish",
+          "text_content": "Published task family: anomaly investigation prompts with reproducible evidence."
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000303",
+          "tenant_id": "tenant_a",
+          "layer": "content",
+          "source_entity_type": "rubric",
+          "source_entity_id": "rubric-3",
+          "source_type": "admin_approved",
+          "status": "active",
+          "visibility_scope": ["candidate", "reviewer", "org_admin"],
+          "created_by": "reviewer_1",
+          "reviewed_by": "reviewer_1",
+          "policy_version": "1.0.0",
+          "change_reason": "publish",
+          "text_content": "Rubric dimensions: problem_framing, evidence_reasoning, communication."
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000304",
+          "tenant_id": "tenant_a",
+          "layer": "content",
+          "source_entity_type": "task_quality_signal",
+          "source_entity_id": "task-family-3",
+          "source_type": "model_inferred",
+          "status": "active",
+          "visibility_scope": ["reviewer", "org_admin"],
+          "created_by": "system",
+          "change_reason": "quality_evaluated",
+          "text_content": "Quality score 0.94. Diversity 0.93. Realism 0.92. Leakage detected False."
+        }
+      ],
+      "expected_retrieved_entry_ids": [
+        "00000000-0000-0000-0000-000000000301",
+        "00000000-0000-0000-0000-000000000302",
+        "00000000-0000-0000-0000-000000000303",
+        "00000000-0000-0000-0000-000000000304"
+      ],
+      "expected_grounding_phrases": [
+        "retention and escalation policy",
+        "reproducible evidence",
+        "problem_framing",
+        "Quality score 0.94"
+      ],
+      "forbidden_grounding_phrases": [
+        "hidden candidate answer"
+      ],
+      "expected_layer_sequence": [
+        "Layer: org",
+        "Layer: content"
+      ]
+    }
+  }
+}

@@ -49,3 +49,4 @@ demo-gate:
 	uv run python apps/api/scripts/check_report_summary_consistency.py
 	uv run python apps/api/scripts/check_export_schema.py
 	uv run python apps/api/scripts/check_score_drift.py
+	uv run python apps/api/scripts/check_memory_eval.py
