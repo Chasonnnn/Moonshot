@@ -1,10 +1,10 @@
 # Moonshot
 
-Backend-first MVP scaffold for API contracts, documentation, and integration-safe domain endpoints.
+Backend-first MVP scaffold for Moonshot's evidence-based work simulation platform.
 
 ## Architecture
 
-Moonshot is an API-first assessment platform with explicit evidence loops:
+Moonshot is an API-first work simulation platform with explicit evidence loops:
 - API service: FastAPI (`apps/api/app`)
 - Database: PostgreSQL 18 (`docker-compose.yml`)
 - Async worker: Postgres-backed job runner (`apps/api/app/workers/main.py`)
@@ -17,6 +17,11 @@ Core runtime flow:
 4. Candidate runs session (events, coach, submit).
 5. Reviewer/admin submits async scoring.
 6. Reports, interpretations, exports, fairness/red-team, and audit artifacts are retrieved via APIs.
+
+Positioning focus:
+- Work simulations for analyst, strategy, and support hiring.
+- Evidence about how candidates work, not just what they submit.
+- Reviewable governance surfaces for fairness, provenance, and auditability.
 
 ## Data Model
 
