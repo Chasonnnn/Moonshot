@@ -50,6 +50,7 @@ def test_generate_fixture_mode_returns_deterministic_family(client, admin_header
     assert isinstance(first_dimension["evidence_signals"], list)
     assert isinstance(first_dimension["common_failure_modes"], list)
     assert isinstance(first_dimension["score_bands"], dict)
+    assert isinstance(first_dimension["weight"], float)
     rubric_keys = {item["key"] for item in rubric["dimensions"]}
     assert "sql_accuracy" in rubric_keys
     assert "data_quality_process" in rubric_keys
@@ -128,6 +129,51 @@ def test_generate_fixture_mode_supports_customer_support_template(client, admin_
     assert "written_clarity" in rubric_keys
 
 
+def test_generate_fixture_mode_supports_revops_and_ops_templates(client, admin_headers):
+    for template_id, title, allowed_tools, expected_rubric_keys in [
+        (
+            "tpl_revops_forecast_variance",
+            "RevOps Fixture Generate Case",
+            ["spreadsheet_workspace", "dashboard_workspace", "slides_workspace"],
+            {"variance_reconciliation", "driver_validation", "executive_readout"},
+        ),
+        (
+            "tpl_ops_capacity_escalation",
+            "Ops Fixture Generate Case",
+            ["spreadsheet_workspace", "dashboard_workspace", "slides_workspace"],
+            {"capacity_modeling", "sla_risk_judgment", "leadership_brief"},
+        ),
+    ]:
+        case_res = client.post(
+            "/v1/cases",
+            headers=admin_headers,
+            json={
+                "title": title,
+                "scenario": f"{title} scenario",
+                "artifacts": [],
+                "metrics": [],
+                "allowed_tools": allowed_tools,
+            },
+        )
+        assert case_res.status_code == 201
+        case_id = case_res.json()["id"]
+
+        gen_res = client.post(
+            f"/v1/cases/{case_id}/generate",
+            headers={**admin_headers, "Idempotency-Key": f"fixture-generate-{template_id}-1"},
+            json={"mode": "fixture", "template_id": template_id, "variant_count": 12},
+        )
+        assert gen_res.status_code == 202
+
+        generated = _job_result(client, gen_res.json()["job_id"], admin_headers)
+        task_family = generated["task_family"]
+        rubric = generated["rubric"]
+
+        assert task_family["id"]
+        assert len(task_family["variants"]) == 12
+        assert set(item["key"] for item in rubric["dimensions"]) >= expected_rubric_keys
+
+
 def test_score_fixture_mode_uses_fixture_score_payload(client, admin_headers, reviewer_headers, candidate_headers):
     case_res = client.post(
         "/v1/cases",
@@ -201,9 +247,15 @@ def test_score_fixture_mode_uses_fixture_score_payload(client, admin_headers, re
     scored = _job_result(client, score_res.json()["job_id"], reviewer_headers)
     assert scored["confidence"] == 0.82
     assert scored["dimension_scores"]["sql_accuracy"] == 0.8
+    assert scored["dimension_scores"]["oral_communication"] > 0
     assert "dimension_evidence" in scored
     assert "sql_accuracy" in scored["dimension_evidence"]
+    assert "oral_communication" in scored["dimension_evidence"]
     assert "fixture_score_profile" in scored["trigger_codes"]
+    events = client.get(f"/v1/sessions/{session_id}/events", headers=reviewer_headers)
+    assert events.status_code == 200
+    event_types = {item["event_type"] for item in events.json()["items"]}
+    assert "oral_response_seeded" in event_types
 
 
 def test_score_fixture_mode_uses_doordash_enablement_score_profile(

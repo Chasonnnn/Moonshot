@@ -458,6 +458,175 @@ _FIXTURE_PROFILES: dict[str, dict[str, Any]] = {
             ],
         },
     },
+    "tpl_revops_forecast_variance": {
+        "task_prompt": (
+            "Reconcile a quarterly forecast miss, validate the main driver in the pipeline board, "
+            "and present a corrective plan leadership can act on."
+        ),
+        "skills": ["spreadsheet", "bi", "slides", "forecasting", "communication"],
+        "difficulty_plan": [
+            "foundation",
+            "foundation",
+            "intermediate",
+            "intermediate",
+            "intermediate",
+            "advanced",
+            "advanced",
+            "advanced",
+            "executive",
+            "executive",
+            "executive",
+            "capstone",
+        ],
+        "rubric_dimensions": [
+            {
+                "key": "variance_reconciliation",
+                "anchor": "Builds a clean variance bridge before recommending action.",
+                "evaluation_points": [
+                    "Bridge logic is complete",
+                    "Drivers are not double counted",
+                    "Forecast assumptions are explicit",
+                ],
+                "evidence_signals": ["variance bridge", "workbook notes"],
+                "common_failure_modes": ["single-cause story", "missing bridge logic", "no assumptions"],
+                "score_bands": {
+                    "1": "Variance story is incomplete or unsupported",
+                    "3": "Variance story is directionally right with gaps",
+                    "5": "Variance bridge is auditable and decision-ready",
+                },
+            },
+            {
+                "key": "driver_validation",
+                "anchor": "Validates the workbook story against BI evidence before finalizing the recommendation.",
+                "evaluation_points": [
+                    "Validates by segment and stage",
+                    "Avoids unsupported causal claims",
+                    "Uses BI to sharpen the workbook story",
+                ],
+                "evidence_signals": ["board filters", "segment drill-down"],
+                "common_failure_modes": ["trusts workbook blindly", "ignores segment mix", "over-claims"],
+                "score_bands": {
+                    "1": "Workbook narrative is not validated",
+                    "3": "Some validation is present but incomplete",
+                    "5": "Validation clearly strengthens the recommendation",
+                },
+            },
+            {
+                "key": "executive_readout",
+                "anchor": "Turns the analysis into a concise executive recommendation with clear next actions.",
+                "evaluation_points": [
+                    "Leads with the decision",
+                    "Preserves caveats",
+                    "Names the owner and next check",
+                ],
+                "evidence_signals": ["deck structure", "summary language"],
+                "common_failure_modes": ["chart dump", "buried recommendation", "missing owner"],
+                "score_bands": {
+                    "1": "Readout is unclear or non-actionable",
+                    "3": "Readout is understandable with weak prioritization",
+                    "5": "Readout is concise, decision-first, and owner-specific",
+                },
+            },
+        ],
+        "failure_modes": [
+            "Recommends action without a clean bridge.",
+            "Confuses forecast-model quality with execution quality.",
+        ],
+        "mock_score": {
+            "confidence": 0.88,
+            "dimension_scores": {
+                "variance_reconciliation": 0.9,
+                "driver_validation": 0.87,
+                "executive_readout": 0.89,
+            },
+            "oral_communication": 0.86,
+            "trigger_codes": ["driver_validated_in_bi", "exec_story_concise"],
+        },
+    },
+    "tpl_ops_capacity_escalation": {
+        "task_prompt": (
+            "Model the staffing gap, prioritize the highest-risk queues, and prepare a leadership escalation brief "
+            "that makes the accepted operational risk explicit."
+        ),
+        "skills": ["spreadsheet", "bi", "slides", "operations", "prioritization"],
+        "difficulty_plan": [
+            "foundation",
+            "foundation",
+            "intermediate",
+            "intermediate",
+            "intermediate",
+            "advanced",
+            "advanced",
+            "advanced",
+            "leadership",
+            "leadership",
+            "leadership",
+            "capstone",
+        ],
+        "rubric_dimensions": [
+            {
+                "key": "capacity_modeling",
+                "anchor": "Quantifies the staffing gap and ties it to queue-level risk.",
+                "evaluation_points": [
+                    "Coverage gap is quantified",
+                    "Assumptions are reviewable",
+                    "Queue-level math is clear",
+                ],
+                "evidence_signals": ["capacity model", "coverage assumptions"],
+                "common_failure_modes": ["hand-wavy staffing gap", "missing assumptions", "no queue breakdown"],
+                "score_bands": {
+                    "1": "Staffing model is not usable",
+                    "3": "Model is directionally right with gaps",
+                    "5": "Model is explicit, reviewable, and decision-ready",
+                },
+            },
+            {
+                "key": "sla_risk_judgment",
+                "anchor": "Prioritizes the response by breach risk and customer harm rather than raw volume.",
+                "evaluation_points": [
+                    "Hotspots are correctly identified",
+                    "Tradeoffs are explicit",
+                    "Wrong queue is not optimized",
+                ],
+                "evidence_signals": ["SLA board", "scenario overlay"],
+                "common_failure_modes": ["volume bias", "ignores harm severity", "no prioritization logic"],
+                "score_bands": {
+                    "1": "Risk prioritization is weak",
+                    "3": "Risk prioritization is acceptable",
+                    "5": "Risk prioritization is explicit and defensible",
+                },
+            },
+            {
+                "key": "leadership_brief",
+                "anchor": "Communicates the least-bad recommendation and accepted risk clearly.",
+                "evaluation_points": [
+                    "Decision-first summary",
+                    "Residual risk is stated",
+                    "Concrete next actions are visible",
+                ],
+                "evidence_signals": ["brief structure", "handoff language"],
+                "common_failure_modes": ["buried decision", "no accepted risk", "no next step"],
+                "score_bands": {
+                    "1": "Brief is unclear or incomplete",
+                    "3": "Brief is understandable but uneven",
+                    "5": "Brief is concise, explicit, and leadership-ready",
+                },
+            },
+        ],
+        "failure_modes": [
+            "Optimizes for queue volume instead of breach risk.",
+            "Hides accepted risk from leadership.",
+        ],
+        "mock_score": {
+            "confidence": 0.86,
+            "dimension_scores": {
+                "capacity_modeling": 0.88,
+                "sla_risk_judgment": 0.87,
+                "leadership_brief": 0.84,
+            },
+            "trigger_codes": ["sla_priority_clear", "accepted_risk_explicit"],
+        },
+    },
     "tpl_doordash_enablement": {
         "task_prompt": (
             "Design and defend a strategy to double unmanaged marketplace restaurant sales in Atlanta, "
@@ -752,6 +921,8 @@ def score_from_fixture(
     events: list[dict[str, Any]],
     rubric_version: str,
     task_family_version: str,
+    oral_bundle: str = "",
+    oral_weight: float = 0.0,
 ) -> tuple[ScoreResult, Interpretation]:
     resolved = _resolve_template_id(template_id)
     profile = _FIXTURE_PROFILES[resolved]
@@ -762,6 +933,24 @@ def score_from_fixture(
     trigger_codes = list(mock_score["trigger_codes"])
     if "fixture_score_profile" not in trigger_codes:
         trigger_codes.append("fixture_score_profile")
+    normalized_oral_weight = max(0.0, min(1.0, round(float(oral_weight), 3)))
+
+    rubric_items = list(profile["rubric_dimensions"])
+    base_weight_total = sum(max(0.0, float(item.get("weight", 0.0))) for item in rubric_items)
+    remaining_weight = max(0.0, 1.0 - normalized_oral_weight) if normalized_oral_weight > 0 else 1.0
+    if base_weight_total > 0:
+        weight_map = {
+            str(item["key"]): round(max(0.0, float(item.get("weight", 0.0))) * remaining_weight / base_weight_total, 3)
+            for item in rubric_items
+        }
+    else:
+        equal_weight = round(remaining_weight / max(1, len(rubric_items)), 3)
+        weight_map = {str(item["key"]): equal_weight for item in rubric_items}
+
+    if normalized_oral_weight > 0 and oral_bundle.strip():
+        dimension_scores["oral_communication"] = float(mock_score.get("oral_communication", 0.86))
+        weight_map["oral_communication"] = normalized_oral_weight
+        trigger_codes.append("oral_defense_included")
 
     dimension_evidence = {
         item["key"]: DimensionScoreOutput(
@@ -770,9 +959,19 @@ def score_from_fixture(
             rationale=f"Fixture evidence indicates competency in {item['key'].replace('_', ' ')}.",
             failure_modes_matched=list(item.get("common_failure_modes", []))[:1],
             confidence=min(0.99, confidence + 0.03),
+            weight=weight_map.get(item["key"], 0.0),
         )
-        for item in profile["rubric_dimensions"]
+        for item in rubric_items
     }
+    if "oral_communication" in dimension_scores:
+        dimension_evidence["oral_communication"] = DimensionScoreOutput(
+            key="oral_communication",
+            score=float(dimension_scores["oral_communication"]),
+            rationale="Fixture oral-defense transcript shows a concise presentation with defensible follow-up answers.",
+            failure_modes_matched=[],
+            confidence=min(0.99, confidence + 0.02),
+            weight=weight_map.get("oral_communication", normalized_oral_weight),
+        )
 
     objective_metrics = _metric(events)
     objective_metrics["rounds_completed"] = 3
@@ -781,11 +980,16 @@ def score_from_fixture(
         "python": objective_metrics["python_run_count"] > 0,
         "r": objective_metrics["r_run_count"] > 0,
         "dashboard": objective_metrics["dashboard_action_count"] > 0,
+        "oral": "oral_communication" in dimension_scores,
     }
+    weighted_total = sum(dimension_scores[key] * weight_map.get(key, 1.0) for key in dimension_scores)
+    total_weight = sum(weight_map.get(key, 1.0) for key in dimension_scores)
+    overall_score = round(weighted_total / total_weight, 3) if total_weight > 0 else round(confidence, 3)
 
     score_result = ScoreResult(
         session_id=session_id,
         objective_metrics=objective_metrics,
+        overall_score=overall_score,
         dimension_scores=dimension_scores,
         dimension_evidence=dimension_evidence,
         confidence=confidence,
@@ -811,6 +1015,9 @@ def score_from_fixture(
         suggestions=[
             "Review round-by-round evidence chain for consistency.",
             "Validate escalation rationale against rubric score bands.",
+            "Use the oral-defense transcript to probe whether the candidate can defend trade-offs live."
+            if "oral_communication" in dimension_scores
+            else "Use the transcript rail only when oral defense is part of the template.",
         ],
     )
     return score_result, interpretation
