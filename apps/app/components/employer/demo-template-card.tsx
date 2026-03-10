@@ -10,6 +10,17 @@ interface DemoTemplateCardProps {
   disabled?: boolean
 }
 
+const TOOL_LABELS: Record<string, string> = {
+  sql: "SQL",
+  python: "Analysis",
+  r: "R",
+  dashboard: "Dashboard",
+  spreadsheet: "Spreadsheet",
+  bi: "BI",
+  slides: "Slides",
+  oral: "Oral",
+}
+
 export function DemoTemplateCard({ template, selected, onSelect, disabled }: DemoTemplateCardProps) {
   const priorityStyles =
     template.priority === "flagship"
@@ -17,6 +28,7 @@ export function DemoTemplateCard({ template, selected, onSelect, disabled }: Dem
       : template.priority === "teaser"
         ? "border-[#0F766E]/25 bg-[#0F766E]/[0.06] text-[#115E59]"
         : "border-[#CBD5E1] bg-[#F8FAFC] text-[#475569]"
+  const workspaceLabels = [...new Set(template.workspaceModes.map((mode) => TOOL_LABELS[mode] ?? mode))]
 
   return (
     <button
@@ -64,6 +76,25 @@ export function DemoTemplateCard({ template, selected, onSelect, disabled }: Dem
             <p className="mt-1 text-[13px] font-semibold text-[#0F172A]">{stat.value}</p>
           </div>
         ))}
+      </div>
+      <div className="mt-4">
+        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#64748B]">Workspace mix</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {workspaceLabels.map((label) => (
+            <Badge
+              key={label}
+              variant="outline"
+              className="border-[#BFDBFE] bg-[#EFF6FF] text-[11px] font-medium text-[#1E3A8A]"
+            >
+              {label}
+            </Badge>
+          ))}
+          {template.requiresOralDefense && !workspaceLabels.includes("Oral") ? (
+            <Badge variant="outline" className="border-[#BBF7D0] bg-[#F0FDF4] text-[11px] font-medium text-[#15803D]">
+              Oral
+            </Badge>
+          ) : null}
+        </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {template.skillTags.map((tag) => (

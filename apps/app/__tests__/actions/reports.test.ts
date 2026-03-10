@@ -61,6 +61,7 @@ function buildClient(overrides: Partial<Record<string, unknown>> = {}) {
     }),
     listRedteamRuns: vi.fn().mockResolvedValue({ items: [] }),
     listFairnessSmokeRuns: vi.fn().mockResolvedValue({ items: [] }),
+    listOralResponses: vi.fn().mockResolvedValue({ items: [] }),
     getContextInjectionTraces: vi.fn().mockResolvedValue({
       items: [
         {
@@ -282,6 +283,25 @@ describe("loadReportDetailSnapshot timeline source behavior", () => {
         }),
         listRedteamRuns: vi.fn().mockResolvedValue({ items: [{ id: "rt-1" }] }),
         listFairnessSmokeRuns: vi.fn().mockResolvedValue({ items: [{ id: "fair-1" }] }),
+        listOralResponses: vi.fn().mockResolvedValue({
+          items: [
+            {
+              id: "oral-1",
+              session_id: "sess-1",
+              question_id: null,
+              clip_type: "presentation",
+              duration_ms: 92000,
+              mime_type: "audio/webm",
+              status: "transcribed",
+              transcript_text: "The mismatch is caused by a duplicate ETL merge step, not missing source rows.",
+              transcription_model: "gpt-4o-transcribe",
+              request_id: "req-oral-1",
+              audio_retained: false,
+              created_at: "2026-03-01T10:08:00Z",
+              updated_at: "2026-03-01T10:08:00Z",
+            },
+          ],
+        }),
       }),
     )
 
@@ -289,9 +309,11 @@ describe("loadReportDetailSnapshot timeline source behavior", () => {
 
     expect(snapshot.approach_narrative?.headline).toContain("moved from exploration")
     expect(snapshot.approach_narrative?.summary).toContain("validating the discrepancy")
+    expect(snapshot.approach_narrative?.summary).toContain("defended the recommendation verbally")
     expect(snapshot.approach_narrative?.final_recommendation).toContain("Escalate the dashboard mismatch")
     expect(snapshot.approach_narrative?.key_evidence_moments).toHaveLength(4)
     expect(snapshot.approach_narrative?.key_evidence_moments[0]?.event_type).toBe("sql_query_run")
+    expect(snapshot.oral_responses).toHaveLength(1)
 
     expect(snapshot.governance_trace?.audit_chain_status).toBe("verified")
     expect(snapshot.governance_trace?.audit_checked_entries).toBe(8)

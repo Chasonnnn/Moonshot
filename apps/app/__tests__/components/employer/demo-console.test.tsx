@@ -163,14 +163,20 @@ describe("DemoConsole template selection", () => {
   it("defaults to the flagship analyst selection and renders the story summary", () => {
     renderConsole()
 
+    const launchBand = screen.getByTestId("demo-launch-band")
+
     expect(screen.getByText("Operator-led demo story")).toBeInTheDocument()
     expect(screen.getByText("KPI Discrepancy Investigation")).toBeInTheDocument()
     expect(screen.getByText("SQL Data Quality Triage")).toBeInTheDocument()
     expect(screen.getByText("Stakeholder Ambiguity Handling")).toBeInTheDocument()
+    expect(screen.getByText("RevOps Forecast Variance Review")).toBeInTheDocument()
+    expect(screen.getByText("Ops Capacity Escalation Simulation")).toBeInTheDocument()
     expect(screen.getByText("Customer Support Escalation Judgment")).toBeInTheDocument()
     expect(screen.getByText("Marketplace Growth Strategy Simulation")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /KPI Discrepancy Investigation/i })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("button", { name: "Start flagship demo" })).toBeInTheDocument()
+    expect(within(launchBand).getByRole("button", { name: "Hybrid fixture path" })).toBeInTheDocument()
+    expect(within(launchBand).getByRole("button", { name: "Fully live mode" })).toBeInTheDocument()
+    expect(within(launchBand).getByRole("button", { name: "Start flagship demo" })).toBeInTheDocument()
   })
 
   it("shows the updated narrative and step indicators initially", () => {
@@ -179,6 +185,7 @@ describe("DemoConsole template selection", () => {
     expect(screen.getAllByText("Simulation Gallery").length).toBeGreaterThan(0)
     expect(screen.getByText("Co-design")).toBeInTheDocument()
     expect(screen.getByText("Candidate work trace")).toBeInTheDocument()
+    expect(screen.getByText("Presentation & defense")).toBeInTheDocument()
     expect(screen.getByText("Evaluation")).toBeInTheDocument()
     expect(screen.getByText("Governance")).toBeInTheDocument()
     expect(screen.getByText("What the candidate was asked to do")).toBeInTheDocument()
@@ -191,6 +198,30 @@ describe("DemoConsole template selection", () => {
 
     expect(screen.getByRole("button", { name: "Hybrid fixture path" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Fully live mode" })).toBeInTheDocument()
+  })
+
+  it("surfaces the new simulation tool mix and oral metadata in the launch gallery", async () => {
+    const user = userEvent.setup()
+    renderConsole()
+
+    await user.click(screen.getByRole("button", { name: /RevOps Forecast Variance Review/i }))
+
+    expect(screen.getAllByText("Executive readout + follow-up defense").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Spreadsheet").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("BI").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Slides").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Oral").length).toBeGreaterThan(0)
+  })
+
+  it("marks junior analyst scenarios as requiring slides and oral defense", async () => {
+    const user = userEvent.setup()
+    renderConsole()
+
+    await user.click(screen.getByRole("button", { name: /SQL Data Quality Triage/i }))
+
+    expect(screen.getAllByText("3-slide readout + 60-second defense").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Slides").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Oral").length).toBeGreaterThan(0)
   })
 
   it("shows operators panel in fully live mode", async () => {

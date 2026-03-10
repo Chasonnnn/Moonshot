@@ -115,10 +115,15 @@ export function computeSmartSummary(snapshot: ReportDetailSnapshot): SmartSummar
     codes: triggerCodes,
   }
 
+  const overallScoreValue = Number(scoreResult?.overall_score ?? Number.NaN)
   const overallScore =
-    dimensionScores.length > 0
-      ? Math.round(dimensionScores.reduce((sum, d) => sum + d.score, 0) / dimensionScores.length)
-      : 0
+    Number.isFinite(overallScoreValue)
+      ? Math.round(overallScoreValue * 100)
+      : (
+          dimensionScores.length > 0
+            ? Math.round(dimensionScores.reduce((sum, d) => sum + d.score, 0) / dimensionScores.length)
+            : 0
+        )
 
   const hiringSuggestion = computeHiringSuggestion(overallScore)
 

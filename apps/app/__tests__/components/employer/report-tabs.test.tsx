@@ -135,6 +135,7 @@ const BASE_SNAPSHOT: ReportDetailSnapshot = {
     triggerRationale: [{ code: "TC-01", rationale: "Pattern detected", impact: "medium" }],
     agentNarrative: ["Candidate performed well overall."],
   },
+  oral_responses: [],
   computed_analysis: {
     strengths: [
       { dimension: "Problem Solving", score: 90, note: "Excellent" },
@@ -251,6 +252,35 @@ describe("ReportReviewConsole tabs", () => {
     await user.click(screen.getByRole("tab", { name: /output/i }))
 
     expect(screen.getByText(/SELECT COUNT/)).toBeInTheDocument()
+  })
+
+  it("shows oral defense evidence on Output tab when transcripts are available", async () => {
+    const user = userEvent.setup()
+    const snapshot = {
+      ...BASE_SNAPSHOT,
+      oral_responses: [
+        {
+          id: "oral-1",
+          question_id: "follow_up_1",
+          clip_type: "presentation",
+          duration_ms: 78000,
+          status: "transcribed",
+          transcript_text: "I would escalate the ETL defect, restore the dashboard, and set a reconciliation guardrail.",
+          transcription_model: "gpt-4o-transcribe",
+          request_id: "req-oral-1",
+          audio_retained: false,
+          created_at: "2026-03-01T10:08:00Z",
+        },
+      ],
+    }
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={snapshot} />)
+
+    await user.click(screen.getByRole("tab", { name: /output/i }))
+
+    expect(screen.getByText("Oral Defense Evidence")).toBeInTheDocument()
+    expect(screen.getByText(/discarded after transcription/i)).toBeInTheDocument()
+    expect(screen.getByText(/request_id=req-oral-1/i)).toBeInTheDocument()
+    expect(screen.getByText(/I would escalate the ETL defect/i)).toBeInTheDocument()
   })
 
   it("shows empty state when no final response on Output tab", async () => {

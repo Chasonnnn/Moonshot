@@ -57,6 +57,7 @@ function makeSnapshot(overrides: Partial<ReportDetailSnapshot> = {}): ReportDeta
     demo_template_id: null,
     co_design_bundle: null,
     round_blueprint: [],
+    oral_responses: [],
     approach_narrative: null,
     governance_trace: null,
     evaluation_bundle: {

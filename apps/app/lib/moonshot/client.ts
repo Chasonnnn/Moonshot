@@ -16,6 +16,7 @@ import {
   type ModelOptionsResponse,
   MoonshotApiError,
   type MoonshotRole,
+  type OralResponse,
   type RedTeamRun,
   type ReportSummary,
   type ReviewQueueItem,
@@ -424,6 +425,10 @@ export class MoonshotApiClient {
 
   async getInterpretation(token: string, sessionId: string, viewId: string): Promise<InterpretationView> {
     return this.request<InterpretationView>(`/v1/reports/${sessionId}/interpretations/${viewId}`, { token })
+  }
+
+  async listOralResponses(token: string, sessionId: string): Promise<{ items: OralResponse[] }> {
+    return this.request<{ items: OralResponse[] }>(`/v1/sessions/${sessionId}/oral-responses`, { token })
   }
 
   async getExport(token: string, runId: string): Promise<Record<string, unknown>> {

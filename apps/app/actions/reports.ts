@@ -35,6 +35,18 @@ export interface ReportDetailSnapshot {
   co_design_bundle: DemoCoDesignBundle | null
   round_blueprint: DemoRound[]
   evaluation_bundle: DemoEvaluationBundle | null
+  oral_responses: Array<{
+    id: string
+    question_id: string | null
+    clip_type: string
+    duration_ms: number
+    status: string
+    transcript_text: string
+    transcription_model: string
+    request_id: string | null
+    audio_retained: boolean
+    created_at: string
+  }>
   computed_analysis: SmartSummary | null
   approach_narrative: {
     headline: string
@@ -167,6 +179,7 @@ function buildApproachNarrative(input: {
   report: Record<string, unknown> | null
   events: SessionEvent[]
   evaluationBundle: DemoEvaluationBundle | null
+  oralResponses: ReportDetailSnapshot["oral_responses"]
 }): ReportDetailSnapshot["approach_narrative"] {
   const scoreResult = asRecord(input.report?.score_result)
   const interpretation = asRecord(input.report?.interpretation)
@@ -194,6 +207,15 @@ function buildApproachNarrative(input: {
   })
 
   const finalRecommendation = clipText(input.session.final_response)
+  const oralHighlight = input.oralResponses.find((item) => item.transcript_text.trim().length > 0)
+  if (oralHighlight) {
+    keyEvidenceMoments.push({
+      title: "Presentation & defense",
+      detail: `Captured oral defense evidence from ${oralHighlight.clip_type.replace(/_/g, " ")} and linked it into the score.`,
+      event_type: "oral_response_transcribed",
+      timestamp: oralHighlight.created_at,
+    })
+  }
   if (finalRecommendation) {
     keyEvidenceMoments.push({
       title: "Decision",
@@ -212,6 +234,9 @@ function buildApproachNarrative(input: {
   }
   if (keyEvidenceMoments.some((item) => item.title === "Verification")) {
     clauses.push("validated a key assumption before locking the answer")
+  }
+  if (oralHighlight) {
+    clauses.push("defended the recommendation verbally with transcript evidence")
   }
   if (finalRecommendation) {
     clauses.push("closed with a scoped recommendation")
@@ -376,11 +401,12 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
     const session = await client.getSession(reviewer.access_token, sessionId)
     const demoTemplateId = typeof session.policy?.demo_template_id === "string" ? session.policy.demo_template_id : null
     const fixture = demoTemplateId ? DEMO_FIXTURES[demoTemplateId] ?? null : null
-    const [summary, redteamRuns, fairnessRuns, humanReview] = await Promise.all([
+    const [summary, redteamRuns, fairnessRuns, humanReview, oralResponses] = await Promise.all([
       client.getReportSummary(reviewer.access_token, sessionId),
       client.listRedteamRuns(reviewer.access_token, { targetType: "session", targetId: sessionId, limit: 5 }),
       client.listFairnessSmokeRuns(reviewer.access_token, { targetSessionId: sessionId, limit: 5 }),
       client.getHumanReview(reviewer.access_token, sessionId),
+      client.listOralResponses(reviewer.access_token, sessionId),
     ])
     let report: Record<string, unknown> | null = null
     if (summary.report_available) {
@@ -429,6 +455,7 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       co_design_bundle: fixture?.coDesignBundle ?? null,
       round_blueprint: fixture?.rounds ?? [],
       evaluation_bundle: derivedEvaluationBundle ?? fixture?.evaluationBundle ?? null,
+      oral_responses: oralResponses.items,
       approach_narrative: null,
       governance_trace: null,
       error: null,
@@ -438,6 +465,7 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       report,
       events,
       evaluationBundle: partial.evaluation_bundle,
+      oralResponses: partial.oral_responses,
     })
     partial.governance_trace = buildGovernanceTrace({
       sessionId,
@@ -476,6 +504,7 @@ export async function loadReportDetailSnapshot(sessionId: string): Promise<Repor
       co_design_bundle: null,
       round_blueprint: [],
       evaluation_bundle: null,
+      oral_responses: [],
       approach_narrative: null,
       governance_trace: null,
       computed_analysis: null,

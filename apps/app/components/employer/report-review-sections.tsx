@@ -383,6 +383,7 @@ export function ReportOverviewTab({
 
 export function ReportOutputTab({ snapshot }: { snapshot: ReportDetailSnapshot }) {
   const dimensionEvidence = getDimensionEvidence(snapshot)
+  const oralResponses = snapshot.oral_responses
 
   return (
     <section className="space-y-6">
@@ -405,6 +406,42 @@ export function ReportOutputTab({ snapshot }: { snapshot: ReportDetailSnapshot }
           </Empty>
         )}
       </div>
+
+      {oralResponses.length > 0 && (
+        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2">
+            <BrainIcon className="size-5 text-[#0F766E]" />
+            <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Oral Defense Evidence</h2>
+          </div>
+          <p className="mt-2 text-[13px] leading-relaxed text-[#6E6E73]">
+            Presentation and follow-up responses were transcribed, attached to the session evidence graph, and scored alongside the written work.
+          </p>
+          <div className="mt-4 grid gap-3">
+            {oralResponses.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-[#CCFBF1] bg-[#F0FDFA] p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="border-[#99F6E4] bg-white text-[11px] text-[#115E59]">
+                    {item.clip_type.replace(/_/g, " ")}
+                  </Badge>
+                  <span className="text-[11px] text-[#0F766E]">
+                    {Math.round(item.duration_ms / 1000)}s · {item.transcription_model}
+                  </span>
+                  {item.request_id ? (
+                    <span className="font-mono text-[11px] text-[#134E4A]">request_id={item.request_id}</span>
+                  ) : null}
+                  <span className="text-[11px] text-[#134E4A]">
+                    raw audio {item.audio_retained ? "retained" : "discarded after transcription"}
+                  </span>
+                </div>
+                {item.question_id ? (
+                  <p className="mt-2 text-[12px] font-medium text-[#0F172A]">Question: {item.question_id}</p>
+                ) : null}
+                <p className="mt-2 text-[13px] leading-relaxed text-[#0F172A]">{item.transcript_text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {snapshot.evaluation_bundle && (
         <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
