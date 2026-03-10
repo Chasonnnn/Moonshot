@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 
 import { EmployerShell } from "@/components/employer/shell"
 
@@ -21,7 +22,7 @@ describe("EmployerShell behavior", () => {
       </EmployerShell>,
     )
 
-    expect(screen.getByText("Processing (2)")).toBeInTheDocument()
+    expect(screen.getAllByText("Processing (2)").length).toBeGreaterThan(0)
     expect(screen.queryByText("Ready")).not.toBeInTheDocument()
   })
 
@@ -32,7 +33,7 @@ describe("EmployerShell behavior", () => {
       </EmployerShell>,
     )
 
-    expect(screen.getByText("Ready")).toBeInTheDocument()
+    expect(screen.getAllByText("Ready").length).toBeGreaterThan(0)
     expect(screen.queryByText(/Processing/)).not.toBeInTheDocument()
   })
 
@@ -46,5 +47,24 @@ describe("EmployerShell behavior", () => {
     )
 
     expect(screen.getByRole("link", { name: "Cases" }).className).toContain("bg-[#1D1D1F]")
+  })
+
+  it("renders a compact mobile nav toggle and expands the panel on demand", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <EmployerShell>
+        <div>content</div>
+      </EmployerShell>,
+    )
+
+    const toggle = screen.getByTestId("mobile-nav-toggle")
+    expect(toggle).toHaveAttribute("aria-expanded", "false")
+
+    await user.click(toggle)
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getAllByRole("navigation", { hidden: true }).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByRole("link", { name: "Work Simulations" }).length).toBeGreaterThanOrEqual(1)
   })
 })
