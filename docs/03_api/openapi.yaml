@@ -209,6 +209,102 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/memory/entries:
+    get:
+      tags:
+      - memory
+      summary: List Memory Entries
+      operationId: list_memory_entries_v1_memory_entries_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: layer
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Layer
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoryEntryListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/memory/entries/{entry_id}:
+    get:
+      tags:
+      - memory
+      summary: Get Memory Entry
+      operationId: get_memory_entry_v1_memory_entries__entry_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: entry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Entry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoryEntry'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/memory/session-digests/{session_id}:
+    get:
+      tags:
+      - memory
+      summary: Get Session Memory Digest
+      operationId: get_session_memory_digest_v1_memory_session_digests__session_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionMemoryDigest'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/admin/policies:
     get:
       tags:
@@ -373,6 +469,123 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BusinessContextPackUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPack'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/business-context/packs/{pack_id}/review:
+    post:
+      tags:
+      - business-context
+      summary: Review Pack
+      operationId: review_pack_v1_business_context_packs__pack_id__review_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - type: object
+                additionalProperties:
+                  type: string
+              - type: 'null'
+              title: Payload
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPack'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/business-context/packs/{pack_id}/activate:
+    post:
+      tags:
+      - business-context
+      summary: Activate Pack
+      operationId: activate_pack_v1_business_context_packs__pack_id__activate_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - type: object
+                additionalProperties:
+                  type: string
+              - type: 'null'
+              title: Payload
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessContextPack'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/business-context/packs/{pack_id}/deprecate:
+    post:
+      tags:
+      - business-context
+      summary: Deprecate Pack
+      operationId: deprecate_pack_v1_business_context_packs__pack_id__deprecate_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - type: object
+                additionalProperties:
+                  type: string
+              - type: 'null'
+              title: Payload
       responses:
         '200':
           description: Successful Response
@@ -1144,6 +1357,307 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardState'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/datasets:
+    get:
+      tags:
+      - simulator-runtime
+      summary: List Datasets
+      operationId: list_datasets_v1_sessions__session_id__datasets_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/datasets/{dataset_name}/preview:
+    get:
+      tags:
+      - simulator-runtime
+      summary: Get Dataset Preview
+      operationId: get_dataset_preview_v1_sessions__session_id__datasets__dataset_name__preview_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      - name: dataset_name
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Dataset Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/deliverables:
+    post:
+      tags:
+      - deliverables
+      summary: Create Deliverable
+      operationId: create_deliverable_v1_sessions__session_id__deliverables_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliverableSubmitRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deliverable'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - deliverables
+      summary: List Deliverables
+      operationId: list_deliverables_v1_sessions__session_id__deliverables_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliverableListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/deliverables/{deliverable_id}:
+    get:
+      tags:
+      - deliverables
+      summary: Get Deliverable
+      operationId: get_deliverable_v1_sessions__session_id__deliverables__deliverable_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      - name: deliverable_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Deliverable Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deliverable'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - deliverables
+      summary: Update Deliverable
+      operationId: update_deliverable_v1_sessions__session_id__deliverables__deliverable_id__put
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      - name: deliverable_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Deliverable Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliverableSubmitRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deliverable'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/deliverables/{deliverable_id}/submit:
+    post:
+      tags:
+      - deliverables
+      summary: Submit Deliverable
+      operationId: submit_deliverable_v1_sessions__session_id__deliverables__deliverable_id__submit_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      - name: deliverable_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Deliverable Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deliverable'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/sessions/{session_id}/oral-responses:
+    post:
+      tags:
+      - oral-responses
+      summary: Upload Oral Response
+      operationId: upload_oral_response_v1_sessions__session_id__oral_responses_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_oral_response_v1_sessions__session_id__oral_responses_post'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OralResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - oral-responses
+      summary: Get Oral Responses
+      operationId: get_oral_responses_v1_sessions__session_id__oral_responses_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OralResponseListResponse'
         '422':
           description: Validation Error
           content:
@@ -2154,6 +2668,29 @@ components:
       - expires_at
       - kid
       title: AuthTokenResponse
+    Body_upload_oral_response_v1_sessions__session_id__oral_responses_post:
+      properties:
+        clip_type:
+          type: string
+          title: Clip Type
+        duration_ms:
+          type: integer
+          title: Duration Ms
+        question_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Question Id
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - clip_type
+      - duration_ms
+      - file
+      title: Body_upload_oral_response_v1_sessions__session_id__oral_responses_post
     BusinessContextPack:
       properties:
         id:
@@ -2298,6 +2835,44 @@ components:
       - title
       - scenario
       title: CaseCreate
+    CaseDataset:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        case_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Case Id
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+          default: ''
+        row_count:
+          type: integer
+          title: Row Count
+          default: 0
+        file_path:
+          type: string
+          title: File Path
+          default: ''
+        dataset_schema:
+          $ref: '#/components/schemas/DatasetSchema'
+        precomputed_queries:
+          items:
+            $ref: '#/components/schemas/PrecomputedQuery'
+          type: array
+          title: Precomputed Queries
+      type: object
+      required:
+      - name
+      title: CaseDataset
     CaseGenerateRequest:
       properties:
         mode:
@@ -2336,6 +2911,37 @@ components:
           title: Thinking Budget Tokens
       type: object
       title: CaseGenerateRequest
+    CasePart:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        title:
+          type: string
+          title: Title
+        description:
+          type: string
+          title: Description
+          default: ''
+        part_type:
+          type: string
+          title: Part Type
+          default: exploration
+        time_limit_minutes:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Time Limit Minutes
+        deliverable_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Deliverable Type
+      type: object
+      required:
+      - title
+      title: CasePart
     CaseSpec:
       properties:
         id:
@@ -2381,6 +2987,24 @@ components:
           type: string
           title: Version
           default: 0.1.0
+        assessment_format:
+          type: string
+          enum:
+          - analysis_simulation
+          - case_study
+          - sql_proficiency
+          title: Assessment Format
+          default: analysis_simulation
+        datasets:
+          items:
+            $ref: '#/components/schemas/CaseDataset'
+          type: array
+          title: Datasets
+        parts:
+          items:
+            $ref: '#/components/schemas/CasePart'
+          type: array
+          title: Parts
         created_at:
           type: string
           format: date-time
@@ -2594,6 +3218,37 @@ components:
           - type: string
           - type: 'null'
           title: Policy Hash
+        memory_entry_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Memory Entry Ids
+        chunk_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Chunk Ids
+        ranking_features:
+          additionalProperties: true
+          type: object
+          title: Ranking Features
+        query_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Query Text
+        token_budget:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Token Budget
+        assembled_context_hash:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Assembled Context Hash
         created_at:
           type: string
           format: date-time
@@ -2645,6 +3300,101 @@ components:
           title: Annotations
       type: object
       title: DashboardState
+    DatasetColumn:
+      properties:
+        name:
+          type: string
+          title: Name
+        dtype:
+          type: string
+          title: Dtype
+        description:
+          type: string
+          title: Description
+          default: ''
+        sample_values:
+          items:
+            type: string
+          type: array
+          title: Sample Values
+      type: object
+      required:
+      - name
+      - dtype
+      title: DatasetColumn
+    DatasetSchema:
+      properties:
+        columns:
+          items:
+            $ref: '#/components/schemas/DatasetColumn'
+          type: array
+          title: Columns
+      type: object
+      title: DatasetSchema
+    Deliverable:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        part_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Part Id
+        content_markdown:
+          type: string
+          title: Content Markdown
+          default: ''
+        embedded_artifacts:
+          items:
+            type: string
+          type: array
+          title: Embedded Artifacts
+        status:
+          type: string
+          title: Status
+          default: draft
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - session_id
+      title: Deliverable
+    DeliverableListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Deliverable'
+          type: array
+          title: Items
+      type: object
+      title: DeliverableListResponse
+    DeliverableSubmitRequest:
+      properties:
+        content_markdown:
+          type: string
+          title: Content Markdown
+        embedded_artifacts:
+          items:
+            type: string
+          type: array
+          title: Embedded Artifacts
+      type: object
+      required:
+      - content_markdown
+      title: DeliverableSubmitRequest
     DimensionScoreOutput:
       properties:
         key:
@@ -2664,6 +3414,10 @@ components:
         confidence:
           type: number
           title: Confidence
+        weight:
+          type: number
+          title: Weight
+          default: 1.0
       type: object
       required:
       - key
@@ -3139,6 +3893,102 @@ components:
           title: Items
       type: object
       title: JobStatusListResponse
+    MemoryEntry:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        tenant_id:
+          type: string
+          title: Tenant Id
+        layer:
+          type: string
+          enum:
+          - org
+          - content
+          - episode
+          title: Layer
+        source_entity_type:
+          type: string
+          title: Source Entity Type
+        source_entity_id:
+          type: string
+          title: Source Entity Id
+        source_type:
+          type: string
+          enum:
+          - admin_approved
+          - model_inferred
+          title: Source Type
+        status:
+          type: string
+          enum:
+          - proposed
+          - reviewed
+          - approved
+          - active
+          - deprecated
+          title: Status
+        visibility_scope:
+          items:
+            type: string
+          type: array
+          title: Visibility Scope
+        created_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Created By
+        reviewed_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reviewed By
+        policy_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Policy Version
+        change_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Change Reason
+        text_content:
+          type: string
+          title: Text Content
+        metadata_json:
+          additionalProperties: true
+          type: object
+          title: Metadata Json
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - tenant_id
+      - layer
+      - source_entity_type
+      - source_entity_id
+      - source_type
+      - status
+      - text_content
+      title: MemoryEntry
+    MemoryEntryListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/MemoryEntry'
+          type: array
+          title: Items
+      type: object
+      title: MemoryEntryListResponse
     MetaVersion:
       properties:
         api_version:
@@ -3232,6 +4082,99 @@ components:
           title: Options
       type: object
       title: ModelOptionsResponse
+    OralResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        question_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Question Id
+        clip_type:
+          type: string
+          title: Clip Type
+        duration_ms:
+          type: integer
+          title: Duration Ms
+          default: 0
+        mime_type:
+          type: string
+          title: Mime Type
+        status:
+          type: string
+          title: Status
+          default: transcribed
+        transcript_text:
+          type: string
+          title: Transcript Text
+        transcription_model:
+          type: string
+          title: Transcription Model
+        request_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Request Id
+        audio_retained:
+          type: boolean
+          title: Audio Retained
+          default: false
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - session_id
+      - clip_type
+      - mime_type
+      - transcript_text
+      - transcription_model
+      title: OralResponse
+    OralResponseListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/OralResponse'
+          type: array
+          title: Items
+      type: object
+      title: OralResponseListResponse
+    PrecomputedQuery:
+      properties:
+        pattern:
+          type: string
+          title: Pattern
+        normalized:
+          type: string
+          title: Normalized
+        columns:
+          items:
+            type: string
+          type: array
+          title: Columns
+        rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Rows
+      type: object
+      required:
+      - pattern
+      - normalized
+      title: PrecomputedQuery
     PurgeExpiredRequest:
       properties:
         dry_run:
@@ -3606,6 +4549,10 @@ components:
         anchor:
           type: string
           title: Anchor
+        weight:
+          type: number
+          title: Weight
+          default: 1.0
         evaluation_points:
           items:
             type: string
@@ -3779,6 +4726,9 @@ components:
           additionalProperties: true
           type: object
           title: Objective Metrics
+        overall_score:
+          type: number
+          title: Overall Score
         dimension_scores:
           additionalProperties:
             type: number
@@ -3838,6 +4788,7 @@ components:
       required:
       - session_id
       - objective_metrics
+      - overall_score
       - dimension_scores
       - confidence
       - needs_human_review
@@ -4045,6 +4996,46 @@ components:
       - limit
       - total
       title: SessionEventListResponse
+    SessionMemoryDigest:
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          title: Session Id
+        tenant_id:
+          type: string
+          title: Tenant Id
+        summary_text:
+          type: string
+          title: Summary Text
+        facts_json:
+          additionalProperties: true
+          type: object
+          title: Facts Json
+        risk_signals:
+          items:
+            type: string
+          type: array
+          title: Risk Signals
+        open_questions:
+          items:
+            type: string
+          type: array
+          title: Open Questions
+        last_event_offset:
+          type: integer
+          title: Last Event Offset
+          default: 0
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - session_id
+      - tenant_id
+      - summary_text
+      title: SessionMemoryDigest
     SessionModeRequest:
       properties:
         mode:
