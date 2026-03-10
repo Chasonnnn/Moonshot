@@ -92,6 +92,42 @@ def test_generate_fixture_mode_supports_doordash_enablement_template(client, adm
     assert "sql_proficiency" in rubric_keys
 
 
+def test_generate_fixture_mode_supports_customer_support_template(client, admin_headers):
+    case_res = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Customer Support Fixture Generate Case",
+            "scenario": "Customer support fixture scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["dashboard_workspace", "copilot"],
+        },
+    )
+    assert case_res.status_code == 201
+    case_id = case_res.json()["id"]
+
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "fixture-generate-support-1"},
+        json={"mode": "fixture", "template_id": "tpl_customer_support_judgment", "variant_count": 12},
+    )
+    assert gen_res.status_code == 202
+
+    generated = _job_result(client, gen_res.json()["job_id"], admin_headers)
+    task_family = generated["task_family"]
+    rubric = generated["rubric"]
+
+    assert task_family["id"]
+    assert len(task_family["variants"]) == 12
+    rubric_keys = {item["key"] for item in rubric["dimensions"]}
+    assert "queue_prioritization" in rubric_keys
+    assert "policy_judgment" in rubric_keys
+    assert "escalation_quality" in rubric_keys
+    assert "customer_empathy" in rubric_keys
+    assert "written_clarity" in rubric_keys
+
+
 def test_score_fixture_mode_uses_fixture_score_payload(client, admin_headers, reviewer_headers, candidate_headers):
     case_res = client.post(
         "/v1/cases",
@@ -253,6 +289,91 @@ def test_score_fixture_mode_uses_doordash_enablement_score_profile(
     assert scored["confidence"] == 0.89
     assert scored["dimension_scores"]["sql_proficiency"] == 0.86
     assert scored["dimension_scores"]["tradeoff_roi_rigor"] == 0.9
+    assert "fixture_score_profile" in scored["trigger_codes"]
+
+
+def test_score_fixture_mode_uses_customer_support_score_profile(
+    client, admin_headers, reviewer_headers, candidate_headers
+):
+    case_res = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Customer Support Fixture Score Case",
+            "scenario": "Customer support fixture score scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["dashboard_workspace", "copilot"],
+        },
+    )
+    assert case_res.status_code == 201
+    case_id = case_res.json()["id"]
+
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "fixture-generate-support-2"},
+        json={"mode": "fixture", "template_id": "tpl_customer_support_judgment"},
+    )
+    assert gen_res.status_code == 202
+    generated = _job_result(client, gen_res.json()["job_id"], admin_headers)
+    task_family_id = generated["task_family"]["id"]
+
+    review = client.post(
+        f"/v1/task-families/{task_family_id}/review",
+        headers=reviewer_headers,
+        json={"decision": "approve"},
+    )
+    assert review.status_code == 200
+    publish = client.post(f"/v1/task-families/{task_family_id}/publish", headers=reviewer_headers, json={})
+    assert publish.status_code == 200
+
+    session_res = client.post(
+        "/v1/sessions",
+        headers=reviewer_headers,
+        json={
+            "task_family_id": task_family_id,
+            "candidate_id": "candidate_1",
+            "policy": {
+                "raw_content_opt_in": False,
+                "retention_ttl_days": 30,
+                "demo_template_id": "tpl_customer_support_judgment",
+            },
+        },
+    )
+    assert session_res.status_code == 201
+    session_id = session_res.json()["id"]
+
+    ingest = client.post(
+        f"/v1/sessions/{session_id}/events",
+        headers=candidate_headers,
+        json={
+            "events": [
+                {"event_type": "dashboard_action", "payload": {"action": "sort_queue_by_sla_risk"}},
+                {"event_type": "copilot_invoked", "payload": {"source": "coach"}},
+                {"event_type": "verification_step_completed", "payload": {"step": "policy_exception_check"}},
+            ]
+        },
+    )
+    assert ingest.status_code == 202
+
+    submit = client.post(
+        f"/v1/sessions/{session_id}/submit",
+        headers=candidate_headers,
+        json={"final_response": "support fixture response"},
+    )
+    assert submit.status_code == 200
+
+    score_res = client.post(
+        f"/v1/sessions/{session_id}/score",
+        headers={**reviewer_headers, "Idempotency-Key": "fixture-score-support-1"},
+        json={"mode": "fixture", "template_id": "tpl_customer_support_judgment"},
+    )
+    assert score_res.status_code == 202
+
+    scored = _job_result(client, score_res.json()["job_id"], reviewer_headers)
+    assert scored["confidence"] == 0.9
+    assert scored["dimension_scores"]["queue_prioritization"] == 0.92
+    assert scored["dimension_scores"]["policy_judgment"] == 0.9
     assert "fixture_score_profile" in scored["trigger_codes"]
 
 

@@ -335,6 +335,129 @@ _FIXTURE_PROFILES: dict[str, dict[str, Any]] = {
             "trigger_codes": ["strong_communication", "proactive_clarification"],
         },
     },
+    "tpl_customer_support_judgment": {
+        "task_prompt": (
+            "Prioritize a mixed customer-support queue, apply refund policy with judgment, "
+            "and produce an escalation-ready response that stays calm and reviewable."
+        ),
+        "skills": ["prioritization", "policy", "escalation", "writing", "communication"],
+        "difficulty_plan": [
+            "foundation",
+            "foundation",
+            "triage",
+            "triage",
+            "triage",
+            "policy",
+            "policy",
+            "policy",
+            "escalation",
+            "escalation",
+            "escalation",
+            "capstone",
+        ],
+        "rubric_dimensions": [
+            {
+                "key": "queue_prioritization",
+                "anchor": "Orders work using customer harm, SLA risk, and business impact.",
+                "evaluation_points": [
+                    "Uses SLA risk and customer harm in prioritization",
+                    "Explains why priority order changed",
+                    "Avoids defaulting to queue order alone",
+                ],
+                "evidence_signals": ["priority queue", "reason-code notes"],
+                "common_failure_modes": ["fifo ordering", "vip-only prioritization"],
+                "score_bands": {
+                    "1": "Priority order is not defensible",
+                    "3": "Priority order is reasonable with some gaps",
+                    "5": "Priority order is clear, harm-based, and reviewable",
+                },
+            },
+            {
+                "key": "policy_judgment",
+                "anchor": "Applies policy correctly while documenting when exceptions are justified.",
+                "evaluation_points": [
+                    "Reads baseline policy correctly",
+                    "Documents exception rationale",
+                    "States risk or precedent implications",
+                ],
+                "evidence_signals": ["policy citation notes", "exception rationale"],
+                "common_failure_modes": ["misreads policy", "undocumented exception"],
+                "score_bands": {
+                    "1": "Policy application is incorrect or inconsistent",
+                    "3": "Policy application is mostly correct with weak exception logic",
+                    "5": "Policy application is correct and exception handling is well-defended",
+                },
+            },
+            {
+                "key": "escalation_quality",
+                "anchor": "Escalates with a clear owner, reason, and next action.",
+                "evaluation_points": [
+                    "Uses explicit escalation trigger",
+                    "Names next owner and expected action",
+                    "Hands off sufficient context",
+                ],
+                "evidence_signals": ["escalation summary", "reason codes", "handoff note"],
+                "common_failure_modes": ["vague handoff", "no owner", "escalates too early"],
+                "score_bands": {
+                    "1": "Escalation is premature or incomplete",
+                    "3": "Escalation is acceptable but lacks detail",
+                    "5": "Escalation is crisp, justified, and actionable",
+                },
+            },
+            {
+                "key": "customer_empathy",
+                "anchor": "Keeps the customer response calm, specific, and respectful.",
+                "evaluation_points": [
+                    "Acknowledges customer impact",
+                    "Uses ownership language",
+                    "Provides a next update window",
+                ],
+                "evidence_signals": ["customer response draft"],
+                "common_failure_modes": ["robotic tone", "defensive tone"],
+                "score_bands": {
+                    "1": "Tone is rigid or escalatory",
+                    "3": "Tone is acceptable with limited empathy",
+                    "5": "Tone is calm, respectful, and confidence-building",
+                },
+            },
+            {
+                "key": "written_clarity",
+                "anchor": "Communicates the decision and rationale concisely.",
+                "evaluation_points": [
+                    "States the decision clearly",
+                    "Keeps the note structured and brief",
+                    "Separates rationale from next steps",
+                ],
+                "evidence_signals": ["reply structure", "handoff structure"],
+                "common_failure_modes": ["buried decision", "rambling response"],
+                "score_bands": {
+                    "1": "Writing is hard to follow or incomplete",
+                    "3": "Writing is understandable but uneven",
+                    "5": "Writing is concise, structured, and immediately actionable",
+                },
+            },
+        ],
+        "failure_modes": [
+            "Escalates without a trigger or next owner.",
+            "Quotes policy without translating it into a customer-safe explanation.",
+            "Fails to revise the decision after new evidence changes the root cause.",
+        ],
+        "mock_score": {
+            "confidence": 0.9,
+            "dimension_scores": {
+                "queue_prioritization": 0.92,
+                "policy_judgment": 0.9,
+                "escalation_quality": 0.88,
+                "customer_empathy": 0.91,
+                "written_clarity": 0.87,
+            },
+            "trigger_codes": [
+                "harm_based_triage",
+                "policy_exception_documented",
+                "decision_revised_with_new_evidence",
+            ],
+        },
+    },
     "tpl_doordash_enablement": {
         "task_prompt": (
             "Design and defend a strategy to double unmanaged marketplace restaurant sales in Atlanta, "
