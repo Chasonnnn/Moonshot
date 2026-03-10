@@ -1,0 +1,42 @@
+{
+  "desktop": {
+    "label": "demo-desktop-initial",
+    "ctaBox": {
+      "x": 1007,
+      "y": 387.25,
+      "width": 318,
+      "height": 48
+    },
+    "ctaAboveFold": true,
+    "horizontalOverflowPx": 0,
+    "backendDisconnected": true,
+    "viewport": {
+      "innerWidth": 1600,
+      "innerHeight": 900,
+      "scrollWidth": 1600,
+      "clientWidth": 1600,
+      "scrollHeight": 3865,
+      "clientHeight": 900
+    }
+  },
+  "mobile": {
+    "label": "demo-mobile-initial",
+    "ctaBox": {
+      "x": 83,
+      "y": 436.5,
+      "width": 274.484375,
+      "height": 48
+    },
+    "ctaAboveFold": true,
+    "horizontalOverflowPx": 0,
+    "backendDisconnected": true,
+    "viewport": {
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 10253,
+      "clientHeight": 844
+    }
+  }
+}
