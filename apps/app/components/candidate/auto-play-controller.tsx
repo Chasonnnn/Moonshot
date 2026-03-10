@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Spinner } from "@/components/ui/spinner"
 import { useSession } from "@/components/candidate/session-context"
-import type { DemoCoachTurn, DemoFixtureData } from "@/lib/moonshot/demo-fixtures"
+import { getRoundToolActions, type DemoCoachTurn, type DemoFixtureData, type DemoToolAction } from "@/lib/moonshot/demo-fixtures"
 
 interface AutoPlayStep {
   label: string
@@ -21,16 +21,26 @@ function nextCoachResponse(turns: DemoCoachTurn[], userTurn: DemoCoachTurn): Dem
   return response
 }
 
+function toolLabel(action: DemoToolAction): string {
+  const prefix =
+    action.tool === "bi"
+      ? "BI"
+      : action.tool === "oral"
+        ? "Oral"
+        : action.tool.charAt(0).toUpperCase() + action.tool.slice(1)
+  return `${prefix} ${action.label}`
+}
+
 export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
   const {
     api,
     isAiDisabled,
     session,
     setFinalResponse,
+    setActiveWorkspace,
     track,
     pushCoachMessage,
     setCurrentRoundIndex,
-    totalRounds,
   } = useSession()
   const [currentStep, setCurrentStep] = useState(0)
   const [currentRound, setCurrentRound] = useState(0)
@@ -63,60 +73,99 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
           },
         })
 
-        for (const sqlQuery of round.sqlQueries) {
+        for (const toolAction of getRoundToolActions(round)) {
           steps.push({
-            label: `Round ${roundIndex + 1}: SQL ${sqlQuery.query.slice(0, 40)}...`,
+            label: `Round ${roundIndex + 1}: ${toolLabel(toolAction)}`,
             roundIndex,
             action: async () => {
-              await api.runSql(sqlQuery.query)
-            },
-          })
-        }
-
-        for (const script of round.pythonScripts) {
-          steps.push({
-            label: `Round ${roundIndex + 1}: Python ${script.code.split("\n")[0].slice(0, 40)}...`,
-            roundIndex,
-            action: async () => {
-              const runtimeContext =
-                templateId && script.datasetId
-                  ? {
-                      template_id: templateId,
-                      round_id: round.id,
-                      dataset_id: script.datasetId,
-                    }
-                  : undefined
-              const response = await api.runPython(script.code, runtimeContext)
-              track("python_code_run", {
-                source: "autoplay",
-                round_id: round.id,
-                runtime_ms: response.runtime_ms,
-                artifact_count: response.artifacts.length,
-              })
-            },
-          })
-        }
-
-        for (const script of round.rScripts) {
-          steps.push({
-            label: `Round ${roundIndex + 1}: R ${script.code.split("\n")[0].slice(0, 40)}...`,
-            roundIndex,
-            action: async () => {
-              track("analysis_r_run", {
-                source: "autoplay_mock",
-                code_length: script.code.length,
-                has_plot: !!script.plotUrl,
-              })
-            },
-          })
-        }
-
-        for (const action of round.dashboardActions) {
-          steps.push({
-            label: `Round ${roundIndex + 1}: Dashboard ${action}`,
-            roundIndex,
-            action: async () => {
-              track("dashboard_action", { source: "autoplay", action })
+              switch (toolAction.tool) {
+                case "sql": {
+                  setActiveWorkspace("sql")
+                  if (!toolAction.query) return
+                  await api.runSql(toolAction.query)
+                  return
+                }
+                case "python": {
+                  setActiveWorkspace("python")
+                  if (!toolAction.code) return
+                  const runtimeContext =
+                    templateId && toolAction.datasetId
+                      ? {
+                          template_id: templateId,
+                          round_id: round.id,
+                          dataset_id: toolAction.datasetId,
+                        }
+                      : undefined
+                  const response = await api.runPython(toolAction.code, runtimeContext)
+                  track("python_code_run", {
+                    source: "autoplay",
+                    round_id: round.id,
+                    runtime_ms: response.runtime_ms,
+                    artifact_count: response.artifacts.length,
+                  })
+                  return
+                }
+                case "r": {
+                  setActiveWorkspace("python")
+                  track("analysis_r_run", {
+                    source: "autoplay_mock",
+                    round_id: round.id,
+                    code_length: toolAction.code?.length ?? 0,
+                    has_plot: Boolean(toolAction.plotUrl),
+                  })
+                  return
+                }
+                case "dashboard": {
+                  setActiveWorkspace("dashboard")
+                  track("dashboard_action", {
+                    source: "autoplay",
+                    round_id: round.id,
+                    action: toolAction.action ?? toolAction.detail ?? toolAction.label,
+                  })
+                  return
+                }
+                case "spreadsheet": {
+                  setActiveWorkspace("spreadsheet")
+                  track("spreadsheet_action", {
+                    source: "autoplay_mock",
+                    round_id: round.id,
+                    action: toolAction.action ?? toolAction.label,
+                    artifact_refs: toolAction.artifactRefs ?? [],
+                  })
+                  return
+                }
+                case "bi": {
+                  setActiveWorkspace("bi")
+                  track("bi_action", {
+                    source: "autoplay_mock",
+                    round_id: round.id,
+                    action: toolAction.action ?? toolAction.label,
+                    artifact_refs: toolAction.artifactRefs ?? [],
+                  })
+                  return
+                }
+                case "slides": {
+                  setActiveWorkspace("slides")
+                  track("slides_action", {
+                    source: "autoplay_mock",
+                    round_id: round.id,
+                    action: toolAction.action ?? toolAction.label,
+                    artifact_refs: toolAction.artifactRefs ?? [],
+                  })
+                  return
+                }
+                case "oral": {
+                  setActiveWorkspace("oral")
+                  track("oral_response_recorded", {
+                    source: "autoplay_mock",
+                    round_id: round.id,
+                    label: toolAction.label,
+                    prompt: toolAction.prompt ?? null,
+                    transcript_excerpt: toolAction.transcriptExcerpt ?? null,
+                    duration_seconds: toolAction.durationSeconds ?? null,
+                  })
+                }
+              }
             },
           })
         }
@@ -149,6 +198,7 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
           label: `Running SQL: ${sqlQuery.query.slice(0, 50)}...`,
           roundIndex: 0,
           action: async () => {
+            setActiveWorkspace("sql")
             await api.runSql(sqlQuery.query)
           },
         })
@@ -159,6 +209,7 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
           label: `Running Python: ${script.code.split("\n")[0].slice(0, 50)}...`,
           roundIndex: 0,
           action: async () => {
+            setActiveWorkspace("python")
             await api.runPython(script.code)
           },
         })
@@ -190,12 +241,13 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
       label: "Writing final response...",
       roundIndex: Math.max(0, fixture.rounds.length - 1),
       action: async () => {
+        setActiveWorkspace("report")
         setFinalResponse(fixture.finalResponse)
       },
     })
 
     return steps
-  }, [fixture, api, isAiDisabled, pushCoachMessage, session.policy, setFinalResponse, setCurrentRoundIndex, track])
+  }, [fixture, api, isAiDisabled, pushCoachMessage, session.policy, setActiveWorkspace, setFinalResponse, setCurrentRoundIndex, track])
 
   useEffect(() => {
     if (runningRef.current) return
@@ -235,13 +287,15 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
   }, [buildSteps, runToken, session.id, setCurrentRoundIndex, track])
 
   const totalSteps = buildSteps().length
+  const roundCount = Math.max(fixture.rounds.length, 1)
 
   const handleSkipToEnd = useCallback(() => {
+    setActiveWorkspace("report")
     setFinalResponse(fixture.finalResponse)
     setCurrentRoundIndex(Math.max(0, (fixture.rounds.length || 1) - 1))
     setIsComplete(true)
     window.parent?.postMessage({ type: AUTOPLAY_COMPLETE_MESSAGE, sessionId: session.id }, window.location.origin)
-  }, [fixture.finalResponse, fixture.rounds.length, session.id, setCurrentRoundIndex, setFinalResponse])
+  }, [fixture.finalResponse, fixture.rounds.length, session.id, setActiveWorkspace, setCurrentRoundIndex, setFinalResponse])
 
   const handleRetry = useCallback(() => {
     setFailure(null)
@@ -290,7 +344,7 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
       <Spinner className="h-4 w-4 text-white" />
       <span className="max-w-[360px] truncate text-[13px] text-white">{stepLabel}</span>
       <span className="text-[12px] text-[#86868B]">{currentStep + 1}/{totalSteps}</span>
-      <span className="text-[12px] text-[#A1D7FF]">Round {Math.min(currentRound + 1, Math.max(totalRounds, 1))}</span>
+      <span className="text-[12px] text-[#A1D7FF]">Round {Math.min(currentRound + 1, roundCount)}</span>
       <button
         onClick={handleSkipToEnd}
         className="ml-2 rounded-full bg-white/20 px-3 py-1 text-[12px] font-medium text-white hover:bg-white/30"

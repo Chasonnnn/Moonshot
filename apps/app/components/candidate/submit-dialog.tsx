@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { useSession } from "@/components/candidate/session-context"
 import { submitSession } from "@/actions/session"
+import { toast } from "sonner"
 
 const initialSubmitState = { success: false as boolean, error: undefined as string | undefined }
-import { toast } from "sonner"
 
 export function SubmitDialog({
   open,
@@ -35,6 +35,11 @@ export function SubmitDialog({
     setDeliverableId,
     deliverableStatus,
     setDeliverableStatus,
+    isOralComplete = true,
+    missingOralPromptLabels = [],
+    oralRequirement = { required: false, requiredClipTypes: [], weight: 0 },
+    oralResponsesError = null,
+    oralResponsesLoaded = true,
   } = useSession()
   const [state, formAction, isPending] = useActionState(
     submitSession,
@@ -46,6 +51,9 @@ export function SubmitDialog({
   const allowNativeSubmitRef = useRef(false)
   const submissionText = deliverableContent.trim() || finalResponse
   const isValid = submissionText.trim().length >= 10
+  const oralCheckBlocked = oralRequirement.required && !oralResponsesLoaded
+  const oralComplete = !oralRequirement.required || isOralComplete
+  const isReadyToSubmit = isValid && oralComplete && !oralCheckBlocked && !oralResponsesError
 
   useEffect(() => {
     if (state.success) {
@@ -61,7 +69,7 @@ export function SubmitDialog({
       return
     }
     event.preventDefault()
-    if (!isValid || isPending || isSyncingDeliverable) {
+    if (!isReadyToSubmit || isPending || isSyncingDeliverable) {
       return
     }
 
@@ -136,6 +144,19 @@ export function SubmitDialog({
               Please write a response before submitting.
             </p>
           )}
+          {!oralComplete && (
+            <p className="text-[12px] text-[#FF3B30]">
+              Complete the oral-defense clips before submitting: {missingOralPromptLabels.join(", ")}.
+            </p>
+          )}
+          {oralCheckBlocked && (
+            <p className="text-[12px] text-[#FF3B30]">
+              Oral-defense requirements are still loading. Wait for the oral workspace to finish checking saved clips before submitting.
+            </p>
+          )}
+          {oralResponsesError && (
+            <p className="text-[12px] text-[#FF3B30]">{oralResponsesError}</p>
+          )}
 
           {state.error && (
             <p className="text-[12px] text-[#FF3B30]">{state.error}</p>
@@ -161,7 +182,7 @@ export function SubmitDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={!isValid || isPending || isSyncingDeliverable}
+                disabled={!isReadyToSubmit || isPending || isSyncingDeliverable}
                 className="h-8 bg-[#0071E3] text-[13px] text-white hover:bg-[#0077ED]"
                 aria-label="Confirm"
               >

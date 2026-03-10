@@ -281,11 +281,64 @@ export interface CandidateSession {
     coach_mode?: SessionMode
     demo_template_id?: string
     sample_script_version?: string
+    oral_defense_required?: boolean
+    oral_required_clip_types?: string[]
+    oral_weight?: number
   }
   final_response: string | null
   created_at: string
   updated_at: string
   task_prompt: string
+}
+
+export interface OralResponse {
+  id: string
+  session_id: string
+  clip_type: string
+  question_id: string | null
+  duration_ms: number
+  mime_type: string
+  status: string
+  transcript_text: string
+  transcription_model: string | null
+  request_id: string | null
+  audio_retained: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type OralClipType = "presentation" | "follow_up_1" | "follow_up_2"
+
+export interface OralDefenseRequirement {
+  required: boolean
+  requiredClipTypes: OralClipType[]
+  weight: number
+}
+
+export interface OralPromptConfig {
+  clipType: OralClipType
+  title: string
+  prompt: string
+  questionId?: string
+  maxDurationSeconds: number
+}
+
+export type CandidateWorkspaceTab =
+  | "data"
+  | "sql"
+  | "python"
+  | "dashboard"
+  | "spreadsheet"
+  | "bi"
+  | "slides"
+  | "oral"
+  | "report"
+
+export interface CandidateWorkspaceAvailability {
+  spreadsheet: boolean
+  bi: boolean
+  slides: boolean
+  oral: boolean
 }
 
 export interface SqlRunResponse {

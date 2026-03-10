@@ -233,5 +233,55 @@ describe("CandidateApiClient", () => {
         embedded_artifacts: ["a.png"],
       })
     })
+
+    it("listOralResponses sends GET to oral-responses", async () => {
+      mockFetchResponse({ items: [] })
+      await client.listOralResponses()
+      const { url, init } = lastFetchCall()
+      expect(url).toBe("/api/candidate/test-session-123/oral-responses")
+      expect(init.method).toBe("GET")
+    })
+
+    it("uploadOralResponse sends multipart form data without forcing JSON content-type", async () => {
+      mockFetchResponse({
+        id: "oral-1",
+        session_id: sessionId,
+        clip_type: "presentation",
+        question_id: null,
+        duration_ms: 32000,
+        mime_type: "audio/webm",
+        status: "transcribed",
+        transcript_text: "The KPI drop is isolated to paid social.",
+        transcription_model: "gpt-4o-transcribe",
+        request_id: "req-1",
+        audio_retained: false,
+        created_at: "2026-03-10T12:00:00Z",
+        updated_at: "2026-03-10T12:00:00Z",
+      })
+
+      const file = new File(["audio-bytes"], "presentation.webm", { type: "audio/webm" })
+      await client.uploadOralResponse({
+        file,
+        clipType: "presentation",
+        durationMs: 32000,
+      })
+
+      const { url, init } = lastFetchCall()
+      expect(url).toBe("/api/candidate/test-session-123/oral-responses")
+      expect(init.method).toBe("POST")
+
+      const headers = lastFetchCall().init.headers as Record<string, string>
+      expect(headers["Content-Type"]).toBeUndefined()
+      expect(headers["X-CSRF-Token"]).toBe("mock-csrf-token")
+
+      const formData = init.body as FormData
+      expect(formData).toBeInstanceOf(FormData)
+      expect(formData.get("clip_type")).toBe("presentation")
+      expect(formData.get("duration_ms")).toBe("32000")
+      const uploadedFile = formData.get("file") as File
+      expect(uploadedFile).toBeInstanceOf(File)
+      expect(uploadedFile.name).toBe("presentation.webm")
+      expect(uploadedFile.type).toBe("audio/webm")
+    })
   })
 })

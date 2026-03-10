@@ -56,8 +56,11 @@ async function proxyRequest(request: Request): Promise<Response> {
   // Build upstream request
   const headers: Record<string, string> = {
     "Authorization": `Bearer ${jwt}`,
-    "Content-Type": "application/json",
     "X-Request-Id": requestId,
+  }
+  const contentType = request.headers.get("Content-Type")
+  if (contentType) {
+    headers["Content-Type"] = contentType
   }
 
   // Forward idempotency key if present
@@ -66,10 +69,11 @@ async function proxyRequest(request: Request): Promise<Response> {
     headers["Idempotency-Key"] = idempotencyKey
   }
 
-  let body: string | undefined
+  let body: ArrayBuffer | undefined
   if (request.method !== "GET" && request.method !== "HEAD") {
     try {
-      body = await request.text()
+      const requestBody = await request.arrayBuffer()
+      body = requestBody.byteLength > 0 ? requestBody : undefined
     } catch {
       // no body
     }

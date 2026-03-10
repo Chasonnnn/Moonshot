@@ -16,6 +16,11 @@ const mockApi = {
 }
 let mockFinalResponse = "This is a valid final response for testing"
 let mockIsSubmitted = false
+let mockOralRequirement = { required: false, requiredClipTypes: [] as string[], weight: 0 }
+let mockIsOralComplete = true
+let mockMissingOralPromptLabels: string[] = []
+let mockOralResponsesError: string | null = null
+let mockOralResponsesLoaded = true
 let mockSession = {
   id: "session-1",
   policy: { raw_content_opt_in: false, retention_ttl_days: 90, time_limit_minutes: null },
@@ -41,6 +46,11 @@ vi.mock("@/components/candidate/session-context", () => ({
     setDeliverableId: vi.fn(),
     deliverableStatus: null,
     setDeliverableStatus: vi.fn(),
+    oralRequirement: mockOralRequirement,
+    isOralComplete: mockIsOralComplete,
+    missingOralPromptLabels: mockMissingOralPromptLabels,
+    oralResponsesError: mockOralResponsesError,
+    oralResponsesLoaded: mockOralResponsesLoaded,
   }),
 }))
 
@@ -69,6 +79,11 @@ describe("SubmitDialog", () => {
     vi.clearAllMocks()
     mockFinalResponse = "This is a valid final response for testing"
     mockIsSubmitted = false
+    mockOralRequirement = { required: false, requiredClipTypes: [], weight: 0 }
+    mockIsOralComplete = true
+    mockMissingOralPromptLabels = []
+    mockOralResponsesError = null
+    mockOralResponsesLoaded = true
     mockSession = {
       id: "session-1",
       policy: { raw_content_opt_in: false, retention_ttl_days: 90, time_limit_minutes: null },
@@ -120,5 +135,28 @@ describe("SubmitDialog", () => {
     expect(
       screen.queryByText(/will not be stored after scoring/i)
     ).not.toBeInTheDocument()
+  })
+
+  it("blocks submit when oral-defense clips are still missing", () => {
+    mockOralRequirement = { required: true, requiredClipTypes: ["presentation", "follow_up_1"], weight: 0.2 }
+    mockIsOralComplete = false
+    mockMissingOralPromptLabels = ["Presentation", "Follow-up 1"]
+
+    render(<SubmitDialog open onOpenChange={() => {}} />)
+
+    expect(screen.getByText(/complete the oral-defense clips before submitting/i)).toHaveTextContent(
+      "Presentation, Follow-up 1"
+    )
+    expect(screen.getByRole("button", { name: /confirm/i })).toBeDisabled()
+  })
+
+  it("blocks submit when oral-response loading failed", () => {
+    mockOralRequirement = { required: true, requiredClipTypes: ["presentation"], weight: 0.2 }
+    mockOralResponsesError = "Failed to load oral responses."
+
+    render(<SubmitDialog open onOpenChange={() => {}} />)
+
+    expect(screen.getByText("Failed to load oral responses.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /confirm/i })).toBeDisabled()
   })
 })

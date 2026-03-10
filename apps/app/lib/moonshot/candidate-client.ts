@@ -9,6 +9,7 @@ import type {
   DashboardState,
   CoachResponse,
   CoachFeedback,
+  OralResponse,
 } from "@/lib/moonshot/types"
 
 export class CandidateApiError extends Error {
@@ -45,15 +46,18 @@ export class CandidateApiClient {
     } = {}
   ): Promise<T> {
     const method = options.method ?? "GET"
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    }
+    const headers: Record<string, string> = {}
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData
 
     if (method !== "GET") {
       const csrf = getCsrfToken()
       if (csrf) {
         headers["X-CSRF-Token"] = csrf
       }
+    }
+
+    if (!isFormData && options.body !== undefined) {
+      headers["Content-Type"] = "application/json"
     }
 
     if (options.idempotencyKey) {
@@ -63,7 +67,12 @@ export class CandidateApiClient {
     const response = await fetch(this.baseUrl(path), {
       method,
       headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
+      body:
+        options.body === undefined
+          ? undefined
+          : isFormData
+            ? (options.body as FormData)
+            : JSON.stringify(options.body),
     })
 
     if (!response.ok) {
@@ -201,6 +210,30 @@ export class CandidateApiClient {
       method: "POST",
       body: { events },
       idempotencyKey: true,
+    })
+  }
+
+  async listOralResponses(): Promise<{ items: OralResponse[] }> {
+    return this.request<{ items: OralResponse[] }>("oral-responses")
+  }
+
+  async uploadOralResponse(args: {
+    file: Blob
+    clipType: string
+    durationMs: number
+    questionId?: string | null
+    filename?: string
+  }): Promise<OralResponse> {
+    const formData = new FormData()
+    formData.set("clip_type", args.clipType)
+    formData.set("duration_ms", String(args.durationMs))
+    if (args.questionId) {
+      formData.set("question_id", args.questionId)
+    }
+    formData.set("file", args.file, args.filename ?? `${args.clipType}.webm`)
+    return this.request<OralResponse>("oral-responses", {
+      method: "POST",
+      body: formData,
     })
   }
 }

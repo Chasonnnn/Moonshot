@@ -7,6 +7,10 @@ import { AnalysisWorkspace } from "@/components/candidate/python-workspace"
 import { DashboardWorkspace } from "@/components/candidate/dashboard-workspace"
 import { DataWorkspace, type CaseDatasetView } from "@/components/candidate/data-workspace"
 import { EditorWorkspace } from "@/components/candidate/editor-workspace"
+import { SpreadsheetWorkspace } from "@/components/candidate/spreadsheet-workspace"
+import { BIWorkspace } from "@/components/candidate/bi-workspace"
+import { SlidesWorkspace } from "@/components/candidate/slides-workspace"
+import { OralWorkspace } from "@/components/candidate/oral-workspace"
 import { useSession } from "@/components/candidate/session-context"
 import type { CaseDataset } from "@/lib/moonshot/types"
 
@@ -24,7 +28,7 @@ function normalizeDataset(dataset: CaseDataset): CaseDatasetView {
 }
 
 export function WorkspacePanel() {
-  const { api, fixtureData } = useSession()
+  const { api, fixtureData, workspaceAvailability, activeWorkspace, setActiveWorkspace } = useSession()
   const [runtimeDatasets, setRuntimeDatasets] = useState<CaseDatasetView[]>([])
 
   useEffect(() => {
@@ -77,41 +81,47 @@ export function WorkspacePanel() {
     () => (runtimeDatasets.length > 0 ? runtimeDatasets : fixtureData?.datasets ?? []),
     [fixtureData?.datasets, runtimeDatasets]
   )
+  const tabs = useMemo(() => {
+    const items = [
+      { value: "data", label: "Data", content: <DataWorkspace datasets={datasets} /> },
+      { value: "sql", label: "SQL", content: <SqlWorkspace /> },
+      { value: "python", label: "Analysis", content: <AnalysisWorkspace /> },
+      { value: "dashboard", label: "Dashboard", content: <DashboardWorkspace /> },
+    ]
+    if (workspaceAvailability.spreadsheet) {
+      items.push({ value: "spreadsheet", label: "Spreadsheet", content: <SpreadsheetWorkspace /> })
+    }
+    if (workspaceAvailability.bi) {
+      items.push({ value: "bi", label: "BI", content: <BIWorkspace /> })
+    }
+    if (workspaceAvailability.slides) {
+      items.push({ value: "slides", label: "Slides", content: <SlidesWorkspace /> })
+    }
+    if (workspaceAvailability.oral) {
+      items.push({ value: "oral", label: "Oral", content: <OralWorkspace /> })
+    }
+    items.push({ value: "report", label: "Report", content: <EditorWorkspace /> })
+    return items
+  }, [datasets, workspaceAvailability.bi, workspaceAvailability.oral, workspaceAvailability.slides, workspaceAvailability.spreadsheet])
 
   return (
-    <Tabs defaultValue="data" className="flex h-full flex-col">
+    <Tabs
+      value={activeWorkspace}
+      onValueChange={(value) => setActiveWorkspace(value as typeof activeWorkspace)}
+      className="flex h-full flex-col"
+    >
       <TabsList className="mx-3 mt-2 h-8 w-fit">
-        <TabsTrigger value="data" className="text-[12px]">
-          Data
-        </TabsTrigger>
-        <TabsTrigger value="sql" className="text-[12px]">
-          SQL
-        </TabsTrigger>
-        <TabsTrigger value="python" className="text-[12px]">
-          Analysis
-        </TabsTrigger>
-        <TabsTrigger value="dashboard" className="text-[12px]">
-          Dashboard
-        </TabsTrigger>
-        <TabsTrigger value="report" className="text-[12px]">
-          Report
-        </TabsTrigger>
+        {tabs.map((tab) => (
+          <TabsTrigger key={tab.value} value={tab.value} className="text-[12px]">
+            {tab.label}
+          </TabsTrigger>
+        ))}
       </TabsList>
-      <TabsContent value="data" className="mt-0 flex-1 overflow-hidden">
-        <DataWorkspace datasets={datasets} />
-      </TabsContent>
-      <TabsContent value="sql" className="mt-0 flex-1 overflow-hidden">
-        <SqlWorkspace />
-      </TabsContent>
-      <TabsContent value="python" className="mt-0 flex-1 overflow-hidden">
-        <AnalysisWorkspace />
-      </TabsContent>
-      <TabsContent value="dashboard" className="mt-0 flex-1 overflow-hidden">
-        <DashboardWorkspace />
-      </TabsContent>
-      <TabsContent value="report" className="mt-0 flex-1 overflow-hidden">
-        <EditorWorkspace />
-      </TabsContent>
+      {tabs.map((tab) => (
+        <TabsContent key={tab.value} value={tab.value} className="mt-0 flex-1 overflow-hidden">
+          {tab.content}
+        </TabsContent>
+      ))}
     </Tabs>
   )
 }
