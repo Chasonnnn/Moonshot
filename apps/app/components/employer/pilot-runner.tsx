@@ -30,7 +30,7 @@ export function PilotRunner({ snapshot }: { snapshot: PilotSnapshot }) {
           <button
             type="submit"
             disabled={isPending}
-            className="px-4 py-2 rounded-full bg-[#0071E3] text-white text-[13px] font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            className="min-h-11 rounded-full bg-[#0071E3] px-4 py-2 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? "Running..." : "Run JDA Flow"}
           </button>
@@ -104,14 +104,14 @@ export function PilotRunner({ snapshot }: { snapshot: PilotSnapshot }) {
                   href={candidateUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-full bg-[#0071E3] text-white text-[12px] font-medium"
+                  className="inline-flex min-h-11 items-center rounded-full bg-[#0071E3] px-3 py-1.5 text-[12px] font-medium text-white"
                 >
                   Open Candidate Session
                 </Link>
                 <button
                   type="button"
                   onClick={copyCandidateLink}
-                  className="px-3 py-1.5 rounded-full bg-[#F5F5F7] text-[#1D1D1F] text-[12px] font-medium"
+                  className="min-h-11 rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12px] font-medium text-[#1D1D1F]"
                 >
                   Copy Link
                 </button>

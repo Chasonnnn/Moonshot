@@ -13,15 +13,22 @@ export default async function DemoPage() {
   const snapshot = await loadPilotSnapshot()
 
   return (
-    <div className="overflow-x-clip bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.10),transparent_32%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.10),transparent_28%)]">
-      <div className="mx-auto max-w-screen-xl px-4 py-4 md:px-8 md:py-6">
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-full border border-[#D7E0E4] bg-white/85 px-3 py-2 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#2563EB]">Moonshot demo</p>
-          <span className="text-[12px] text-[#475569]">Flagship analyst path first, breadth after the win.</span>
-          <span className="rounded-full border border-[#DBEAFE] bg-white px-3 py-1 text-[11px] font-medium text-[#1E3A8A]">
+    <div className="ops-app-shell overflow-x-clip">
+      <div className="ops-page-wrap py-4 md:py-6">
+        <div className="mb-4">
+          <p className="ops-eyebrow text-[var(--ops-accent)]">Moonshot demo</p>
+          <h1 className="ops-page-title mt-2">Work simulation demo</h1>
+          <p className="ops-page-copy mt-2 max-w-3xl">
+            Run the flagship analyst story with visible evidence capture, an explicit live proof beat, and governance signals that survive review.
+          </p>
+        </div>
+        <div className="ops-surface mb-4 flex flex-wrap items-center gap-2 px-4 py-3">
+          <p className="ops-eyebrow text-[var(--ops-accent)]">Demo focus</p>
+          <span className="text-[12px] text-[var(--ops-text-muted)]">Flagship analyst path first, breadth after the win.</span>
+          <span className="ops-pill ops-pill-accent text-[11px]">
             Explicit live proof step
           </span>
-          <span className="rounded-full border border-[#DBEAFE] bg-white px-3 py-1 text-[11px] font-medium text-[#1E3A8A]">
+          <span className="ops-pill ops-pill-accent text-[11px]">
             Breadth teaser after the win
           </span>
         </div>
