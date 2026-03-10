@@ -40,6 +40,7 @@ EXPECTED_PATHS = {
     "/v1/sessions/{session_id}/coach/message",
     "/v1/sessions/{session_id}/coach/feedback",
     "/v1/sessions/{session_id}/submit",
+    "/v1/sessions/{session_id}/oral-responses",
     "/v1/sessions/{session_id}/score",
     "/v1/reports/{session_id}",
     "/v1/reports/{session_id}/summary",
@@ -165,6 +166,20 @@ def test_openapi_python_runtime_and_report_summary_extensions_exist(client):
     assert "has_human_review" in report_summary
     assert "final_score_source" in report_summary
     assert "final_confidence" in report_summary
+
+    score_result = components["ScoreResult"]["properties"]
+    assert "overall_score" in score_result
+
+    rubric_dimension = components["RubricDimension"]["properties"]
+    assert "weight" in rubric_dimension
+
+    oral_response = components["OralResponse"]["properties"]
+    assert "clip_type" in oral_response
+    assert "duration_ms" in oral_response
+    assert "mime_type" in oral_response
+    assert "transcript_text" in oral_response
+    assert "transcription_model" in oral_response
+    assert "audio_retained" in oral_response
 
 
 def test_docs_openapi_file_tracks_required_paths():

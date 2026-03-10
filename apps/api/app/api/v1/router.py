@@ -14,6 +14,7 @@ from app.api.v1.endpoints import (
     jobs,
     memory,
     meta,
+    oral_responses,
     redteam,
     review_queue,
     reports,
@@ -37,6 +38,7 @@ api_router.include_router(task_families.router)
 api_router.include_router(sessions.router)
 api_router.include_router(simulator_runtime.router)
 api_router.include_router(deliverables.router)
+api_router.include_router(oral_responses.router)
 api_router.include_router(coach.router)
 api_router.include_router(scoring.router)
 api_router.include_router(reports.router)

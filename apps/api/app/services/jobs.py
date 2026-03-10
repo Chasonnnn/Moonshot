@@ -23,6 +23,8 @@ from app.schemas import (
     MemoryAssemblerRequest,
     Report,
     ReviewQueueItem,
+    Rubric,
+    RubricDimension,
     Session,
 )
 from app.services.context_injection import append_context_trace
@@ -45,6 +47,14 @@ from app.services.memory import (
     memory_projection_service,
     session_digest_service,
     sync_task_family_memory,
+)
+from app.services.oral_responses import (
+    build_oral_transcript_bundle,
+    get_oral_defense_requirement,
+    oral_metrics,
+    oral_requirements_error,
+    seed_fixture_oral_responses,
+    session_allows_fixture_oral_seed,
 )
 from app.services.scoring import score_session
 from app.services.store import store
@@ -392,6 +402,51 @@ def _audit_system(tenant_id: str, action: str, resource_type: str, resource_id: 
     governance_repository.append_audit_log(entry.model_dump(mode="json"))
 
 
+def _rubric_with_oral_dimension(rubric: Rubric | None, *, oral_weight: float) -> Rubric | None:
+    if rubric is None:
+        return None
+
+    normalized_oral_weight = max(0.0, min(1.0, round(float(oral_weight), 3)))
+    if normalized_oral_weight <= 0:
+        return rubric
+
+    dimensions = [dimension.model_copy(deep=True) for dimension in rubric.dimensions]
+    oral_dimension = next((dimension for dimension in dimensions if dimension.key == "oral_communication"), None)
+    if oral_dimension is None:
+        oral_dimension = RubricDimension(
+            key="oral_communication",
+            anchor="Presents findings clearly and defends recommendations with concise, evidence-linked answers.",
+            evaluation_points=[
+                "Presents the main recommendation without burying the conclusion",
+                "Connects claims back to evidence or assumptions",
+                "Handles probing follow-up questions without losing clarity",
+            ],
+            evidence_signals=["presentation transcript", "follow-up transcript", "timed completion"],
+            common_failure_modes=["rambling answer", "cannot defend recommendation", "evidence-free response"],
+            score_bands={
+                "1": "Presentation is unclear and follow-up answers are unsupported",
+                "3": "Presentation is understandable with partial defense under probing",
+                "5": "Presentation is concise, confident, and resilient to follow-up questions",
+            },
+            weight=normalized_oral_weight,
+        )
+        dimensions.append(oral_dimension)
+
+    non_oral_dimensions = [dimension for dimension in dimensions if dimension.key != "oral_communication"]
+    remaining_weight = max(0.0, 1.0 - normalized_oral_weight)
+    total_non_oral_weight = sum(max(0.0, float(dimension.weight)) for dimension in non_oral_dimensions)
+    if non_oral_dimensions:
+        if total_non_oral_weight > 0:
+            for dimension in non_oral_dimensions:
+                dimension.weight = round(max(0.0, float(dimension.weight)) * remaining_weight / total_non_oral_weight, 3)
+        else:
+            equal_weight = round(remaining_weight / len(non_oral_dimensions), 3)
+            for dimension in non_oral_dimensions:
+                dimension.weight = equal_weight
+    oral_dimension.weight = normalized_oral_weight
+    return rubric.model_copy(update={"dimensions": dimensions})
+
+
 def _handle_generate_case(job: JobRunModel) -> dict[str, Any]:
     case_id = UUID(job.request_payload["case_id"])
     case = case_repository.get_case(case_id)
@@ -481,26 +536,52 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
         raise RuntimeError("session_not_found")
     if session.status != "submitted":
         raise RuntimeError("session_not_submitted")
+    mode = str(job.request_payload.get("mode", "live")).strip().lower()
+    oral_error = oral_requirements_error(session)
+    if oral_error and mode == "fixture" and session_allows_fixture_oral_seed(session):
+        seeded_oral_responses = seed_fixture_oral_responses(session)
+        if seeded_oral_responses:
+            session_repository.append_events(
+                session_id,
+                [
+                    {
+                        "event_type": "oral_response_seeded",
+                        "payload": {
+                            "oral_response_id": str(item.id),
+                            "clip_type": item.clip_type,
+                            "question_id": item.question_id,
+                            "source": "fixture_seed",
+                        },
+                    }
+                    for item in seeded_oral_responses
+                ],
+            )
+        oral_error = oral_requirements_error(session)
+    if oral_error:
+        raise RuntimeError(oral_error)
 
     events = session_repository.list_events(session_id)
     task_family = case_repository.get_task_family(session.task_family_id)
     rubric = case_repository.get_rubric(task_family.rubric_id) if task_family is not None else None
     task_prompt = task_family.variants[0].prompt if task_family is not None and task_family.variants else None
     scoring_config = task_family.scoring_config if task_family is not None else None
-    mode = str(job.request_payload.get("mode", "live")).strip().lower()
     template_id = job.request_payload.get("template_id")
     if template_id is None and isinstance(session.policy, dict):
         policy_template_id = session.policy.get("demo_template_id")
         if isinstance(policy_template_id, str) and policy_template_id.strip():
             template_id = policy_template_id.strip()
 
+    oral_bundle = build_oral_transcript_bundle(session_id)
+    oral_requirement = get_oral_defense_requirement(session)
+    rubric = _rubric_with_oral_dimension(rubric, oral_weight=oral_requirement.weight)
+    score_input = "\n\n".join(part for part in [session.final_response or "", oral_bundle] if part.strip())
     session_digest_service.refresh(session_id, tenant_id=job.tenant_id, force=False)
     assembled = memory_assembler.assemble(
         MemoryAssemblerRequest(
             tenant_id=job.tenant_id,
             actor_role="reviewer",
             consumer="evaluator",
-            query_text=f"{task_prompt or ''}\n{session.final_response or ''}",
+            query_text=f"{task_prompt or ''}\n{score_input}",
             session_id=session_id,
         )
     )
@@ -512,6 +593,8 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
             events=events,
             rubric_version=rubric.version if rubric is not None else "fixture-v1",
             task_family_version=task_family.version if task_family is not None else "fixture-v1",
+            oral_bundle=oral_bundle,
+            oral_weight=oral_requirement.weight,
         )
     else:
         model_override = job.request_payload.get("model_override")
@@ -541,10 +624,11 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
             rubric=rubric,
             task_prompt=task_prompt,
             memory_context=assembled.context_text,
-            final_response=session.final_response,
+            final_response=score_input,
             provider=provider,
             scoring_config=scoring_config,
         )
+    score_result.objective_metrics.update(oral_metrics(session_id))
     scoring_repository.save_score(score_result)
     report = Report(session_id=session_id, score_result=score_result, interpretation=interpretation)
     scoring_repository.save_report(report)

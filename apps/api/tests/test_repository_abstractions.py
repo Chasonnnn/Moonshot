@@ -80,6 +80,7 @@ def test_scoring_repository_roundtrip(client):
     score = ScoreResult(
         session_id=session_id,
         objective_metrics={"query_error_rate": 0.0},
+        overall_score=0.91,
         dimension_scores={"sql_quality": 0.91},
         confidence=0.91,
         needs_human_review=True,

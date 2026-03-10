@@ -105,6 +105,26 @@ class DeliverableListResponse(BaseModel):
     items: list[Deliverable] = Field(default_factory=list)
 
 
+class OralResponse(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    session_id: UUID
+    question_id: str | None = None
+    clip_type: str
+    duration_ms: int = 0
+    mime_type: str
+    status: str = "transcribed"
+    transcript_text: str
+    transcription_model: str
+    request_id: str | None = None
+    audio_retained: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class OralResponseListResponse(BaseModel):
+    items: list[OralResponse] = Field(default_factory=list)
+
+
 class CaseCreate(BaseModel):
     context_pack_id: UUID | None = None
     title: str
@@ -167,6 +187,7 @@ class TaskVariant(BaseModel):
 class RubricDimension(BaseModel):
     key: str
     anchor: str
+    weight: float = 1.0
     evaluation_points: list[str] = Field(default_factory=list)
     evidence_signals: list[str] = Field(default_factory=list)
     common_failure_modes: list[str] = Field(default_factory=list)
@@ -402,6 +423,7 @@ class DimensionScoreOutput(BaseModel):
     rationale: str
     failure_modes_matched: list[str] = Field(default_factory=list)
     confidence: float
+    weight: float = 1.0
 
 
 class HolisticScoreOutput(BaseModel):
@@ -416,6 +438,7 @@ class ScoreResult(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     session_id: UUID
     objective_metrics: dict[str, Any]
+    overall_score: float
     dimension_scores: dict[str, float]
     dimension_evidence: dict[str, DimensionScoreOutput] = Field(default_factory=dict)
     confidence: float

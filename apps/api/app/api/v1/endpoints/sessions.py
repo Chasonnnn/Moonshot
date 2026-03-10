@@ -19,6 +19,7 @@ from app.schemas import (
 from app.services.admin_policy import get_policy
 from app.services.audit import audit
 from app.services.memory import session_digest_service
+from app.services.oral_responses import oral_requirements_error, session_allows_fixture_oral_seed
 from app.services.repositories import case_repository, session_repository
 
 router = APIRouter(prefix="/v1/sessions", tags=["sessions"])
@@ -152,6 +153,9 @@ def submit_session(
     existing = _get_session_for_tenant(session_id, user.tenant_id)
     if existing.candidate_id != user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    oral_error = oral_requirements_error(existing)
+    if oral_error and not session_allows_fixture_oral_seed(existing):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=oral_error)
 
     existing_payload = existing.model_dump(mode="json")
     merged = {

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from decimal import Decimal, ROUND_HALF_UP
 from statistics import mean
 from typing import Any
 from uuid import UUID
@@ -43,7 +44,8 @@ def _metric(events: list[dict]) -> dict:
 
 
 def _clamp01(value: float) -> float:
-    return max(0.0, min(1.0, round(float(value), 3)))
+    rounded = float(Decimal(str(float(value))).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
+    return max(0.0, min(1.0, rounded))
 
 
 def _append_trigger(trigger_codes: list[str], code: str) -> None:
@@ -163,6 +165,7 @@ def _dimension_prompt(
     return (
         "Return JSON only with keys: key, score, rationale, failure_modes_matched, confidence.\n"
         f"TARGET_DIMENSION_KEY: {dimension.key}\n"
+        f"DIMENSION_WEIGHT: {_normalized_weight(dimension.weight)}\n"
         f"DIMENSION_ANCHOR: {dimension.anchor}\n"
         f"RUBRIC_FAILURE_MODES: {', '.join(rubric.failure_modes)}\n"
         f"DETERMINISTIC_TRIGGERS: {', '.join(deterministic_triggers)}\n"
@@ -191,9 +194,11 @@ def _holistic_prompt(
     dimension_scores: dict[str, float],
     deterministic_triggers: list[str],
 ) -> str:
+    dimension_weights = {dimension.key: _normalized_weight(dimension.weight) for dimension in rubric.dimensions}
     return (
         "Return JSON only with keys: overall_score, overall_confidence, consistency_flags, narrative_summary, suggestions.\n"
         f"RUBRIC_DIMENSIONS: {[d.key for d in rubric.dimensions]}\n"
+        f"RUBRIC_DIMENSION_WEIGHTS: {dimension_weights}\n"
         f"RUBRIC_FAILURE_MODES: {', '.join(rubric.failure_modes)}\n"
         f"DETERMINISTIC_TRIGGERS: {', '.join(deterministic_triggers)}\n"
         f"OBJECTIVE_METRICS: {metrics}\n"
@@ -211,7 +216,7 @@ def _holistic_repair_prompt(prior_output: str) -> str:
     )
 
 
-def _parse_dimension_output(payload: str, target_key: str) -> DimensionScoreOutput:
+def _parse_dimension_output(payload: str, target_key: str, *, weight: float) -> DimensionScoreOutput:
     parsed = DimensionScoreOutput.model_validate_json(payload)
     if parsed.key != target_key:
         raise ValueError("dimension_key_mismatch")
@@ -221,6 +226,7 @@ def _parse_dimension_output(payload: str, target_key: str) -> DimensionScoreOutp
         rationale=parsed.rationale,
         failure_modes_matched=[str(item) for item in parsed.failure_modes_matched],
         confidence=_clamp01(parsed.confidence),
+        weight=_normalized_weight(weight),
     )
 
 
@@ -240,6 +246,7 @@ def _dimension_fallback(
     key: str,
     heuristic_dimension_scores: dict[str, float],
     heuristic_confidence: float,
+    weight: float,
 ) -> DimensionScoreOutput:
     return DimensionScoreOutput(
         key=key,
@@ -247,6 +254,7 @@ def _dimension_fallback(
         rationale="heuristic fallback for dimension",
         failure_modes_matched=[],
         confidence=_clamp01(heuristic_confidence),
+        weight=max(0.0, round(float(weight), 3)),
     )
 
 
@@ -254,6 +262,51 @@ def _mean_or_zero(values: list[float]) -> float:
     if not values:
         return 0.0
     return _clamp01(mean(values))
+
+
+def _normalized_weight(value: float | int | None) -> float:
+    try:
+        return max(0.0, round(float(value if value is not None else 1.0), 3))
+    except (TypeError, ValueError):
+        return 1.0
+
+
+def _weighted_mean_or_zero(
+    scores: dict[str, float],
+    *,
+    rubric: Rubric | None = None,
+) -> float:
+    if not scores:
+        return 0.0
+    if rubric is None or not rubric.dimensions:
+        return _mean_or_zero(list(scores.values()))
+
+    weight_by_key = {dimension.key: _normalized_weight(dimension.weight) for dimension in rubric.dimensions}
+    weighted_total = 0.0
+    total_weight = 0.0
+    for key, score in scores.items():
+        weight = weight_by_key.get(key, 1.0)
+        if weight <= 0:
+            continue
+        weighted_total += float(score) * weight
+        total_weight += weight
+    if total_weight <= 0:
+        return _mean_or_zero(list(scores.values()))
+    return _clamp01(weighted_total / total_weight)
+
+
+def _fallback_dimension_scores(
+    *,
+    rubric: Rubric | None,
+    heuristic_dimension_scores: dict[str, float],
+    heuristic_confidence: float,
+) -> dict[str, float]:
+    if rubric is None or not rubric.dimensions:
+        return {key: _clamp01(value) for key, value in heuristic_dimension_scores.items()}
+    return {
+        dimension.key: _clamp01(heuristic_dimension_scores.get(dimension.key, heuristic_confidence))
+        for dimension in rubric.dimensions
+    }
 
 
 def _model_hash_for(provider: EvaluatorProvider | None, traces: list[ModelInvocationTrace]) -> str:
@@ -289,12 +342,18 @@ def score_session(
     )
 
     if not can_use_llm:
+        fallback_scores = _fallback_dimension_scores(
+            rubric=rubric,
+            heuristic_dimension_scores=heuristic_dimensions,
+            heuristic_confidence=heuristic_confidence,
+        )
         needs_review = heuristic_confidence < 0.7 or int(metrics["policy_violation_count"]) > 0
         return (
             ScoreResult(
                 session_id=session_id,
                 objective_metrics=metrics,
-                dimension_scores=heuristic_dimensions,
+                overall_score=_weighted_mean_or_zero(fallback_scores, rubric=rubric),
+                dimension_scores=fallback_scores,
                 confidence=heuristic_confidence,
                 needs_human_review=needs_review,
                 trigger_codes=heuristic_trigger_codes,
@@ -331,6 +390,7 @@ def score_session(
                 key=dimension.key,
                 heuristic_dimension_scores=heuristic_dimensions,
                 heuristic_confidence=heuristic_confidence,
+                weight=dimension.weight,
             )
             dimension_scores[dimension.key] = fallback.score
             dimension_evidence[dimension.key] = fallback
@@ -360,7 +420,7 @@ def score_session(
 
         parsed_dimension: DimensionScoreOutput | None = None
         try:
-            parsed_dimension = _parse_dimension_output(output.content, dimension.key)
+            parsed_dimension = _parse_dimension_output(output.content, dimension.key, weight=dimension.weight)
         except (ValidationError, ValueError):
             if calls_used < call_budget:
                 repair_prompt = _dimension_repair_prompt(dimension.key, output.content)
@@ -375,7 +435,7 @@ def score_session(
                     )
                 )
                 try:
-                    parsed_dimension = _parse_dimension_output(repaired.content, dimension.key)
+                    parsed_dimension = _parse_dimension_output(repaired.content, dimension.key, weight=dimension.weight)
                 except (ValidationError, ValueError):
                     parsed_dimension = None
 
@@ -386,6 +446,7 @@ def score_session(
                 key=dimension.key,
                 heuristic_dimension_scores=heuristic_dimensions,
                 heuristic_confidence=heuristic_confidence,
+                weight=dimension.weight,
             )
             dimension_scores[dimension.key] = fallback.score
             dimension_evidence[dimension.key] = fallback
@@ -450,7 +511,7 @@ def score_session(
     if budget_exceeded:
         _append_trigger(trigger_codes, "llm_budget_exceeded")
 
-    overall_score = holistic.overall_score if holistic is not None else _mean_or_zero(list(dimension_scores.values()))
+    overall_score = _weighted_mean_or_zero(dimension_scores, rubric=rubric)
     confidence = holistic.overall_confidence if holistic is not None else _mean_or_zero(dimension_confidences)
 
     if holistic is not None and holistic.consistency_flags:
@@ -485,6 +546,7 @@ def score_session(
     score_result = ScoreResult(
         session_id=session_id,
         objective_metrics=metrics,
+        overall_score=_clamp01(overall_score),
         dimension_scores={k: _clamp01(v) for k, v in dimension_scores.items()},
         dimension_evidence=dimension_evidence,
         confidence=_clamp01(confidence),

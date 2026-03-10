@@ -7,6 +7,7 @@ from app.core.security import UserContext
 from app.schemas import JobAccepted, SessionScoreRequest
 from app.services.audit import audit
 from app.services.jobs import submit_job
+from app.services.oral_responses import oral_requirements_error, session_allows_fixture_oral_seed
 from app.services.repositories import session_repository
 
 router = APIRouter(prefix="/v1/sessions", tags=["scoring"])
@@ -28,7 +29,11 @@ def score(
         raise HTTPException(status_code=404, detail="Session not found")
     if session.status != "submitted":
         raise HTTPException(status_code=400, detail="Session must be submitted before scoring")
+    oral_error = oral_requirements_error(session)
     request_payload = payload or SessionScoreRequest()
+    allow_fixture_seed = request_payload.mode == "fixture" and session_allows_fixture_oral_seed(session)
+    if oral_error and not allow_fixture_seed:
+        raise HTTPException(status_code=409, detail=oral_error)
 
     accepted = submit_job(
         job_type="score",

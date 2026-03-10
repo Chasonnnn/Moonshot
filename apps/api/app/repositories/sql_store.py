@@ -35,6 +35,7 @@ from app.models.entities import (
     JobRunModel,
     MemoryChunkModel,
     MemoryEntryModel,
+    OralResponseModel,
     RedTeamRunModel,
     ReportModel,
     ReviewQueueModel,
@@ -786,6 +787,12 @@ class SQLStore:
         self.session_deliverables = SQLRowMap(
             session_factory=session_factory,
             model_cls=DeliverableModel,
+            key_attr="id",
+            uuid_keys=True,
+        )
+        self.session_oral_responses = SQLRowMap(
+            session_factory=session_factory,
+            model_cls=OralResponseModel,
             key_attr="id",
             uuid_keys=True,
         )

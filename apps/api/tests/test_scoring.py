@@ -49,6 +49,17 @@ def _rubric() -> Rubric:
     )
 
 
+def _weighted_rubric() -> Rubric:
+    return Rubric(
+        dimensions=[
+            RubricDimension(key="analysis_correctness", anchor="Findings are analytically sound", weight=0.8),
+            RubricDimension(key="oral_communication", anchor="Presentation and Q&A are clear", weight=0.2),
+        ],
+        failure_modes=[],
+        version="0.2.0",
+    )
+
+
 def _events_for_heuristic() -> list[dict]:
     return [
         {"event_type": "sql_query_run", "payload": {"time_to_first_action_ms": 1200}},
@@ -93,6 +104,7 @@ def test_heuristic_fallback_when_no_provider():
     score_result, interpretation = score_session(uuid4(), _events_for_heuristic(), rubric=None, provider=None, final_response=None)
 
     assert score_result.confidence == 0.65
+    assert score_result.overall_score == 0.638
     assert score_result.needs_human_review is True
     assert score_result.dimension_scores == {
         "problem_framing": 0.62,
@@ -248,6 +260,31 @@ def test_llm_malformed_pass2_uses_mean():
 
     assert score_result.confidence == round(mean(confidences), 3)
     assert score_result.dimension_scores["communication"] == scores[3]
+    assert "holistic_parse_failure" in score_result.trigger_codes
+
+
+def test_weighted_overall_score_uses_rubric_weights_when_holistic_output_is_missing():
+    provider = MockEvaluatorProvider(
+        dimension_outputs=[
+            _dim_output("analysis_correctness", score=0.91, confidence=0.84),
+            _dim_output("oral_communication", score=0.55, confidence=0.78),
+        ],
+        holistic_outputs=["{", "still bad"],
+    )
+
+    score_result, _ = score_session(
+        uuid4(),
+        _events_for_llm(),
+        rubric=_weighted_rubric(),
+        task_prompt="Present findings and defend your recommendation.",
+        final_response="Written summary plus transcript bundle.",
+        provider=provider,
+        scoring_config=ScoringConfig(max_query_error_rate=1.0),
+    )
+
+    assert score_result.dimension_scores["analysis_correctness"] == 0.91
+    assert score_result.dimension_scores["oral_communication"] == 0.55
+    assert score_result.overall_score == 0.838
     assert "holistic_parse_failure" in score_result.trigger_codes
 
 

@@ -53,6 +53,7 @@ def client() -> TestClient:
     store.worker_heartbeats.clear()
     store.case_datasets.clear()
     store.session_deliverables.clear()
+    store.session_oral_responses.clear()
     _matcher_cache.clear()
     _schema_cache.clear()
     return TestClient(app)

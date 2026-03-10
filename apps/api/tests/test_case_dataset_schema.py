@@ -10,9 +10,10 @@ from app.schemas.contracts import (
     DatasetSchema,
     Deliverable,
     DeliverableSubmitRequest,
+    OralResponse,
     PrecomputedQuery,
 )
-from app.models.entities import CaseDatasetModel, DeliverableModel
+from app.models.entities import CaseDatasetModel, DeliverableModel, OralResponseModel
 
 
 def test_dataset_column_basic():
@@ -99,6 +100,10 @@ def test_deliverable_model_exists():
     assert DeliverableModel.__tablename__ == "deliverables"
 
 
+def test_oral_response_model_exists():
+    assert OralResponseModel.__tablename__ == "oral_responses"
+
+
 def test_case_dataset_model_exists():
     assert CaseDatasetModel.__tablename__ == "case_datasets"
 
@@ -116,6 +121,22 @@ def test_deliverable_submit_request():
     )
     assert req.content_markdown == "# Final report"
     assert req.embedded_artifacts == ["art-1"]
+
+
+def test_oral_response_schema():
+    response = OralResponse(
+        session_id=uuid4(),
+        clip_type="presentation",
+        duration_ms=180000,
+        mime_type="audio/webm",
+        status="transcribed",
+        transcript_text="Summary of findings.",
+        transcription_model="gpt-4o-transcribe",
+        request_id="req-oral-1",
+        audio_retained=False,
+    )
+    assert response.clip_type == "presentation"
+    assert response.transcript_text == "Summary of findings."
 
 
 def test_assessment_format_literal():

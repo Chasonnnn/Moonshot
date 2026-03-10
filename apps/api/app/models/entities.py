@@ -96,6 +96,7 @@ class ScoreResultModel(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     session_id: Mapped[str] = mapped_column(String(36), index=True, unique=True)
     objective_metrics: Mapped[dict] = mapped_column(JSON)
+    overall_score: Mapped[float] = mapped_column(Float)
     dimension_scores: Mapped[dict] = mapped_column(JSON)
     confidence: Mapped[float] = mapped_column(Float)
     needs_human_review: Mapped[bool] = mapped_column(Boolean)
@@ -425,6 +426,25 @@ class DeliverableModel(Base):
     content_markdown: Mapped[str] = mapped_column(Text)
     embedded_artifacts: Mapped[list] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(32))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+
+
+class OralResponseModel(Base):
+    __tablename__ = "oral_responses"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(36), index=True)
+    question_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    clip_type: Mapped[str] = mapped_column(String(64), index=True)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    mime_type: Mapped[str] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(32), index=True)
+    transcript_text: Mapped[str] = mapped_column(Text)
+    transcription_model: Mapped[str] = mapped_column(String(128))
+    request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    audio_retained: Mapped[bool] = mapped_column(Boolean, default=False)
+    audio_blob_b64: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
 

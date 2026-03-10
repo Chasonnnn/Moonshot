@@ -32,7 +32,9 @@ class Settings(BaseSettings):
     embedding_dimensions: int = 64
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.0-flash"
+    openai_api_key: str | None = None
     openai_model: str = "gpt-5-mini"
+    openai_transcription_model: str = "gpt-4o-transcribe"
     managed_secrets_enabled: bool = False
     managed_secrets_required: bool = False
     managed_secrets_region: str | None = None
