@@ -101,6 +101,7 @@ def generate_from_case(
     model_override: str | None = None,
     reasoning_effort: str | None = None,
     thinking_budget_tokens: int | None = None,
+    memory_context: str | None = None,
 ) -> GenerationResult:
     provider = get_codesign_provider(
         model_override=model_override,
@@ -148,11 +149,12 @@ def generate_from_case(
     ]
 
     seed_prompt = (
-        f"Case title: {case.title}\n"
-        f"Scenario: {case.scenario}\n"
-        f"Artifacts: {artifact_summary}\n"
-        f"Allowed tools: {case.allowed_tools}\n"
-        "Return one concise (2-3 sentence) simulation prompt template with no answer leakage."
+        (f"Retrieved memory context:\n{memory_context[:3000]}\n\n" if memory_context else "")
+        + f"Case title: {case.title}\n"
+        + f"Scenario: {case.scenario}\n"
+        + f"Artifacts: {artifact_summary}\n"
+        + f"Allowed tools: {case.allowed_tools}\n"
+        + "Return one concise (2-3 sentence) simulation prompt template with no answer leakage."
     )
     seed_output = provider.generate_variant(seed_prompt)
     seed_text = " ".join(seed_output.content.split()).strip()

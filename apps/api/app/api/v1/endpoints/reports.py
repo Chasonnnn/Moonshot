@@ -18,6 +18,7 @@ from app.schemas import (
 from app.services.audit import audit
 from app.services.interpretation_views import get_interpretation_view
 from app.services.jobs import submit_job
+from app.services.memory import sync_human_review_memory
 from app.services.repositories import scoring_repository, session_repository
 from app.services.store import store
 
@@ -181,6 +182,7 @@ def put_human_review(
         updated_at=now,
     )
     store.human_reviews[session_id] = row.model_dump(mode="json")
+    sync_human_review_memory(row)
     audit(
         user,
         "update",

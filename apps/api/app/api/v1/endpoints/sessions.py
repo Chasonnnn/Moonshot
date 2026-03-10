@@ -18,6 +18,7 @@ from app.schemas import (
 )
 from app.services.admin_policy import get_policy
 from app.services.audit import audit
+from app.services.memory import session_digest_service
 from app.services.repositories import case_repository, session_repository
 
 router = APIRouter(prefix="/v1/sessions", tags=["sessions"])
@@ -106,6 +107,7 @@ def ingest_events(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     accepted = session_repository.append_events(session_id, payload.events)
+    session_digest_service.refresh(session_id, tenant_id=user.tenant_id, force=False)
     audit(user, "ingest", "event", str(session_id), {"count": len(payload.events)})
     return EventIngestResponse(accepted=accepted)
 
@@ -161,6 +163,7 @@ def submit_session(
 
     session = Session.model_validate(merged)
     session_repository.save_session(session)
+    session_digest_service.refresh(session_id, tenant_id=user.tenant_id, force=True)
     audit(user, "submit", "session", str(session_id))
     return session
 

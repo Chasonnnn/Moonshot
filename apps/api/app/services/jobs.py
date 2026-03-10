@@ -20,6 +20,7 @@ from app.schemas import (
     JobAccepted,
     JobResultResponse,
     JobStatus,
+    MemoryAssemblerRequest,
     Report,
     ReviewQueueItem,
     Session,
@@ -39,6 +40,12 @@ from app.services.repositories import (
     session_repository,
 )
 from app.services.fairness import create_fairness_smoke_run
+from app.services.memory import (
+    memory_assembler,
+    memory_projection_service,
+    session_digest_service,
+    sync_task_family_memory,
+)
 from app.services.scoring import score_session
 from app.services.store import store
 from app.services.task_quality import evaluate_task_quality
@@ -60,6 +67,8 @@ JOB_PIPELINES: dict[str, list[str]] = {
     "quality_evaluate": ["load_task_family", "compute_quality_signal", "persist_quality_signal"],
     "interpretation_generate": ["load_report", "build_interpretation_view", "persist_interpretation_view"],
     "fairness_smoke_run": ["load_scope", "run_fairness_checks", "persist_fairness_run"],
+    "memory_reindex": ["load_memory_scope", "reindex_memory", "persist_memory_index"],
+    "session_digest_refresh": ["load_session", "refresh_session_digest", "persist_session_digest"],
 }
 
 RUNNING_PROGRESS_BY_JOB_TYPE: dict[str, int] = {
@@ -70,6 +79,8 @@ RUNNING_PROGRESS_BY_JOB_TYPE: dict[str, int] = {
     "quality_evaluate": 40,
     "interpretation_generate": 50,
     "fairness_smoke_run": 45,
+    "memory_reindex": 35,
+    "session_digest_refresh": 35,
 }
 
 RETRYING_PROGRESS_BY_JOB_TYPE: dict[str, int] = {
@@ -80,6 +91,8 @@ RETRYING_PROGRESS_BY_JOB_TYPE: dict[str, int] = {
     "quality_evaluate": 25,
     "interpretation_generate": 30,
     "fairness_smoke_run": 25,
+    "memory_reindex": 20,
+    "session_digest_refresh": 20,
 }
 
 
@@ -404,6 +417,14 @@ def _handle_generate_case(job: JobRunModel) -> dict[str, Any]:
         normalized_variant_count = (
             int(variant_count) if isinstance(variant_count, int) else None
         )
+        assembled = memory_assembler.assemble(
+            MemoryAssemblerRequest(
+                tenant_id=job.tenant_id,
+                actor_role="reviewer",
+                consumer="codesign",
+                query_text=f"{case.title}\n{case.scenario}",
+            )
+        )
         normalized_model_override = str(model_override) if isinstance(model_override, str) and model_override.strip() else None
         normalized_reasoning_effort = (
             str(reasoning_effort) if isinstance(reasoning_effort, str) and reasoning_effort.strip() else None
@@ -422,10 +443,21 @@ def _handle_generate_case(job: JobRunModel) -> dict[str, Any]:
             override_kwargs["thinking_budget_tokens"] = normalized_thinking_budget
         if normalized_variant_count is not None:
             override_kwargs["variant_count"] = normalized_variant_count
+        if assembled.context_text:
+            override_kwargs["memory_context"] = assembled.context_text
         generated = generate_from_case(case, **override_kwargs)
+        generated.task_family.generation_diagnostics.update(
+            {
+                "memory_entry_ids": [str(entry_id) for entry_id in assembled.memory_entry_ids],
+                "memory_chunk_ids": [str(chunk_id) for chunk_id in assembled.chunk_ids],
+                "memory_context_hash": assembled.assembled_context_hash,
+                "memory_token_budget": assembled.token_budget,
+            }
+        )
 
     case_repository.save_task_family(generated.task_family)
     case_repository.save_rubric(generated.rubric)
+    sync_task_family_memory(generated.task_family.id)
 
     _audit_system(
         job.tenant_id,
@@ -462,6 +494,17 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
         if isinstance(policy_template_id, str) and policy_template_id.strip():
             template_id = policy_template_id.strip()
 
+    session_digest_service.refresh(session_id, tenant_id=job.tenant_id, force=False)
+    assembled = memory_assembler.assemble(
+        MemoryAssemblerRequest(
+            tenant_id=job.tenant_id,
+            actor_role="reviewer",
+            consumer="evaluator",
+            query_text=f"{task_prompt or ''}\n{session.final_response or ''}",
+            session_id=session_id,
+        )
+    )
+
     if mode == "fixture":
         score_result, interpretation = score_from_fixture(
             session_id=session_id,
@@ -497,6 +540,7 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
             events,
             rubric=rubric,
             task_prompt=task_prompt,
+            memory_context=assembled.context_text,
             final_response=session.final_response,
             provider=provider,
             scoring_config=scoring_config,
@@ -512,6 +556,12 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
         mode="assessment",
         context_keys=["task_rubric", "scoring_config", "session_events"],
         policy_version=None,
+        memory_entry_ids=assembled.memory_entry_ids,
+        chunk_ids=assembled.chunk_ids,
+        ranking_features=assembled.ranking_features,
+        query_text=assembled.query_text,
+        token_budget=assembled.token_budget,
+        assembled_context_hash=assembled.assembled_context_hash,
     )
 
     if score_result.needs_human_review:
@@ -527,6 +577,7 @@ def _handle_score_session(job: JobRunModel) -> dict[str, Any]:
 
     updated_session = Session.model_validate({**session.model_dump(mode="json"), "status": "scored"})
     session_repository.save_session(updated_session)
+    session_digest_service.refresh(session_id, tenant_id=job.tenant_id, force=True)
 
     _audit_system(
         job.tenant_id,
@@ -582,6 +633,7 @@ def _handle_quality_evaluate(job: JobRunModel) -> dict[str, Any]:
     task_family_id = UUID(job.request_payload["task_family_id"])
     evaluated_by_role = str(job.request_payload.get("evaluated_by_role", "system"))
     signal = evaluate_task_quality(task_family_id, evaluated_by_role=evaluated_by_role)
+    sync_task_family_memory(task_family_id)
     _audit_system(
         job.tenant_id,
         "evaluate_quality",
@@ -596,6 +648,15 @@ def _handle_interpretation_generate(job: JobRunModel) -> dict[str, Any]:
     session_id = UUID(job.request_payload["session_id"])
     request_payload = InterpretationRequest.model_validate(job.request_payload["interpretation_request"])
     view = create_interpretation_view(session_id, request_payload, tenant_id=job.tenant_id)
+    assembled = memory_assembler.assemble(
+        MemoryAssemblerRequest(
+            tenant_id=job.tenant_id,
+            actor_role="reviewer",
+            consumer="evaluator",
+            query_text=" ".join(request_payload.focus_dimensions) or "interpretation analysis",
+            session_id=session_id,
+        )
+    )
     append_context_trace(
         session_id=session_id,
         tenant_id=job.tenant_id,
@@ -604,6 +665,12 @@ def _handle_interpretation_generate(job: JobRunModel) -> dict[str, Any]:
         mode="analysis",
         context_keys=["task_rubric", "score_result", "interpretation_request"],
         policy_version=None,
+        memory_entry_ids=assembled.memory_entry_ids,
+        chunk_ids=assembled.chunk_ids,
+        ranking_features=assembled.ranking_features,
+        query_text=assembled.query_text,
+        token_budget=assembled.token_budget,
+        assembled_context_hash=assembled.assembled_context_hash,
     )
     _audit_system(
         job.tenant_id,
@@ -634,6 +701,31 @@ def _handle_fairness_smoke_run(job: JobRunModel) -> dict[str, Any]:
     return run.model_dump(mode="json")
 
 
+def _handle_memory_reindex(job: JobRunModel) -> dict[str, Any]:
+    reindexed = memory_projection_service.reindex_tenant(job.tenant_id)
+    _audit_system(
+        job.tenant_id,
+        "memory_reindex",
+        "tenant",
+        job.tenant_id,
+        {"reindexed_entries": reindexed},
+    )
+    return {"tenant_id": job.tenant_id, "reindexed_entries": reindexed}
+
+
+def _handle_session_digest_refresh(job: JobRunModel) -> dict[str, Any]:
+    session_id = UUID(job.request_payload["session_id"])
+    digest = session_digest_service.refresh(session_id, tenant_id=job.tenant_id, force=True)
+    _audit_system(
+        job.tenant_id,
+        "session_digest_refresh",
+        "session",
+        str(session_id),
+        {"last_event_offset": digest.last_event_offset},
+    )
+    return digest.model_dump(mode="json")
+
+
 def _execute_job(job: JobRunModel) -> dict[str, Any]:
     if job.job_type == "generate":
         return _handle_generate_case(job)
@@ -649,6 +741,10 @@ def _execute_job(job: JobRunModel) -> dict[str, Any]:
         return _handle_interpretation_generate(job)
     if job.job_type == "fairness_smoke_run":
         return _handle_fairness_smoke_run(job)
+    if job.job_type == "memory_reindex":
+        return _handle_memory_reindex(job)
+    if job.job_type == "session_digest_refresh":
+        return _handle_session_digest_refresh(job)
     raise RuntimeError("unsupported_job_type")
 
 

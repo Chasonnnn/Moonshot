@@ -4,10 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import require_roles
 from app.core.security import UserContext
-from app.schemas import CoachFeedback, CoachFeedbackRequest, CoachMessageRequest, CoachResponse
+from app.schemas import CoachFeedback, CoachFeedbackRequest, CoachMessageRequest, CoachResponse, MemoryAssemblerRequest
 from app.services.audit import audit
 from app.services.coach import coach_reply
 from app.services.context_injection import append_context_trace
+from app.services.memory import memory_assembler, session_digest_service
 from app.services.repositories import case_repository, session_repository
 from app.services.store import store
 
@@ -36,7 +37,6 @@ def send_coach_message(
 
     task_family = case_repository.get_task_family(session.task_family_id)
     case = case_repository.get_case(task_family.case_id) if task_family else None
-    context = case.scenario if case else "Follow the scenario constraints and business context."
     coach_mode = str(session.policy.get("coach_mode", "assessment")).strip().lower()
     if coach_mode not in ALLOWED_COACH_MODES:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Invalid session coach_mode policy")
@@ -83,6 +83,17 @@ def send_coach_message(
         )
 
     coach_engine_mode = "practice" if coach_mode == "practice" else "assessment"
+    session_digest_service.refresh(session_id, tenant_id=user.tenant_id, force=False)
+    assembled = memory_assembler.assemble(
+        MemoryAssemblerRequest(
+            tenant_id=user.tenant_id,
+            actor_role=user.role,
+            consumer="coach",
+            query_text=payload.message,
+            session_id=session_id,
+        )
+    )
+    context = assembled.context_text or (case.scenario if case else "Follow the scenario constraints and business context.")
 
     response = coach_reply(
         payload.message,
@@ -114,9 +125,15 @@ def send_coach_message(
         agent_type="coach",
         actor_role=user.role,
         mode=coach_mode,
-        context_keys=["case_scenario", "policy_constraints", "coach_policy"],
+        context_keys=["org_memory", "content_memory", "episode_memory", "coach_policy"],
         policy_version=response.policy_version,
         policy_hash=response.policy_hash,
+        memory_entry_ids=assembled.memory_entry_ids,
+        chunk_ids=assembled.chunk_ids,
+        ranking_features=assembled.ranking_features,
+        query_text=assembled.query_text,
+        token_budget=assembled.token_budget,
+        assembled_context_hash=assembled.assembled_context_hash,
     )
     audit(
         user,
@@ -154,6 +171,7 @@ def submit_coach_feedback(
         notes=payload.notes,
     )
     store.coach_feedback[feedback.id] = {**feedback.model_dump(mode="json"), "tenant_id": user.tenant_id}
+    session_digest_service.refresh(session_id, tenant_id=user.tenant_id, force=True)
     session_repository.append_events(
         session_id,
         [

@@ -155,6 +155,7 @@ def _dimension_prompt(
     dimension: RubricDimension,
     rubric: Rubric,
     task_prompt: str | None,
+    memory_context: str | None,
     final_response: str,
     metrics: dict[str, Any],
     deterministic_triggers: list[str],
@@ -167,6 +168,7 @@ def _dimension_prompt(
         f"DETERMINISTIC_TRIGGERS: {', '.join(deterministic_triggers)}\n"
         f"OBJECTIVE_METRICS: {metrics}\n"
         f"TASK_PROMPT: {task_prompt or ''}\n"
+        f"RETRIEVED_MEMORY_CONTEXT: {memory_context or ''}\n"
         f"CANDIDATE_RESPONSE_START\n{final_response}\nCANDIDATE_RESPONSE_END"
     )
 
@@ -183,6 +185,7 @@ def _holistic_prompt(
     *,
     rubric: Rubric,
     task_prompt: str | None,
+    memory_context: str | None,
     final_response: str,
     metrics: dict[str, Any],
     dimension_scores: dict[str, float],
@@ -196,6 +199,7 @@ def _holistic_prompt(
         f"OBJECTIVE_METRICS: {metrics}\n"
         f"DIMENSION_SCORES: {dimension_scores}\n"
         f"TASK_PROMPT: {task_prompt or ''}\n"
+        f"RETRIEVED_MEMORY_CONTEXT: {memory_context or ''}\n"
         f"CANDIDATE_RESPONSE_START\n{final_response}\nCANDIDATE_RESPONSE_END"
     )
 
@@ -266,6 +270,7 @@ def score_session(
     *,
     rubric: Rubric | None = None,
     task_prompt: str | None = None,
+    memory_context: str | None = None,
     final_response: str | None = None,
     provider: EvaluatorProvider | None = None,
     scoring_config: ScoringConfig | None = None,
@@ -336,6 +341,7 @@ def score_session(
             dimension=dimension,
             rubric=rubric,
             task_prompt=task_prompt,
+            memory_context=memory_context,
             final_response=final_response_clean,
             metrics=metrics,
             deterministic_triggers=deterministic_trigger_codes,
@@ -398,6 +404,7 @@ def score_session(
         holistic_prompt = _holistic_prompt(
             rubric=rubric,
             task_prompt=task_prompt,
+            memory_context=memory_context,
             final_response=final_response_clean,
             metrics=metrics,
             dimension_scores=dimension_scores,

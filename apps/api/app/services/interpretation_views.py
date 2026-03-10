@@ -3,6 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from app.schemas import InterpretationRequest, InterpretationView, ScoringVersionLock
+from app.services.memory import sync_interpretation_view_memory
 from app.services.repositories import scoring_repository
 from app.services.store import store
 
@@ -54,6 +55,7 @@ def create_interpretation_view(session_id: UUID, request: InterpretationRequest,
         "payload": view.model_dump(mode="json"),
         "created_at": view.created_at.isoformat(),
     }
+    sync_interpretation_view_memory(view, tenant_id=tenant_id)
     return view
 
 

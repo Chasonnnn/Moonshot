@@ -7,6 +7,7 @@ from app.core.security import UserContext
 from app.schemas import JobAccepted, TaskFamily, TaskFamilyPublishRequest, TaskFamilyReviewRequest, TaskQualitySignal
 from app.services.audit import audit
 from app.services.jobs import submit_job
+from app.services.memory import sync_task_family_memory
 from app.services.repositories import case_repository
 from app.services.task_quality import get_task_quality
 
@@ -101,6 +102,7 @@ def publish_task_family(
     merged = {**existing, "status": "published"}
     task_family = TaskFamily.model_validate(merged)
     case_repository.save_task_family(task_family)
+    sync_task_family_memory(task_family.id)
     audit(user, "publish", "task_family", str(task_family_id), {"approver_note": payload.approver_note})
     return task_family
 
