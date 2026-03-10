@@ -202,6 +202,14 @@ describe("ReportReviewConsole tabs", () => {
     expect(screen.getByRole("tab", { name: /provenance/i })).toBeInTheDocument()
   })
 
+  it("exposes a keyboard-reachable region for the report tab strip and keeps mobile tab targets tall", () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    const region = screen.getByRole("region", { name: /report sections/i })
+    expect(region).toHaveAttribute("tabindex", "0")
+    expect(screen.getByRole("tab", { name: /overview/i }).className).toContain("min-h-11")
+  })
+
   it("shows Overview tab content by default including scoring label", async () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
@@ -350,6 +358,16 @@ describe("ReportReviewConsole tabs", () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
     expect(await screen.findByText("Overall Score")).toBeInTheDocument()
+  })
+
+  it("wires human review fields to their visible labels", async () => {
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    expect(await screen.findByLabelText(/notes \(markdown\)/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/tags \(csv\)/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/dimension overrides \(json\)/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/override overall score \(0-1\)/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/override confidence \(0-1\)/i)).toBeInTheDocument()
   })
 
   it("uses human override score in gauge when final score source is human_override", async () => {

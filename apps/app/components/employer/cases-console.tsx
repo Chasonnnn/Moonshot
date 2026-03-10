@@ -32,15 +32,15 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
     <section className="space-y-6">
       <CaseTemplates onSelect={(tpl) => { setTitle(tpl.title); setScenario(tpl.scenario) }} />
 
-      <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-        <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Create Case</h2>
+      <div className="ops-surface p-6">
+        <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Create Case</h2>
         <form action={formAction} className="mt-4 grid gap-3">
           <Input
             name="title"
             placeholder="Case title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="rounded-lg text-[13px]"
+            className="min-h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px]"
             required
           />
           <Textarea
@@ -48,14 +48,14 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
             placeholder="Scenario description"
             value={scenario}
             onChange={(e) => setScenario(e.target.value)}
-            className="min-h-24 rounded-lg text-[13px]"
+            className="min-h-32 rounded-3xl border-[var(--ops-border-strong)] bg-white px-4 py-3 text-[13px]"
             required
           />
           <div className="flex items-center gap-3">
             <Button
               type="submit"
               disabled={isPending}
-              className="text-[13px]"
+              className="min-h-11 bg-[var(--ops-accent)] px-5 text-[13px] text-white hover:bg-[color-mix(in_srgb,var(--ops-accent)_84%,black)]"
             >
               {isPending ? "Creating..." : "Create Case"}
             </Button>
@@ -64,34 +64,37 @@ export function CasesConsole({ snapshot }: { snapshot: CasesSnapshot }) {
       </div>
 
       {snapshot.error ? (
-        <div className="rounded-2xl border border-[#FF9F0A] bg-white p-6 shadow-sm">
-          <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Cases Unavailable</h2>
-          <p className="mt-2 text-[13px] text-[#6E6E73]">{snapshot.error}</p>
+        <div className="ops-surface p-6">
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Cases Unavailable</h2>
+          <p className="mt-2 text-[13px] text-[var(--ops-text-muted)]">{snapshot.error}</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-          <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Cases</h2>
-          <p className="mt-1 text-[12px] text-[#6E6E73]">Task family counts are computed from live backend data.</p>
+        <div className="ops-surface p-6">
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Cases</h2>
+          <p className="mt-1 text-[12px] text-[var(--ops-text-subtle)]">Task family counts are computed from live backend data.</p>
           <div className="mt-4 space-y-3">
             {snapshot.cases.map((item) => {
               const familyCount = snapshot.taskFamilies.filter((family) => family.case_id === item.id).length
               return (
                 <div
                   key={item.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E5EA] px-4 py-3"
+                  className="ops-surface-soft flex flex-wrap items-center justify-between gap-3 px-4 py-4"
                 >
                   <div>
-                    <p className="text-[13px] font-medium text-[#1D1D1F]">{item.title}</p>
-                    <div className="mt-1 flex items-center gap-2">
+                    <p className="text-[13px] font-medium text-[var(--ops-text)]">{item.title}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className="text-[11px]">{item.status}</Badge>
-                      <span className="text-[12px] text-[#6E6E73]">
+                      <span className="text-[12px] text-[var(--ops-text-subtle)]">
                         {familyCount} task {familyCount === 1 ? "family" : "families"}
                       </span>
                     </div>
                   </div>
                   <Link
                     href={`/cases/${item.id}`}
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-[12px]")}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "default" }),
+                      "min-h-11 border-[var(--ops-border-strong)] bg-white px-4 text-[12px] text-[var(--ops-text)] hover:bg-[var(--ops-surface-muted)]"
+                    )}
                   >
                     Open Case
                   </Link>
