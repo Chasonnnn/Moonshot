@@ -45,7 +45,7 @@ export function DemoTemplateCard({ template, selected, onSelect, disabled }: Dem
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#64748B]">
+            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[var(--ops-text-muted)]">
               {template.role} Work Simulation
             </p>
             <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${priorityStyles}`}>
@@ -72,13 +72,13 @@ export function DemoTemplateCard({ template, selected, onSelect, disabled }: Dem
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
         {template.teaserStats.map((stat) => (
           <div key={stat.label} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#64748B]">{stat.label}</p>
+            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--ops-text-muted)]">{stat.label}</p>
             <p className="mt-1 text-[13px] font-semibold text-[#0F172A]">{stat.value}</p>
           </div>
         ))}
       </div>
       <div className="mt-4">
-        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#64748B]">Workspace mix</p>
+        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--ops-text-muted)]">Workspace mix</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {workspaceLabels.map((label) => (
             <Badge

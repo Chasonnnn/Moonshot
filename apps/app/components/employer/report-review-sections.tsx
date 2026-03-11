@@ -82,10 +82,10 @@ function ReportOverviewAnalyticsLoading() {
       role="status"
       aria-live="polite"
       data-testid="report-overview-analytics-loading"
-      className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm"
+      className="ops-surface p-6"
     >
-      <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Loading report analytics...</h2>
-      <p className="mt-2 text-[13px] text-[#6E6E73]">
+      <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Loading report analytics...</h2>
+      <p className="mt-2 text-[13px] text-[var(--ops-text-subtle)]">
         Preparing charts, tool proficiency, and AI analysis.
       </p>
     </section>
@@ -103,64 +103,74 @@ function HumanReviewForm({
   humanFormAction: (payload: FormData) => void
   isHumanPending: boolean
 }) {
+  const notesFieldId = `human-review-notes-${sessionId}`
+  const tagsFieldId = `human-review-tags-${sessionId}`
+  const dimensionOverridesFieldId = `human-review-dimension-overrides-${sessionId}`
+  const overrideScoreFieldId = `human-review-override-score-${sessionId}`
+  const overrideConfidenceFieldId = `human-review-override-confidence-${sessionId}`
+
   return (
-    <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-      <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Human Notes &amp; Override</h2>
+    <div className="ops-surface p-6">
+      <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Human Notes &amp; Override</h2>
       <form action={humanFormAction} className="mt-4 space-y-3">
         <input type="hidden" name="session_id" value={sessionId} />
         <div>
-          <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Notes (Markdown)</Label>
+          <Label htmlFor={notesFieldId} className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Notes (Markdown)</Label>
           <Textarea
+            id={notesFieldId}
             name="notes_markdown"
             defaultValue={snapshot.human_review?.notes_markdown ?? ""}
-            className="mt-1 min-h-[120px] rounded-lg text-[13px]"
+            className="mt-1 min-h-[120px] rounded-3xl border-[var(--ops-border-strong)] bg-white px-4 py-3 text-[13px]"
           />
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Tags (csv)</Label>
+            <Label htmlFor={tagsFieldId} className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Tags (csv)</Label>
             <Input
+              id={tagsFieldId}
               name="tags_csv"
               defaultValue={snapshot.human_review?.tags.join(", ") ?? ""}
-              className="mt-1 h-9 rounded-lg text-[13px]"
+              className="mt-1 h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px] md:h-9"
             />
           </div>
           <div>
-            <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Dimension Overrides (JSON)</Label>
+            <Label htmlFor={dimensionOverridesFieldId} className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Dimension Overrides (JSON)</Label>
             <Input
+              id={dimensionOverridesFieldId}
               name="dimension_overrides_json"
               defaultValue={
                 snapshot.human_review?.dimension_overrides
                   ? JSON.stringify(snapshot.human_review.dimension_overrides)
                   : ""
               }
-              className="mt-1 h-9 rounded-lg text-[13px]"
+              className="mt-1 h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px] md:h-9"
             />
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Override Overall Score (0-1)</Label>
+            <Label htmlFor={overrideScoreFieldId} className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Override Overall Score (0-1)</Label>
             <Input
+              id={overrideScoreFieldId}
               name="override_overall_score"
               defaultValue={snapshot.human_review?.override_overall_score ?? ""}
-              className="mt-1 h-9 rounded-lg text-[13px]"
+              className="mt-1 h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px] md:h-9"
             />
           </div>
           <div>
-            <Label className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Override Confidence (0-1)</Label>
+            <Label htmlFor={overrideConfidenceFieldId} className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Override Confidence (0-1)</Label>
             <Input
+              id={overrideConfidenceFieldId}
               name="override_confidence"
               defaultValue={snapshot.human_review?.override_confidence ?? ""}
-              className="mt-1 h-9 rounded-lg text-[13px]"
+              className="mt-1 h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px] md:h-9"
             />
           </div>
         </div>
         <Button
           type="submit"
           disabled={isHumanPending}
-          size="sm"
-          className="text-[12px]"
+          className="min-h-11 bg-[var(--ops-accent)] px-5 text-[12px] text-white hover:bg-[var(--ops-accent-strong)]"
         >
           {isHumanPending ? "Saving..." : "Save Human Review"}
         </Button>
@@ -185,24 +195,24 @@ function ScoreCredibilityCard({ snapshot }: { snapshot: ReportDetailSnapshot }) 
   ]
 
   return (
-    <div data-testid="credibility-block" className="rounded-[28px] border border-[#10B981]/16 bg-[linear-gradient(160deg,rgba(16,185,129,0.10),rgba(255,255,255,0.96))] p-6 shadow-sm">
+    <div data-testid="credibility-block" className="ops-surface p-6">
       <div className="flex items-center gap-2">
-        <ShieldCheckIcon className="size-5 text-[#047857]" />
-        <h2 className="text-[18px] font-semibold text-[#0F172A]">Why this score is credible</h2>
+        <ShieldCheckIcon className="size-5 text-[var(--ops-success)]" />
+        <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Why this score is credible</h2>
       </div>
-      <p className="mt-2 text-[13px] leading-relaxed text-[#334155]">
+      <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text-muted)]">
         This report combines locked scoring provenance, auditable evidence, and explicit reviewer/governance signals in one place.
       </p>
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         {items.map((item) => (
-          <div key={item.label} className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#047857]">{item.label}</p>
-            <p className="mt-1 text-[13px] font-semibold text-[#0F172A]">{item.value}</p>
+          <div key={item.label} className="ops-surface-soft px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ops-success)]">{item.label}</p>
+            <p className="mt-1 text-[13px] font-semibold text-[var(--ops-text)]">{item.value}</p>
           </div>
         ))}
       </div>
       {governance ? (
-        <p className="mt-4 text-[12px] leading-relaxed text-[#065F46]">{governance.audit_chain_detail}</p>
+        <p className="mt-4 text-[12px] leading-relaxed text-[var(--ops-success)]">{governance.audit_chain_detail}</p>
       ) : null}
     </div>
   )
@@ -226,46 +236,46 @@ export function ReportOverviewTab({
 
   return (
     <section className="space-y-6">
-      <div className="rounded-[28px] border border-[#BFDBFE] bg-[linear-gradient(150deg,rgba(239,246,255,0.95),rgba(255,255,255,0.98))] p-6 shadow-sm">
+      <div className="ops-surface p-6">
         <div className="flex items-center gap-2">
-          <FileTextIcon className="size-5 text-[#2563EB]" />
-          <h2 className="text-[18px] font-semibold text-[#0F172A]">Report Summary</h2>
+          <FileTextIcon className="size-5 text-[var(--ops-accent)]" />
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Report Summary</h2>
           <Badge variant="outline" className={`ml-auto text-[11px] ${scoringLabel.className}`}>
             {scoringLabel.label}
           </Badge>
         </div>
-        {scoringLabel.warning && <p className="mt-2 text-[11px] text-[#FF9F0A]">{scoringLabel.warning}</p>}
+        {scoringLabel.warning && <p className="mt-2 text-[11px] text-[var(--ops-warning)]">{scoringLabel.warning}</p>}
         <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Status</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Status</p>
             <div className="mt-0.5">
               <Badge variant="outline" className="text-[11px]">{snapshot.summary?.session_status ?? "n/a"}</Badge>
             </div>
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Confidence</p>
-            <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{formatConfidence(snapshot.summary?.confidence)}</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Confidence</p>
+            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{formatConfidence(snapshot.summary?.confidence)}</p>
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Final Confidence</p>
-            <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{formatConfidence(snapshot.summary?.final_confidence)}</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Final Confidence</p>
+            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{formatConfidence(snapshot.summary?.final_confidence)}</p>
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Template</p>
-            <p className="mt-0.5 text-[13px] text-[#1D1D1F]">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Template</p>
+            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">
               {activeTemplate ? activeTemplate.title : (snapshot.demo_template_id ?? "n/a")}
             </p>
             {activeTemplate ? (
-              <p className="mt-0.5 text-[11px] text-[#6E6E73]">{activeTemplate.role}</p>
+              <p className="mt-0.5 text-[11px] text-[var(--ops-text-subtle)]">{activeTemplate.role}</p>
             ) : null}
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Human Review</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Human Review</p>
             <div className="mt-0.5">
               {snapshot.summary?.has_human_review ? (
-                <Badge variant="outline" className="border-[#34C759]/40 bg-[#34C759]/10 text-[#0D8A2A] text-[11px]">Saved</Badge>
+                <Badge variant="outline" className="border-[var(--ops-success)]/30 bg-[var(--ops-success-soft)] text-[var(--ops-success)] text-[11px]">Saved</Badge>
               ) : snapshot.summary?.needs_human_review ? (
-                <Badge variant="outline" className="border-[#FF9F0A]/40 bg-[#FF9F0A]/10 text-[#FF9F0A] text-[11px]">Required</Badge>
+                <Badge variant="outline" className="border-[var(--ops-warning)]/30 bg-[var(--ops-warning-soft)] text-[var(--ops-warning)] text-[11px]">Required</Badge>
               ) : (
                 <Badge variant="outline" className="text-[11px]">Clear</Badge>
               )}
@@ -274,12 +284,12 @@ export function ReportOverviewTab({
         </div>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Final Score Source</p>
-            <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{snapshot.summary?.final_score_source ?? "n/a"}</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Final Score Source</p>
+            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{snapshot.summary?.final_score_source ?? "n/a"}</p>
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Model Confidence</p>
-            <p className="mt-0.5 text-[13px] text-[#1D1D1F]">{formatConfidence(snapshot.summary?.confidence)}</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Model Confidence</p>
+            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{formatConfidence(snapshot.summary?.confidence)}</p>
           </div>
         </div>
       </div>
@@ -287,66 +297,66 @@ export function ReportOverviewTab({
       <ScoreCredibilityCard snapshot={snapshot} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-        <div className="rounded-[28px] border border-[#DBEAFE] bg-white p-6 shadow-sm">
+        <div className="ops-surface p-6">
           <div className="flex items-center gap-2">
-            <BrainIcon className="size-5 text-[#2563EB]" />
-            <h2 className="text-[18px] font-semibold text-[#0F172A]">Approach Narrative</h2>
+            <BrainIcon className="size-5 text-[var(--ops-accent)]" />
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Approach Narrative</h2>
           </div>
           {snapshot.approach_narrative ? (
             <>
-              <p className="mt-3 text-[16px] font-semibold text-[#1D1D1F]">{snapshot.approach_narrative.headline}</p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#4D4D52]">{snapshot.approach_narrative.summary}</p>
+              <p className="mt-3 text-[16px] font-semibold text-[var(--ops-text)]">{snapshot.approach_narrative.headline}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text-muted)]">{snapshot.approach_narrative.summary}</p>
               {snapshot.approach_narrative.final_recommendation ? (
-                <div className="mt-4 rounded-2xl border border-[#DBEAFE] bg-[#F8FAFC] p-4">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Final Recommendation</p>
-                  <p className="mt-1 text-[13px] leading-relaxed text-[#1D1D1F]">
+                <div className="ops-surface-soft mt-4 p-4">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Final Recommendation</p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-[var(--ops-text)]">
                     {snapshot.approach_narrative.final_recommendation}
                   </p>
                 </div>
               ) : null}
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {snapshot.approach_narrative.key_evidence_moments.map((moment) => (
-                  <div key={`${moment.event_type}-${moment.timestamp ?? "n/a"}`} className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+                  <div key={`${moment.event_type}-${moment.timestamp ?? "n/a"}`} className="ops-surface-soft p-4">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[13px] font-semibold text-[#1D1D1F]">{moment.title}</p>
+                      <p className="text-[13px] font-semibold text-[var(--ops-text)]">{moment.title}</p>
                       <Badge variant="outline" className="font-mono text-[10px]">{moment.event_type}</Badge>
                     </div>
-                    <p className="mt-2 text-[12px] leading-relaxed text-[#4D4D52]">{moment.detail}</p>
+                    <p className="mt-2 text-[12px] leading-relaxed text-[var(--ops-text-muted)]">{moment.detail}</p>
                   </div>
                 ))}
               </div>
             </>
           ) : (
-            <p className="mt-3 text-[13px] text-[#6E6E73]">Approach narrative unavailable for this report.</p>
+            <p className="mt-3 text-[13px] text-[var(--ops-text-subtle)]">Approach narrative unavailable for this report.</p>
           )}
         </div>
 
-        <div className="rounded-[28px] border border-[#D1FAE5] bg-[#F8FFFC] p-6 shadow-sm">
+        <div className="ops-surface p-6">
           <div className="flex items-center gap-2">
-            <ShieldCheckIcon className="size-5 text-[#047857]" />
-            <h2 className="text-[18px] font-semibold text-[#0F172A]">Governance Trace</h2>
+            <ShieldCheckIcon className="size-5 text-[var(--ops-success)]" />
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Governance Trace</h2>
           </div>
           {snapshot.governance_trace ? (
             <>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Audit Chain</p>
-                  <p className="mt-1 text-[13px] text-[#1D1D1F]">{snapshot.governance_trace.audit_chain_status}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Audit Chain</p>
+                  <p className="mt-1 text-[13px] text-[var(--ops-text)]">{snapshot.governance_trace.audit_chain_status}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Human Review</p>
-                  <p className="mt-1 text-[13px] text-[#1D1D1F]">{snapshot.governance_trace.human_review_status}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Human Review</p>
+                  <p className="mt-1 text-[13px] text-[var(--ops-text)]">{snapshot.governance_trace.human_review_status}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Context Traces</p>
-                  <p className="mt-1 text-[13px] text-[#1D1D1F]">{snapshot.governance_trace.context_trace_count}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Context Traces</p>
+                  <p className="mt-1 text-[13px] text-[var(--ops-text)]">{snapshot.governance_trace.context_trace_count}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Timeline Source</p>
-                  <p className="mt-1 text-[13px] text-[#1D1D1F]">{snapshot.governance_trace.timeline_source}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Timeline Source</p>
+                  <p className="mt-1 text-[13px] text-[var(--ops-text)]">{snapshot.governance_trace.timeline_source}</p>
                 </div>
               </div>
-              <p className="mt-4 text-[12px] leading-relaxed text-[#4D4D52]">
+              <p className="mt-4 text-[12px] leading-relaxed text-[var(--ops-text-muted)]">
                 {snapshot.governance_trace.audit_chain_detail}
               </p>
               <div className="mt-4 flex flex-wrap gap-1.5">
@@ -359,7 +369,7 @@ export function ReportOverviewTab({
               </div>
             </>
           ) : (
-            <p className="mt-3 text-[13px] text-[#6E6E73]">Governance trace unavailable for this report.</p>
+            <p className="mt-3 text-[13px] text-[var(--ops-text-subtle)]">Governance trace unavailable for this report.</p>
           )}
         </div>
       </div>

@@ -5,14 +5,14 @@ import { Badge } from "@/components/ui/badge"
 import type { SmartSummary, HiringSuggestion, ConfidenceLevel, Trend } from "@/lib/report-analysis"
 
 const HIRING_BADGES: Record<HiringSuggestion, { label: string; className: string }> = {
-  "strong-hire": { label: "Strong Hire", className: "border-[#34C759]/40 bg-[#34C759]/10 text-[#0D8A2A]" },
+  "strong-hire": { label: "Strong Hire", className: "border-[var(--ops-success)]/30 bg-[var(--ops-success-soft)] text-[var(--ops-success)]" },
   "lean-hire": { label: "Lean Hire", className: "border-[#0071E3]/40 bg-[#0071E3]/10 text-[#0071E3]" },
   "lean-no": { label: "Lean No", className: "border-[#FF9F0A]/40 bg-[#FF9F0A]/10 text-[#A05A00]" },
   "no-hire": { label: "No Hire", className: "border-[#FF3B30]/40 bg-[#FF3B30]/10 text-[#FF3B30]" },
 }
 
 const CONFIDENCE_BADGES: Record<ConfidenceLevel, { label: string; className: string }> = {
-  high: { label: "High Confidence", className: "border-[#34C759]/40 bg-[#34C759]/10 text-[#0D8A2A]" },
+  high: { label: "High Confidence", className: "border-[var(--ops-success)]/30 bg-[var(--ops-success-soft)] text-[var(--ops-success)]" },
   medium: { label: "Medium Confidence", className: "border-[#FF9F0A]/40 bg-[#FF9F0A]/10 text-[#A05A00]" },
   low: { label: "Low Confidence", className: "border-[#FF3B30]/40 bg-[#FF3B30]/10 text-[#FF3B30]" },
 }

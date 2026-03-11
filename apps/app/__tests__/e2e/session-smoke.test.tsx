@@ -60,6 +60,39 @@ const mockSession = {
   task_prompt: "Analyze the sales data and write a summary of your findings.",
 }
 
+function setViewport(width: number) {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    writable: true,
+    value: width,
+  })
+
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => {
+      const maxMatch = /max-width:\s*(\d+)px/.exec(query)
+      const minMatch = /min-width:\s*(\d+)px/.exec(query)
+      const maxWidth = maxMatch ? Number(maxMatch[1]) : null
+      const minWidth = minMatch ? Number(minMatch[1]) : null
+      const matches =
+        (maxWidth === null || width <= maxWidth) &&
+        (minWidth === null || width >= minWidth)
+
+      return {
+        matches,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }
+    }),
+  })
+}
+
 async function completePreflight() {
   // Check all 3 preflight checkboxes and click Begin
   const checkboxes = screen.getAllByRole("checkbox")
@@ -72,6 +105,7 @@ async function completePreflight() {
 describe("Session Smoke Test", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setViewport(1280)
     mockApi.getSqlHistory.mockResolvedValue({ items: [] })
     mockApi.getDashboardState.mockResolvedValue({ filters: {}, view: "default", annotations: [] })
     mockApi.ingestEvents.mockResolvedValue({ accepted: 0 })
@@ -80,7 +114,11 @@ describe("Session Smoke Test", () => {
   it("renders the full workspace layout", async () => {
     render(<SessionWorkspace session={mockSession} />)
     await completePreflight()
+    await waitFor(() => {
+      expect(screen.getByLabelText("Workspace tools")).toBeInTheDocument()
+    })
 
+    expect(screen.getByRole("heading", { level: 1, name: /assessment workspace/i })).toBeInTheDocument()
     expect(screen.getByText("Moonshot")).toBeInTheDocument()
     expect(screen.getByText("Active")).toBeInTheDocument()
     expect(
@@ -88,6 +126,28 @@ describe("Session Smoke Test", () => {
     ).toBeInTheDocument()
     expect(screen.getByText("SQL")).toBeInTheDocument()
     expect(screen.getByText("Coach")).toBeInTheDocument()
+    expect(screen.getByTestId("candidate-desktop-panels")).toBeInTheDocument()
+    expect(screen.queryByTestId("candidate-mobile-section-switcher")).not.toBeInTheDocument()
+  })
+
+  it("renders the mobile section switcher on phone widths and swaps panes", async () => {
+    const user = userEvent.setup()
+    setViewport(390)
+
+    render(<SessionWorkspace session={mockSession} />)
+    await completePreflight()
+
+    expect(screen.getByTestId("candidate-mobile-section-switcher")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Task" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.queryByTestId("candidate-desktop-panels")).not.toBeInTheDocument()
+    expect(screen.getByText("Analyze the sales data and write a summary of your findings.")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Coach" }))
+    expect(screen.getByPlaceholderText(/ask the coach/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Work" }))
+    expect(screen.getByLabelText("Workspace tools")).toBeInTheDocument()
+    expect(screen.getByText("SQL")).toBeInTheDocument()
   })
 
   it("runs SQL query and displays results", async () => {

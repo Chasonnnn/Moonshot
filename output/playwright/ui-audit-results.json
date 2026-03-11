@@ -1,0 +1,2829 @@
+{
+  "desktop": {
+    "demo": {
+      "axe": [],
+      "metrics": {
+        "title": "Work Simulation Demo",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 18,
+        "smallTouchTargetCount": 6,
+        "smallTouchTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "ariaLabel": null,
+            "width": 92,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Work Simulations",
+            "ariaLabel": null,
+            "width": 132,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Cases",
+            "ariaLabel": null,
+            "width": 61,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Review Queue",
+            "ariaLabel": null,
+            "width": 111,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Governance",
+            "ariaLabel": null,
+            "width": 99,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Pilot Runs",
+            "ariaLabel": null,
+            "width": 87,
+            "height": 36
+          }
+        ],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Work simulation demo"
+          },
+          {
+            "tag": "h2",
+            "text": "Turn one KPI anomaly into a decision-ready recommendation with a visible work trace."
+          },
+          {
+            "tag": "h3",
+            "text": "Turn one KPI anomaly into a decision-ready recommendation with a visible work trace."
+          },
+          {
+            "tag": "h3",
+            "text": "KPI Discrepancy Investigation"
+          },
+          {
+            "tag": "h3",
+            "text": "SQL Data Quality Triage"
+          },
+          {
+            "tag": "h3",
+            "text": "Stakeholder Ambiguity Handling"
+          },
+          {
+            "tag": "h3",
+            "text": "RevOps Forecast Variance Review"
+          },
+          {
+            "tag": "h3",
+            "text": "Ops Capacity Escalation Simulation"
+          },
+          {
+            "tag": "h3",
+            "text": "Customer Support Escalation Judgment"
+          },
+          {
+            "tag": "h3",
+            "text": "Marketplace Growth Strategy Simulation"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 121,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Dashboard",
+          "ariaLabel": null,
+          "width": 92,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Work Simulations",
+          "ariaLabel": null,
+          "width": 132,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(15, 23, 42, 0.08) 0px 12px 24px 0px"
+        },
+        {
+          "tag": "a",
+          "text": "Cases",
+          "ariaLabel": null,
+          "width": 61,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Review Queue",
+          "ariaLabel": null,
+          "width": 111,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Governance",
+          "ariaLabel": null,
+          "width": 99,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Pilot Runs",
+          "ariaLabel": null,
+          "width": 87,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Hybrid fixture path",
+          "ariaLabel": null,
+          "width": 145,
+          "height": 44,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        }
+      ]
+    },
+    "dashboard": {
+      "axe": [],
+      "metrics": {
+        "title": "Moonshot",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 28,
+        "smallTouchTargetCount": 6,
+        "smallTouchTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "ariaLabel": null,
+            "width": 92,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Work Simulations",
+            "ariaLabel": null,
+            "width": 132,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Cases",
+            "ariaLabel": null,
+            "width": 61,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Review Queue",
+            "ariaLabel": null,
+            "width": 111,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Governance",
+            "ariaLabel": null,
+            "width": 99,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Pilot Runs",
+            "ariaLabel": null,
+            "width": 87,
+            "height": 36
+          }
+        ],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Dashboard"
+          },
+          {
+            "tag": "h2",
+            "text": "Recent Sessions"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 121,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Dashboard",
+          "ariaLabel": null,
+          "width": 92,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(15, 23, 42, 0.08) 0px 12px 24px 0px"
+        },
+        {
+          "tag": "a",
+          "text": "Work Simulations",
+          "ariaLabel": null,
+          "width": 132,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Cases",
+          "ariaLabel": null,
+          "width": 61,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Review Queue",
+          "ariaLabel": null,
+          "width": 111,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Governance",
+          "ariaLabel": null,
+          "width": 99,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Pilot Runs",
+          "ariaLabel": null,
+          "width": 87,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Demo Console",
+          "ariaLabel": null,
+          "width": 187,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "cases": {
+      "axe": [],
+      "metrics": {
+        "title": "Cases",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 59,
+        "smallTouchTargetCount": 6,
+        "smallTouchTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "ariaLabel": null,
+            "width": 92,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Work Simulations",
+            "ariaLabel": null,
+            "width": 132,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Cases",
+            "ariaLabel": null,
+            "width": 61,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Review Queue",
+            "ariaLabel": null,
+            "width": 111,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Governance",
+            "ariaLabel": null,
+            "width": 99,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Pilot Runs",
+            "ariaLabel": null,
+            "width": 87,
+            "height": 36
+          }
+        ],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Cases"
+          },
+          {
+            "tag": "h2",
+            "text": "Work Simulation Templates"
+          },
+          {
+            "tag": "h2",
+            "text": "Create Case"
+          },
+          {
+            "tag": "h2",
+            "text": "Cases"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 121,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Dashboard",
+          "ariaLabel": null,
+          "width": 92,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Work Simulations",
+          "ariaLabel": null,
+          "width": 132,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Cases",
+          "ariaLabel": null,
+          "width": 61,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(15, 23, 42, 0.08) 0px 12px 24px 0px"
+        },
+        {
+          "tag": "a",
+          "text": "Review Queue",
+          "ariaLabel": null,
+          "width": 111,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Governance",
+          "ariaLabel": null,
+          "width": 99,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Pilot Runs",
+          "ariaLabel": null,
+          "width": 87,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "div",
+          "text": "Data AnalystKPI Discrepancy InvestigationsqlanalyticsinvestigationJunior Data AnalystSQL D",
+          "ariaLabel": "Work simulation templates",
+          "width": 1166,
+          "height": 106,
+          "outlineStyle": "solid",
+          "outlineWidth": "2px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "review_queue": {
+      "axe": [],
+      "metrics": {
+        "title": "Review Queue",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 7,
+        "smallTouchTargetCount": 6,
+        "smallTouchTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "ariaLabel": null,
+            "width": 92,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Work Simulations",
+            "ariaLabel": null,
+            "width": 132,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Cases",
+            "ariaLabel": null,
+            "width": 61,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Review Queue",
+            "ariaLabel": null,
+            "width": 111,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Governance",
+            "ariaLabel": null,
+            "width": 99,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Pilot Runs",
+            "ariaLabel": null,
+            "width": 87,
+            "height": 36
+          }
+        ],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Review Queue"
+          },
+          {
+            "tag": "h2",
+            "text": "Open Review Items"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 121,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Dashboard",
+          "ariaLabel": null,
+          "width": 92,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Work Simulations",
+          "ariaLabel": null,
+          "width": 132,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Cases",
+          "ariaLabel": null,
+          "width": 61,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Review Queue",
+          "ariaLabel": null,
+          "width": 111,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(15, 23, 42, 0.08) 0px 12px 24px 0px"
+        },
+        {
+          "tag": "a",
+          "text": "Governance",
+          "ariaLabel": null,
+          "width": 99,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Pilot Runs",
+          "ariaLabel": null,
+          "width": 87,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "nextjs-portal",
+          "text": "",
+          "ariaLabel": null,
+          "width": 0,
+          "height": 0,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "governance": {
+      "axe": [],
+      "metrics": {
+        "title": "Governance",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 8,
+        "smallTouchTargetCount": 6,
+        "smallTouchTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "ariaLabel": null,
+            "width": 92,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Work Simulations",
+            "ariaLabel": null,
+            "width": 132,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Cases",
+            "ariaLabel": null,
+            "width": 61,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Review Queue",
+            "ariaLabel": null,
+            "width": 111,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Governance",
+            "ariaLabel": null,
+            "width": 99,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Pilot Runs",
+            "ariaLabel": null,
+            "width": 87,
+            "height": 36
+          }
+        ],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Governance"
+          },
+          {
+            "tag": "h2",
+            "text": "Policy & Audit Integrity"
+          },
+          {
+            "tag": "h2",
+            "text": "Red-Team Runs"
+          },
+          {
+            "tag": "h2",
+            "text": "Fairness Runs"
+          },
+          {
+            "tag": "h2",
+            "text": "Recent Audit Logs"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 121,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Dashboard",
+          "ariaLabel": null,
+          "width": 92,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Work Simulations",
+          "ariaLabel": null,
+          "width": 132,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Cases",
+          "ariaLabel": null,
+          "width": 61,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Review Queue",
+          "ariaLabel": null,
+          "width": 111,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Governance",
+          "ariaLabel": null,
+          "width": 99,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(15, 23, 42, 0.08) 0px 12px 24px 0px"
+        },
+        {
+          "tag": "a",
+          "text": "Pilot Runs",
+          "ariaLabel": null,
+          "width": 87,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Run TTL Purge Dry-Run",
+          "ariaLabel": null,
+          "width": 184,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "pilots": {
+      "axe": [],
+      "metrics": {
+        "title": "Moonshot",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 8,
+        "smallTouchTargetCount": 6,
+        "smallTouchTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "ariaLabel": null,
+            "width": 92,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Work Simulations",
+            "ariaLabel": null,
+            "width": 132,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Cases",
+            "ariaLabel": null,
+            "width": 61,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Review Queue",
+            "ariaLabel": null,
+            "width": 111,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Governance",
+            "ariaLabel": null,
+            "width": 99,
+            "height": 36
+          },
+          {
+            "tag": "a",
+            "text": "Pilot Runs",
+            "ariaLabel": null,
+            "width": 87,
+            "height": 36
+          }
+        ],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Pilot Runs"
+          },
+          {
+            "tag": "h2",
+            "text": "JDA Integration Runner"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 121,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Dashboard",
+          "ariaLabel": null,
+          "width": 92,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Work Simulations",
+          "ariaLabel": null,
+          "width": 132,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Cases",
+          "ariaLabel": null,
+          "width": 61,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Review Queue",
+          "ariaLabel": null,
+          "width": 111,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Governance",
+          "ariaLabel": null,
+          "width": 99,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Pilot Runs",
+          "ariaLabel": null,
+          "width": 87,
+          "height": 36,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(15, 23, 42, 0.08) 0px 12px 24px 0px"
+        },
+        {
+          "tag": "button",
+          "text": "Run JDA Flow",
+          "ariaLabel": null,
+          "width": 116,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "special": {
+      "report": {
+        "url": "http://localhost:3000/reports/1779022f-2a97-4048-94b9-a3fa18d59e56",
+        "axe": [],
+        "metrics": {
+          "title": "Employer Review Report",
+          "width": 1440,
+          "scrollWidth": 1440,
+          "hasHorizontalOverflow": false,
+          "interactiveCount": 21,
+          "smallTouchTargetCount": 12,
+          "smallTouchTargets": [
+            {
+              "tag": "a",
+              "text": "Dashboard",
+              "ariaLabel": null,
+              "width": 92,
+              "height": 36
+            },
+            {
+              "tag": "a",
+              "text": "Work Simulations",
+              "ariaLabel": null,
+              "width": 132,
+              "height": 36
+            },
+            {
+              "tag": "a",
+              "text": "Cases",
+              "ariaLabel": null,
+              "width": 61,
+              "height": 36
+            },
+            {
+              "tag": "a",
+              "text": "Review Queue",
+              "ariaLabel": null,
+              "width": 111,
+              "height": 36
+            },
+            {
+              "tag": "a",
+              "text": "Governance",
+              "ariaLabel": null,
+              "width": 99,
+              "height": 36
+            },
+            {
+              "tag": "a",
+              "text": "Pilot Runs",
+              "ariaLabel": null,
+              "width": 87,
+              "height": 36
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 240,
+              "height": 32
+            },
+            {
+              "tag": "button",
+              "text": "Generate Deep Analysis",
+              "ariaLabel": null,
+              "width": 162,
+              "height": 32
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 577,
+              "height": 36
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 577,
+              "height": 36
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 577,
+              "height": 36
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 577,
+              "height": 36
+            }
+          ],
+          "headings": [
+            {
+              "tag": "h1",
+              "text": "Employer Review Report"
+            },
+            {
+              "tag": "h2",
+              "text": "Report Summary"
+            },
+            {
+              "tag": "h2",
+              "text": "Why this score is credible"
+            },
+            {
+              "tag": "h2",
+              "text": "Approach Narrative"
+            },
+            {
+              "tag": "h2",
+              "text": "Governance Trace"
+            },
+            {
+              "tag": "h2",
+              "text": "Overall Score"
+            },
+            {
+              "tag": "h2",
+              "text": "Smart Summary"
+            },
+            {
+              "tag": "h2",
+              "text": "Dimension Radar"
+            },
+            {
+              "tag": "h2",
+              "text": "Dimension Scores"
+            },
+            {
+              "tag": "h2",
+              "text": "Co-Design Alignment Scorecard"
+            },
+            {
+              "tag": "h2",
+              "text": "AI Analysis"
+            },
+            {
+              "tag": "h2",
+              "text": "Human Notes & Override"
+            }
+          ]
+        },
+        "focus": [
+          {
+            "tag": "a",
+            "text": "MMoonshotOps room",
+            "ariaLabel": null,
+            "width": 121,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "ariaLabel": null,
+            "width": 92,
+            "height": 36,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "a",
+            "text": "Work Simulations",
+            "ariaLabel": null,
+            "width": 132,
+            "height": 36,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "a",
+            "text": "Cases",
+            "ariaLabel": null,
+            "width": 61,
+            "height": 36,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "a",
+            "text": "Review Queue",
+            "ariaLabel": null,
+            "width": 111,
+            "height": 36,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "a",
+            "text": "Governance",
+            "ariaLabel": null,
+            "width": 99,
+            "height": 36,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "a",
+            "text": "Pilot Runs",
+            "ariaLabel": null,
+            "width": 87,
+            "height": 36,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "div",
+            "text": "OverviewOutputIntegrityProvenance",
+            "ariaLabel": "Report sections",
+            "width": 1216,
+            "height": 56,
+            "outlineStyle": "solid",
+            "outlineWidth": "2px",
+            "boxShadow": "none"
+          }
+        ]
+      },
+      "preflight": {
+        "url": "http://localhost:3000/session/1779022f-2a97-4048-94b9-a3fa18d59e56",
+        "axe": [],
+        "metrics": {
+          "title": "Moonshot",
+          "width": 1440,
+          "scrollWidth": 1440,
+          "hasHorizontalOverflow": false,
+          "interactiveCount": 7,
+          "smallTouchTargetCount": 6,
+          "smallTouchTargets": [
+            {
+              "tag": "span",
+              "text": "",
+              "ariaLabel": null,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 1,
+              "height": 1
+            },
+            {
+              "tag": "span",
+              "text": "",
+              "ariaLabel": null,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 1,
+              "height": 1
+            },
+            {
+              "tag": "span",
+              "text": "",
+              "ariaLabel": null,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "headings": [
+            {
+              "tag": "h1",
+              "text": "Assessment Preflight"
+            }
+          ]
+        },
+        "focus": [
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "nextjs-portal",
+            "text": "",
+            "ariaLabel": null,
+            "width": 0,
+            "height": 0,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "body",
+            "text": "AssessmentAssessment PreflightConfirm the session rules and your setup before the assessme",
+            "ariaLabel": null,
+            "width": 1440,
+            "height": 1100,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.54499 -0.0632824 -0.173825 / 0.00366656) 0px 0px 0px 0.0219993px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          }
+        ]
+      },
+      "workspace": {
+        "url": "http://localhost:3000/session/1779022f-2a97-4048-94b9-a3fa18d59e56",
+        "axe": [],
+        "metrics": {
+          "title": "Moonshot",
+          "width": 1440,
+          "scrollWidth": 1440,
+          "hasHorizontalOverflow": false,
+          "interactiveCount": 15,
+          "smallTouchTargetCount": 13,
+          "smallTouchTargets": [
+            {
+              "tag": "button",
+              "text": "Submit",
+              "ariaLabel": null,
+              "width": 79,
+              "height": 32
+            },
+            {
+              "tag": "button",
+              "text": "Assessment Rules",
+              "ariaLabel": null,
+              "width": 256,
+              "height": 32
+            },
+            {
+              "tag": "div",
+              "text": "",
+              "ariaLabel": null,
+              "width": 1,
+              "height": 755
+            },
+            {
+              "tag": "div",
+              "text": "DataSQLAnalysisDashboardOralReport",
+              "ariaLabel": "Workspace tools",
+              "width": 767,
+              "height": 36
+            },
+            {
+              "tag": "button",
+              "text": "Data",
+              "ariaLabel": null,
+              "width": 123,
+              "height": 32
+            },
+            {
+              "tag": "button",
+              "text": "SQL",
+              "ariaLabel": null,
+              "width": 123,
+              "height": 32
+            },
+            {
+              "tag": "button",
+              "text": "Analysis",
+              "ariaLabel": null,
+              "width": 123,
+              "height": 32
+            },
+            {
+              "tag": "button",
+              "text": "Dashboard",
+              "ariaLabel": null,
+              "width": 123,
+              "height": 32
+            },
+            {
+              "tag": "button",
+              "text": "Oral",
+              "ariaLabel": null,
+              "width": 123,
+              "height": 32
+            },
+            {
+              "tag": "button",
+              "text": "Report",
+              "ariaLabel": null,
+              "width": 123,
+              "height": 32
+            },
+            {
+              "tag": "div",
+              "text": "",
+              "ariaLabel": null,
+              "width": 1,
+              "height": 755
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 295,
+              "height": 32
+            }
+          ],
+          "headings": [
+            {
+              "tag": "h1",
+              "text": "Assessment workspace"
+            },
+            {
+              "tag": "h2",
+              "text": "Current Round"
+            },
+            {
+              "tag": "h2",
+              "text": "Task"
+            },
+            {
+              "tag": "h2",
+              "text": "Coach"
+            }
+          ]
+        },
+        "focus": [
+          {
+            "tag": "input",
+            "text": "",
+            "ariaLabel": null,
+            "width": 295,
+            "height": 32,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.54499 -0.0632824 -0.173825 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "nextjs-portal",
+            "text": "",
+            "ariaLabel": null,
+            "width": 0,
+            "height": 0,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "body",
+            "text": "MMoonshotActiveAssessmentSubmitAssessment workspaceAssessment RulesCurrent RoundRound 1 - ",
+            "ariaLabel": null,
+            "width": 1440,
+            "height": 1100,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "button",
+            "text": "Submit",
+            "ariaLabel": null,
+            "width": 79,
+            "height": 32,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "button",
+            "text": "Assessment Rules",
+            "ariaLabel": null,
+            "width": 256,
+            "height": 32,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "textarea",
+            "text": "",
+            "ariaLabel": null,
+            "width": 256,
+            "height": 150,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.54499 -0.0632824 -0.173825 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "div",
+            "text": "",
+            "ariaLabel": null,
+            "width": 1,
+            "height": 755,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, lab(45.9874 0.682712 -61.6565) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "div",
+            "text": "DataSQLAnalysisDashboardOralReport",
+            "ariaLabel": "Workspace tools",
+            "width": 767,
+            "height": 36,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "button",
+            "text": "Data",
+            "ariaLabel": null,
+            "width": 123,
+            "height": 32,
+            "outlineStyle": "solid",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "div",
+            "text": "No datasets available",
+            "ariaLabel": null,
+            "width": 791,
+            "height": 703,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          }
+        ]
+      }
+    }
+  },
+  "mobile": {
+    "demo": {
+      "axe": [],
+      "metrics": {
+        "title": "Work Simulation Demo",
+        "width": 390,
+        "scrollWidth": 390,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 13,
+        "smallTouchTargetCount": 0,
+        "smallTouchTargets": [],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Work simulation demo"
+          },
+          {
+            "tag": "h2",
+            "text": "Turn one KPI anomaly into a decision-ready recommendation with a visible work trace."
+          },
+          {
+            "tag": "h3",
+            "text": "Turn one KPI anomaly into a decision-ready recommendation with a visible work trace."
+          },
+          {
+            "tag": "h3",
+            "text": "KPI Discrepancy Investigation"
+          },
+          {
+            "tag": "h3",
+            "text": "SQL Data Quality Triage"
+          },
+          {
+            "tag": "h3",
+            "text": "Stakeholder Ambiguity Handling"
+          },
+          {
+            "tag": "h3",
+            "text": "RevOps Forecast Variance Review"
+          },
+          {
+            "tag": "h3",
+            "text": "Ops Capacity Escalation Simulation"
+          },
+          {
+            "tag": "h3",
+            "text": "Customer Support Escalation Judgment"
+          },
+          {
+            "tag": "h3",
+            "text": "Marketplace Growth Strategy Simulation"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Hybrid fixture path",
+          "ariaLabel": null,
+          "width": 145,
+          "height": 44,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "tag": "button",
+          "text": "Fully live mode",
+          "ariaLabel": null,
+          "width": 119,
+          "height": 44,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "tag": "button",
+          "text": "Start flagship demo",
+          "ariaLabel": null,
+          "width": 274,
+          "height": 48,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+        },
+        {
+          "tag": "div",
+          "text": "Simulation GalleryCo-DesignBuildEvaluation SetupCandidate Work TraceEvaluation + Governanc",
+          "ariaLabel": "Demo phase progress",
+          "width": 316,
+          "height": 44,
+          "outlineStyle": "solid",
+          "outlineWidth": "2px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Data Analyst Work SimulationFlagship analyst storyKPI Discrepancy InvestigationTurn one KP",
+          "ariaLabel": null,
+          "width": 316,
+          "height": 806,
+          "outlineStyle": "auto",
+          "outlineWidth": "0px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(37, 99, 235, 0.12) 0px 20px 40px 0px"
+        },
+        {
+          "tag": "button",
+          "text": "Junior Data Analyst Work SimulationAdditional simulationSQL Data Quality TriageData qualit",
+          "ariaLabel": null,
+          "width": 316,
+          "height": 789,
+          "outlineStyle": "auto",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Junior Data Analyst Work SimulationAdditional simulationStakeholder Ambiguity HandlingStak",
+          "ariaLabel": null,
+          "width": 316,
+          "height": 837,
+          "outlineStyle": "auto",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "RevOps / Business Analyst Work SimulationAdditional simulationRevOps Forecast Variance Rev",
+          "ariaLabel": null,
+          "width": 316,
+          "height": 784,
+          "outlineStyle": "auto",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "dashboard": {
+      "axe": [],
+      "metrics": {
+        "title": "Moonshot",
+        "width": 390,
+        "scrollWidth": 390,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 23,
+        "smallTouchTargetCount": 0,
+        "smallTouchTargets": [],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Dashboard"
+          },
+          {
+            "tag": "h2",
+            "text": "Recent Sessions"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Demo Console",
+          "ariaLabel": null,
+          "width": 187,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Report",
+          "ariaLabel": null,
+          "width": 107,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Candidate Session",
+          "ariaLabel": null,
+          "width": 174,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Report",
+          "ariaLabel": null,
+          "width": 107,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Candidate Session",
+          "ariaLabel": null,
+          "width": 174,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Report",
+          "ariaLabel": null,
+          "width": 107,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Candidate Session",
+          "ariaLabel": null,
+          "width": 174,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "Open Report",
+          "ariaLabel": null,
+          "width": 107,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "cases": {
+      "axe": [],
+      "metrics": {
+        "title": "Cases",
+        "width": 390,
+        "scrollWidth": 390,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 54,
+        "smallTouchTargetCount": 0,
+        "smallTouchTargets": [],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Cases"
+          },
+          {
+            "tag": "h2",
+            "text": "Work Simulation Templates"
+          },
+          {
+            "tag": "h2",
+            "text": "Create Case"
+          },
+          {
+            "tag": "h2",
+            "text": "Cases"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "div",
+          "text": "Data AnalystKPI Discrepancy InvestigationsqlanalyticsinvestigationJunior Data AnalystSQL D",
+          "ariaLabel": "Work simulation templates",
+          "width": 308,
+          "height": 106,
+          "outlineStyle": "solid",
+          "outlineWidth": "2px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Data AnalystKPI Discrepancy Investigationsqlanalyticsinvestigation",
+          "ariaLabel": null,
+          "width": 220,
+          "height": 98,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Junior Data AnalystSQL Data Quality Triagesqldashboardqa",
+          "ariaLabel": null,
+          "width": 220,
+          "height": 98,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Junior Data AnalystStakeholder Ambiguity Handlingcommunicationassumptionsescalation",
+          "ariaLabel": null,
+          "width": 283,
+          "height": 98,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "RevOps / Business AnalystRevOps Forecast Variance Reviewspreadsheetbislidesroot_causeforec",
+          "ariaLabel": null,
+          "width": 349,
+          "height": 98,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Support Operations / Operations ManagerOps Capacity Escalation Simulationspreadsheetbislid",
+          "ariaLabel": null,
+          "width": 375,
+          "height": 98,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Customer SupportCustomer Support Escalation Judgmentpolicyescalationwritingprioritization",
+          "ariaLabel": null,
+          "width": 295,
+          "height": 98,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Strategy / Senior AnalystMarketplace Growth Strategy Simulationsqlpythonexperimentationsto",
+          "ariaLabel": null,
+          "width": 338,
+          "height": 98,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "review_queue": {
+      "axe": [],
+      "metrics": {
+        "title": "Review Queue",
+        "width": 390,
+        "scrollWidth": 390,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 2,
+        "smallTouchTargetCount": 0,
+        "smallTouchTargets": [],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Review Queue"
+          },
+          {
+            "tag": "h2",
+            "text": "Open Review Items"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "nextjs-portal",
+          "text": "",
+          "ariaLabel": null,
+          "width": 0,
+          "height": 0,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "body",
+          "text": "MMoonshotOps roomDashboardWork SimulationsCasesReview QueueGovernancePilot RunsReadyReadyA",
+          "ariaLabel": null,
+          "width": 390,
+          "height": 845,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "nextjs-portal",
+          "text": "",
+          "ariaLabel": null,
+          "width": 0,
+          "height": 0,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "body",
+          "text": "MMoonshotOps roomDashboardWork SimulationsCasesReview QueueGovernancePilot RunsReadyReadyA",
+          "ariaLabel": null,
+          "width": 390,
+          "height": 845,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "governance": {
+      "axe": [],
+      "metrics": {
+        "title": "Governance",
+        "width": 390,
+        "scrollWidth": 390,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 3,
+        "smallTouchTargetCount": 0,
+        "smallTouchTargets": [],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Governance"
+          },
+          {
+            "tag": "h2",
+            "text": "Policy & Audit Integrity"
+          },
+          {
+            "tag": "h2",
+            "text": "Red-Team Runs"
+          },
+          {
+            "tag": "h2",
+            "text": "Fairness Runs"
+          },
+          {
+            "tag": "h2",
+            "text": "Recent Audit Logs"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Run TTL Purge Dry-Run",
+          "ariaLabel": null,
+          "width": 184,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "nextjs-portal",
+          "text": "",
+          "ariaLabel": null,
+          "width": 0,
+          "height": 0,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "body",
+          "text": "MMoonshotOps roomDashboardWork SimulationsCasesReview QueueGovernancePilot RunsReadyReadyA",
+          "ariaLabel": null,
+          "width": 390,
+          "height": 2339,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Run TTL Purge Dry-Run",
+          "ariaLabel": null,
+          "width": 184,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "nextjs-portal",
+          "text": "",
+          "ariaLabel": null,
+          "width": 0,
+          "height": 0,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "body",
+          "text": "MMoonshotOps roomDashboardWork SimulationsCasesReview QueueGovernancePilot RunsReadyReadyA",
+          "ariaLabel": null,
+          "width": 390,
+          "height": 2339,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "pilots": {
+      "axe": [],
+      "metrics": {
+        "title": "Moonshot",
+        "width": 390,
+        "scrollWidth": 390,
+        "hasHorizontalOverflow": false,
+        "interactiveCount": 3,
+        "smallTouchTargetCount": 0,
+        "smallTouchTargets": [],
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "Pilot Runs"
+          },
+          {
+            "tag": "h2",
+            "text": "JDA Integration Runner"
+          }
+        ]
+      },
+      "focus": [
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Run JDA Flow",
+          "ariaLabel": null,
+          "width": 116,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "nextjs-portal",
+          "text": "",
+          "ariaLabel": null,
+          "width": 0,
+          "height": 0,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "body",
+          "text": "MMoonshotOps roomDashboardWork SimulationsCasesReview QueueGovernancePilot RunsReadyReadyA",
+          "ariaLabel": null,
+          "width": 390,
+          "height": 845,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "a",
+          "text": "MMoonshotOps room",
+          "ariaLabel": null,
+          "width": 113,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "ariaLabel": "Open navigation menu",
+          "width": 44,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "button",
+          "text": "Run JDA Flow",
+          "ariaLabel": null,
+          "width": 116,
+          "height": 44,
+          "outlineStyle": "auto",
+          "outlineWidth": "1px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "nextjs-portal",
+          "text": "",
+          "ariaLabel": null,
+          "width": 0,
+          "height": 0,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "body",
+          "text": "MMoonshotOps roomDashboardWork SimulationsCasesReview QueueGovernancePilot RunsReadyReadyA",
+          "ariaLabel": null,
+          "width": 390,
+          "height": 845,
+          "outlineStyle": "none",
+          "outlineWidth": "0px",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "special": {
+      "report": {
+        "url": "http://localhost:3000/reports/1779022f-2a97-4048-94b9-a3fa18d59e56",
+        "axe": [],
+        "metrics": {
+          "title": "Employer Review Report",
+          "width": 390,
+          "scrollWidth": 390,
+          "hasHorizontalOverflow": false,
+          "interactiveCount": 16,
+          "smallTouchTargetCount": 2,
+          "smallTouchTargets": [
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 240,
+              "height": 32
+            },
+            {
+              "tag": "button",
+              "text": "Generate Deep Analysis",
+              "ariaLabel": null,
+              "width": 162,
+              "height": 32
+            }
+          ],
+          "headings": [
+            {
+              "tag": "h1",
+              "text": "Employer Review Report"
+            },
+            {
+              "tag": "h2",
+              "text": "Report Summary"
+            },
+            {
+              "tag": "h2",
+              "text": "Why this score is credible"
+            },
+            {
+              "tag": "h2",
+              "text": "Approach Narrative"
+            },
+            {
+              "tag": "h2",
+              "text": "Governance Trace"
+            },
+            {
+              "tag": "h2",
+              "text": "Overall Score"
+            },
+            {
+              "tag": "h2",
+              "text": "Smart Summary"
+            },
+            {
+              "tag": "h2",
+              "text": "Dimension Radar"
+            },
+            {
+              "tag": "h2",
+              "text": "Dimension Scores"
+            },
+            {
+              "tag": "h2",
+              "text": "Co-Design Alignment Scorecard"
+            },
+            {
+              "tag": "h2",
+              "text": "AI Analysis"
+            },
+            {
+              "tag": "h2",
+              "text": "Human Notes & Override"
+            }
+          ]
+        },
+        "focus": [
+          {
+            "tag": "a",
+            "text": "MMoonshotOps room",
+            "ariaLabel": null,
+            "width": 113,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "ariaLabel": "Open navigation menu",
+            "width": 44,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "div",
+            "text": "OverviewOutputIntegrityProvenance",
+            "ariaLabel": "Report sections",
+            "width": 358,
+            "height": 56,
+            "outlineStyle": "solid",
+            "outlineWidth": "2px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "button",
+            "text": "Overview",
+            "ariaLabel": null,
+            "width": 91,
+            "height": 44,
+            "outlineStyle": "solid",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "div",
+            "text": "Report SummaryStandardStatusscoredConfidence87%Final Confidence87%TemplateKPI Discrepancy ",
+            "ariaLabel": null,
+            "width": 358,
+            "height": 5238,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "ariaLabel": null,
+            "width": 240,
+            "height": 32,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.54499 -0.0632824 -0.173825 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "button",
+            "text": "Generate Deep Analysis",
+            "ariaLabel": null,
+            "width": 162,
+            "height": 32,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "textarea",
+            "text": "",
+            "ariaLabel": null,
+            "width": 308,
+            "height": 120,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.54499 -0.0632824 -0.173825 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "ariaLabel": null,
+            "width": 308,
+            "height": 44,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.54499 -0.0632824 -0.173825 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "ariaLabel": null,
+            "width": 308,
+            "height": 44,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.54499 -0.0632824 -0.173825 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          }
+        ]
+      },
+      "preflight": {
+        "url": "http://localhost:3000/session/1779022f-2a97-4048-94b9-a3fa18d59e56",
+        "axe": [],
+        "metrics": {
+          "title": "Moonshot",
+          "width": 390,
+          "scrollWidth": 390,
+          "hasHorizontalOverflow": false,
+          "interactiveCount": 7,
+          "smallTouchTargetCount": 6,
+          "smallTouchTargets": [
+            {
+              "tag": "span",
+              "text": "",
+              "ariaLabel": null,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 1,
+              "height": 1
+            },
+            {
+              "tag": "span",
+              "text": "",
+              "ariaLabel": null,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 1,
+              "height": 1
+            },
+            {
+              "tag": "span",
+              "text": "",
+              "ariaLabel": null,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "ariaLabel": null,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "headings": [
+            {
+              "tag": "h1",
+              "text": "Assessment Preflight"
+            }
+          ]
+        },
+        "focus": [
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "nextjs-portal",
+            "text": "",
+            "ariaLabel": null,
+            "width": 0,
+            "height": 0,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "body",
+            "text": "AssessmentAssessment PreflightConfirm the session rules and your setup before the assessme",
+            "ariaLabel": null,
+            "width": 390,
+            "height": 844,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "span",
+            "text": "",
+            "ariaLabel": null,
+            "width": 20,
+            "height": 20,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "nextjs-portal",
+            "text": "",
+            "ariaLabel": null,
+            "width": 0,
+            "height": 0,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "body",
+            "text": "AssessmentAssessment PreflightConfirm the session rules and your setup before the assessme",
+            "ariaLabel": null,
+            "width": 390,
+            "height": 844,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          }
+        ]
+      },
+      "workspace": {
+        "url": "http://localhost:3000/session/1779022f-2a97-4048-94b9-a3fa18d59e56",
+        "axe": [],
+        "metrics": {
+          "title": "Moonshot",
+          "width": 390,
+          "scrollWidth": 390,
+          "hasHorizontalOverflow": false,
+          "interactiveCount": 6,
+          "smallTouchTargetCount": 0,
+          "smallTouchTargets": [],
+          "headings": [
+            {
+              "tag": "h1",
+              "text": "Assessment workspace"
+            },
+            {
+              "tag": "h2",
+              "text": "Current Round"
+            },
+            {
+              "tag": "h2",
+              "text": "Task"
+            },
+            {
+              "tag": "h2",
+              "text": "Coach"
+            }
+          ]
+        },
+        "focus": [
+          {
+            "tag": "button",
+            "text": "Submit",
+            "ariaLabel": null,
+            "width": 79,
+            "height": 44,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "button",
+            "text": "Task",
+            "ariaLabel": null,
+            "width": 114,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(37, 99, 235, 0.18) 0px 12px 24px 0px"
+          },
+          {
+            "tag": "button",
+            "text": "Work",
+            "ariaLabel": null,
+            "width": 114,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "button",
+            "text": "Coach",
+            "ariaLabel": null,
+            "width": 114,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "button",
+            "text": "Assessment Rules",
+            "ariaLabel": null,
+            "width": 358,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "textarea",
+            "text": "",
+            "ariaLabel": null,
+            "width": 358,
+            "height": 150,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.54499 -0.0632824 -0.173825 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "nextjs-portal",
+            "text": "",
+            "ariaLabel": null,
+            "width": 0,
+            "height": 0,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "body",
+            "text": "MMoonshotActiveAssessmentSubmitAssessment workspaceAssessment workspaceTaskWorkCoachAssess",
+            "ariaLabel": null,
+            "width": 390,
+            "height": 855,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "button",
+            "text": "Submit",
+            "ariaLabel": null,
+            "width": 79,
+            "height": 44,
+            "outlineStyle": "none",
+            "outlineWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+          },
+          {
+            "tag": "button",
+            "text": "Task",
+            "ariaLabel": null,
+            "width": 114,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(37, 99, 235, 0.18) 0px 12px 24px 0px"
+          },
+          {
+            "tag": "button",
+            "text": "Work",
+            "ariaLabel": null,
+            "width": 114,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          },
+          {
+            "tag": "button",
+            "text": "Coach",
+            "ariaLabel": null,
+            "width": 114,
+            "height": 44,
+            "outlineStyle": "auto",
+            "outlineWidth": "1px",
+            "boxShadow": "none"
+          }
+        ]
+      }
+    }
+  }
+}

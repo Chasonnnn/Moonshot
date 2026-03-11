@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useSession } from "@/components/candidate/session-context"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { SessionMode } from "@/lib/moonshot/types"
 
@@ -61,34 +61,37 @@ export function SessionPreflight({ onReady }: { onReady: () => void }) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F5F5F7] p-6">
-      <Card className="w-full max-w-lg">
+    <main className="flex min-h-screen items-center justify-center bg-[var(--ops-page-bg,#f5f5f7)] px-4 py-6 sm:px-6">
+      <Card className="w-full max-w-xl border-[var(--ops-border,#d7e0e4)] bg-[var(--ops-surface,#ffffff)] shadow-[0_24px_56px_rgba(15,23,42,0.08)]">
         <CardHeader className="text-center">
           <Badge
-            className={`mx-auto mb-3 w-fit ${MODE_COLORS[mode]}`}
+            className={`mx-auto mb-3 w-fit rounded-full px-3 py-1 ${MODE_COLORS[mode]}`}
             variant="outline"
           >
             {MODE_LABELS[mode]}
           </Badge>
-          <CardTitle className="text-xl font-semibold text-[#1D1D1F]">
+          <h1 className="text-2xl font-semibold tracking-tight text-[var(--ops-text,#1d1d1f)]">
             Assessment Preflight
-          </CardTitle>
+          </h1>
+          <p className="text-sm text-[var(--ops-text-muted,#64748b)]">
+            Confirm the session rules and your setup before the assessment begins.
+          </p>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <p className="text-[13px] font-medium uppercase tracking-wide text-[#86868B]">
+            <p className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle,#64748b)]">
               Time Limit
             </p>
-            <p className="text-[15px] text-[#1D1D1F]">
+            <p className="text-[15px] text-[var(--ops-text,#1d1d1f)]">
               {timeLimit != null ? `${timeLimit} minutes` : "No time limit"}
             </p>
           </div>
 
           <div className="space-y-2">
-            <p className="text-[13px] font-medium uppercase tracking-wide text-[#86868B]">
+            <p className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle,#64748b)]">
               Rules
             </p>
-            <ul className="list-disc space-y-1 pl-5 text-[15px] text-[#1D1D1F]">
+            <ul className="list-disc space-y-1 pl-5 text-[15px] text-[var(--ops-text,#1d1d1f)]">
               {rules.map((rule) => (
                 <li key={rule}>{rule}</li>
               ))}
@@ -96,34 +99,43 @@ export function SessionPreflight({ onReady }: { onReady: () => void }) {
           </div>
 
           <div className="space-y-2">
-            <p className="text-[13px] font-medium uppercase tracking-wide text-[#86868B]">
+            <p className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle,#64748b)]">
               Data Retention
             </p>
-            <p className="text-[15px] text-[#1D1D1F]">
+            <p className="text-[15px] text-[var(--ops-text,#1d1d1f)]">
               Your session data will be retained for {retentionDays} days.
             </p>
           </div>
 
           <div className="space-y-3">
-            <p className="text-[13px] font-medium uppercase tracking-wide text-[#86868B]">
+            <p className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle,#64748b)]">
               Readiness Checklist
             </p>
             {CHECKLIST_ITEMS.map((label, i) => (
-              <label
+              <div
                 key={label}
-                className="flex cursor-pointer items-center gap-3 text-[15px] text-[#1D1D1F]"
+                className="flex items-start gap-3 rounded-2xl border border-[var(--ops-border,#d7e0e4)] bg-[var(--ops-surface-subtle,#f8fafc)] px-4 py-3"
               >
                 <Checkbox
+                  id={`preflight-check-${i}`}
+                  aria-labelledby={`preflight-check-label-${i}`}
                   checked={checked[i]}
                   onCheckedChange={() => toggleCheck(i)}
+                  className="mt-0.5 size-5 rounded-[8px]"
                 />
-                {label}
-              </label>
+                <label
+                  id={`preflight-check-label-${i}`}
+                  htmlFor={`preflight-check-${i}`}
+                  className="min-w-0 cursor-pointer text-[15px] leading-6 text-[var(--ops-text,#1d1d1f)]"
+                >
+                  {label}
+                </label>
+              </div>
             ))}
           </div>
 
           <Button
-            className="h-10 w-full bg-[#0071E3] text-white hover:bg-[#0077ED]"
+            className="h-11 w-full bg-[var(--ops-accent,#2563eb)] text-white hover:bg-[var(--ops-accent-strong,#1d4ed8)]"
             disabled={!allChecked}
             onClick={onReady}
           >
@@ -131,6 +143,6 @@ export function SessionPreflight({ onReady }: { onReady: () => void }) {
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </main>
   )
 }

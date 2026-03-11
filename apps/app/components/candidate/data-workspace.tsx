@@ -42,8 +42,8 @@ export function DataWorkspace({ datasets }: { datasets: CaseDatasetView[] }) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <Database className="mx-auto h-8 w-8 text-[#86868B]" />
-          <p className="mt-2 text-[13px] text-[#86868B]">No datasets available</p>
+          <Database className="mx-auto h-8 w-8 text-[var(--ops-text-muted)]" />
+          <p className="mt-2 text-[13px] text-[var(--ops-text-muted)]">No datasets available</p>
         </div>
       </div>
     )
@@ -73,29 +73,29 @@ function DatasetCard({ dataset }: { dataset: CaseDatasetView }) {
             {dataset.row_count} rows
           </Badge>
         </div>
-        <p className="mt-1 text-[13px] text-[#86868B]">
+        <p className="mt-1 text-[13px] text-[var(--ops-text-muted)]">
           {dataset.description}
         </p>
       </div>
 
       <div>
-        <h4 className="text-[12px] font-medium uppercase tracking-wide text-[#86868B]">
+        <h4 className="text-[12px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
           Schema
         </h4>
         <div className="mt-2 space-y-1">
           {dataset.schema.columns.map((col) => (
             <Collapsible key={col.name}>
               <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-[12px] hover:bg-[#F5F5F7]">
-                <ChevronRight className="h-3 w-3 text-[#86868B] transition-transform [[data-state=open]_&]:rotate-90" />
+                <ChevronRight className="h-3 w-3 text-[var(--ops-text-muted)] transition-transform [[data-state=open]_&]:rotate-90" />
                 <span className="font-mono text-[#1D1D1F]">{col.name}</span>
                 <Badge variant="outline" className="text-[10px]">
                   {col.dtype}
                 </Badge>
               </CollapsibleTrigger>
               <CollapsibleContent className="pl-7">
-                <p className="text-[11px] text-[#86868B]">{col.description}</p>
+                <p className="text-[11px] text-[var(--ops-text-muted)]">{col.description}</p>
                 {col.sample_values.length > 0 && (
-                  <p className="mt-0.5 text-[11px] text-[#86868B]">
+                  <p className="mt-0.5 text-[11px] text-[var(--ops-text-muted)]">
                     Sample: {col.sample_values.join(", ")}
                   </p>
                 )}
@@ -107,7 +107,7 @@ function DatasetCard({ dataset }: { dataset: CaseDatasetView }) {
 
       {dataset.preview_rows.length > 0 && (
         <div>
-          <h4 className="text-[12px] font-medium uppercase tracking-wide text-[#86868B]">
+          <h4 className="text-[12px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
             Preview
           </h4>
           <div className="mt-2 overflow-x-auto rounded-lg border border-[#D2D2D7]">
@@ -125,8 +125,13 @@ function DatasetCard({ dataset }: { dataset: CaseDatasetView }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dataset.preview_rows.map((row, i) => (
-                  <TableRow key={i}>
+                {dataset.preview_rows.map((row) => {
+                  const rowKey = dataset.schema.columns
+                    .map((col) => String(row[col.name] ?? ""))
+                    .join("|")
+
+                  return (
+                    <TableRow key={`${dataset.id}-${rowKey}`}>
                     {dataset.schema.columns.map((col) => (
                       <TableCell
                         key={col.name}
@@ -135,8 +140,9 @@ function DatasetCard({ dataset }: { dataset: CaseDatasetView }) {
                         {String(row[col.name] ?? "")}
                       </TableCell>
                     ))}
-                  </TableRow>
-                ))}
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>

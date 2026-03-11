@@ -39,26 +39,26 @@ export function ReviewQueueConsole({ snapshot }: { snapshot: ReviewQueueSnapshot
 
   if (snapshot.error) {
     return (
-      <section className="rounded-2xl border border-[#FF9F0A] bg-white p-6 shadow-sm">
-        <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Review Queue Unavailable</h2>
-        <p className="mt-2 text-[13px] text-[#6E6E73]">{snapshot.error}</p>
+      <section className="ops-surface p-6">
+        <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Review Queue Unavailable</h2>
+        <p className="mt-2 text-[13px] text-[var(--ops-text-muted)]">{snapshot.error}</p>
       </section>
     )
   }
 
   return (
-    <section className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-      <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Open Review Items</h2>
+    <section className="ops-surface p-6">
+      <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Open Review Items</h2>
       <div className="mt-4 space-y-3">
         {snapshot.items.map((item) => (
-          <div key={item.session_id} className="rounded-xl border border-[#E5E5EA] px-4 py-3">
-            <p className="text-[13px] font-medium text-[#1D1D1F]">
+          <div key={item.session_id} className="ops-surface-soft px-4 py-4">
+            <p className="text-[13px] font-medium text-[var(--ops-text)]">
               Session <code className="font-mono text-[12px]">{item.session_id.slice(0, 8)}</code>
             </p>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="text-[11px]">{item.status}</Badge>
-              <span className="text-[12px] text-[#6E6E73]">Reason: {item.reason}</span>
-              <span className="text-[12px] text-[#6E6E73]">Created by: {item.created_by}</span>
+              <span className="text-[12px] text-[var(--ops-text-subtle)]">Reason: {item.reason}</span>
+              <span className="text-[12px] text-[var(--ops-text-subtle)]">Created by: {item.created_by}</span>
             </div>
             <ResolveForm
               sessionId={item.session_id}
@@ -104,7 +104,7 @@ function ResolveForm({
           if (value) setDecision(value)
         }}
       >
-        <SelectTrigger aria-label="Decision" className="h-8 min-w-[130px] rounded-lg px-2 text-[12px]">
+        <SelectTrigger aria-label="Decision" className="min-h-11 min-w-[130px] rounded-2xl border-[var(--ops-border-strong)] bg-white px-3 text-[12px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -117,12 +117,12 @@ function ResolveForm({
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="Reviewer note"
-        className="h-8 max-w-[220px] rounded-lg text-[12px]"
+        className="min-h-11 max-w-[240px] rounded-2xl border-[var(--ops-border-strong)] bg-white text-[12px]"
       />
       <AlertDialog>
         <AlertDialogTrigger
           disabled={isPending}
-          render={<Button size="sm" className="text-[12px]" />}
+          render={<Button size="default" className="min-h-11 px-4 text-[12px]" />}
         >
           {isPending ? "Resolving..." : "Resolve"}
         </AlertDialogTrigger>

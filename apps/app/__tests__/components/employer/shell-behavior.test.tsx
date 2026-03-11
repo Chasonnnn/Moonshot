@@ -37,6 +37,16 @@ describe("EmployerShell behavior", () => {
     expect(screen.queryByText(/Processing/)).not.toBeInTheDocument()
   })
 
+  it("wraps employer content in a main landmark", () => {
+    render(
+      <EmployerShell>
+        <div>content</div>
+      </EmployerShell>,
+    )
+
+    expect(screen.getByRole("main")).toContainElement(screen.getByText("content"))
+  })
+
   it("marks parent nav item active for child routes", () => {
     mockedPathname = "/cases/case-123"
 
@@ -46,7 +56,7 @@ describe("EmployerShell behavior", () => {
       </EmployerShell>,
     )
 
-    expect(screen.getByRole("link", { name: "Cases" }).className).toContain("bg-[#1D1D1F]")
+    expect(screen.getByRole("link", { name: "Cases" }).className).toContain("bg-[var(--ops-text)]")
   })
 
   it("renders a compact mobile nav toggle and expands the panel on demand", async () => {
@@ -59,6 +69,8 @@ describe("EmployerShell behavior", () => {
     )
 
     const toggle = screen.getByTestId("mobile-nav-toggle")
+    expect(toggle.className).toContain("h-11")
+    expect(toggle.className).toContain("w-11")
     expect(toggle).toHaveAttribute("aria-expanded", "false")
 
     await user.click(toggle)

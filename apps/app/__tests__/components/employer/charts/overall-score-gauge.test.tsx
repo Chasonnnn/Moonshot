@@ -50,4 +50,10 @@ describe("OverallScoreGauge", () => {
 
     expect(screen.getByTestId("radial-bar-chart")).toBeInTheDocument()
   })
+
+  it("hides the chart from assistive tech when the numeric score is already present in text", () => {
+    render(<OverallScoreGauge score={50} confidence={0.6} />)
+
+    expect(screen.getByTestId("responsive-container").closest("[aria-hidden='true']")).toBeInTheDocument()
+  })
 })

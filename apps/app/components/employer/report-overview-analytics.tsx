@@ -31,8 +31,8 @@ export function ReportOverviewAnalytics({
   return (
     <>
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-          <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Overall Score</h2>
+        <div className="ops-surface p-6">
+          <h2 className="mb-3 text-[18px] font-semibold text-[var(--ops-text)]">Overall Score</h2>
           <OverallScoreGauge
             score={displayOverallScore}
             confidence={snapshot.summary?.final_confidence ?? null}
@@ -43,31 +43,31 @@ export function ReportOverviewAnalytics({
 
       {snapshot.evaluation_bundle && snapshot.evaluation_bundle.coDesignAlignment.length > 0 && (
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-            <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Dimension Radar</h2>
+          <div className="ops-surface p-6">
+            <h2 className="mb-3 text-[18px] font-semibold text-[var(--ops-text)]">Dimension Radar</h2>
             <DimensionRadar dimensions={snapshot.evaluation_bundle.coDesignAlignment} />
           </div>
-          <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-            <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Dimension Scores</h2>
+          <div className="ops-surface p-6">
+            <h2 className="mb-3 text-[18px] font-semibold text-[var(--ops-text)]">Dimension Scores</h2>
             <DimensionHeatmap dimensions={snapshot.evaluation_bundle.coDesignAlignment} />
           </div>
         </div>
       )}
 
       {snapshot.evaluation_bundle && snapshot.evaluation_bundle.roundPerformance.length > 0 && (
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-          <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Round-by-Round Performance</h2>
+        <div className="ops-surface p-6">
+          <h2 className="mb-3 text-[18px] font-semibold text-[var(--ops-text)]">Round-by-Round Performance</h2>
           <RoundPerformanceLine rounds={snapshot.evaluation_bundle.roundPerformance} />
         </div>
       )}
 
       {toolChartData.length > 0 && (
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-          <h2 className="mb-3 text-[18px] font-semibold text-[#1D1D1F]">Tool Proficiency</h2>
+        <div className="ops-surface p-6">
+          <h2 className="mb-3 text-[18px] font-semibold text-[var(--ops-text)]">Tool Proficiency</h2>
           <ChartContainer
             className="h-[260px] w-full"
             config={{
-              score: { label: "Score", color: "#0071E3" },
+              score: { label: "Score", color: "var(--ops-accent)" },
             }}
           >
             <BarChart data={toolChartData} margin={{ left: 12, right: 12, top: 8, bottom: 8 }}>
@@ -82,19 +82,19 @@ export function ReportOverviewAnalytics({
       )}
 
       {snapshot.evaluation_bundle && (
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+        <div className="ops-surface p-6">
           <div className="mb-4 flex items-center gap-2">
-            <BrainIcon className="size-5 text-[#6E6E73]" />
-            <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Co-Design Alignment Scorecard</h2>
+            <BrainIcon className="size-5 text-[var(--ops-text-subtle)]" />
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Co-Design Alignment Scorecard</h2>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {snapshot.evaluation_bundle.coDesignAlignment.map((item) => (
-              <div key={item.dimension} className="rounded-lg border border-[#E5E5EA] bg-[#FAFAFB] p-3">
+              <div key={item.dimension} className="ops-surface-soft rounded-2xl p-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[13px] font-semibold text-[#1D1D1F]">{item.dimension}</p>
+                  <p className="text-[13px] font-semibold text-[var(--ops-text)]">{item.dimension}</p>
                   <Badge variant="outline" className="text-[11px]">{item.score}/100</Badge>
                 </div>
-                <p className="mt-1 text-[12px] text-[#6E6E73]">{item.note}</p>
+                <p className="mt-1 text-[12px] text-[var(--ops-text-subtle)]">{item.note}</p>
               </div>
             ))}
           </div>

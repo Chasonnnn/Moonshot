@@ -43,12 +43,12 @@ export function TaskPanel() {
     <ScrollArea className="h-full">
       <div className="space-y-4 p-4">
         <Collapsible>
-          <CollapsibleTrigger className="flex w-full items-center gap-1 text-[13px] font-medium uppercase tracking-wide text-[#86868B] hover:text-[#1D1D1F]">
+          <CollapsibleTrigger className="flex min-h-11 w-full items-center gap-1 rounded-2xl px-3 text-left text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)] transition-colors hover:bg-[var(--ops-surface-subtle,#f8fafc)] hover:text-[var(--ops-text,#1d1d1f)] md:min-h-8 md:px-0">
             <ChevronRight className="h-3.5 w-3.5 transition-transform [[data-panel-open]_&]:rotate-90" />
             Assessment Rules
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-[14px] text-[#1D1D1F]">
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-[14px] text-[var(--ops-text,#1d1d1f)]">
               {rules.map((rule) => (
                 <li key={rule}>{rule}</li>
               ))}
@@ -61,16 +61,16 @@ export function TaskPanel() {
         {currentRound && (
           <>
             <div>
-              <h3 className="text-[13px] font-medium text-[#86868B] uppercase tracking-wide">
+              <h2 className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
                 Current Round
-              </h3>
-              <p className="mt-2 text-[14px] font-medium text-[#1D1D1F]">
+              </h2>
+              <p className="mt-2 text-[14px] font-medium text-[var(--ops-text,#1d1d1f)]">
                 {currentRound.title} ({currentRoundIndex + 1}/{totalRounds})
               </p>
-              <p className="mt-1 text-[13px] leading-relaxed text-[#4D4D52]">
+              <p className="mt-1 text-[13px] leading-relaxed text-[var(--ops-text-muted,#475569)]">
                 {currentRound.objective}
               </p>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px] text-[#1D1D1F]">
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px] text-[var(--ops-text,#1d1d1f)]">
                 {currentRound.deliverables.map((deliverable) => (
                   <li key={deliverable}>{deliverable}</li>
                 ))}
@@ -83,21 +83,21 @@ export function TaskPanel() {
         {parts.length > 0 && (
           <>
             <div>
-              <h3 className="text-[13px] font-medium text-[#86868B] uppercase tracking-wide">
+              <h2 className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
                 Assessment Parts
-              </h3>
+              </h2>
               <div className="mt-2 space-y-1">
                 {parts.map((part, i) => (
                   <button
                     key={part.id}
                     onClick={() => setActivePart(i)}
-                    className={`w-full rounded-md px-3 py-2 text-left text-[13px] transition-colors ${
+                    className={`min-h-11 w-full rounded-2xl px-3 py-3 text-left text-[13px] transition-colors md:min-h-0 md:rounded-md md:py-2 ${
                       i === activePart
-                        ? "bg-[#0071E3]/10 font-medium text-[#0071E3]"
-                        : "text-[#1D1D1F] hover:bg-[#F5F5F7]"
+                        ? "bg-[var(--ops-accent-soft,#eff6ff)] font-medium text-[var(--ops-accent-strong,#1d4ed8)]"
+                        : "text-[var(--ops-text,#1d1d1f)] hover:bg-[var(--ops-surface-subtle,#f8fafc)]"
                     }`}
                   >
-                    <span className="text-[11px] text-[#86868B]">Part {i + 1}</span>
+                    <span className="text-[11px] text-[var(--ops-text-muted)]">Part {i + 1}</span>
                     <br />
                     {part.title}
                   </button>
@@ -105,11 +105,11 @@ export function TaskPanel() {
               </div>
               {parts[activePart] && (
                 <>
-                  <p className="mt-2 text-[13px] leading-relaxed text-[#4D4D52]">
+                  <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text-muted,#475569)]">
                     {parts[activePart].description}
                   </p>
                   {parts[activePart].time_limit_minutes != null && (
-                    <p className={`mt-2 text-[12px] ${isActivePartExpired ? "text-[#FF3B30]" : "text-[#86868B]"}`}>
+                    <p className={`mt-2 text-[12px] ${isActivePartExpired ? "text-[#ef4444]" : "text-[var(--ops-text-subtle,#64748b)]"}`}>
                       Part timer: {formatTimer(activePartRemainingSeconds)}
                     </p>
                   )}
@@ -121,10 +121,10 @@ export function TaskPanel() {
         )}
 
         <div>
-          <h3 className="text-[13px] font-medium text-[#86868B] uppercase tracking-wide">
+          <h2 className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
             Task
-          </h3>
-          <div className="mt-2 text-[15px] leading-relaxed text-[#1D1D1F]">
+          </h2>
+          <div className="mt-2 text-[15px] leading-relaxed text-[var(--ops-text,#1d1d1f)]">
             {session.task_prompt}
           </div>
         </div>
@@ -134,7 +134,7 @@ export function TaskPanel() {
         <div>
           <label
             htmlFor="final-response"
-            className="text-[13px] font-medium text-[#86868B] uppercase tracking-wide"
+            className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]"
           >
             Final Response
           </label>
@@ -147,7 +147,7 @@ export function TaskPanel() {
             className="mt-2 min-h-[150px] text-[14px] leading-relaxed"
             rows={6}
           />
-          <p className="mt-1 text-right text-[11px] text-[#86868B]">
+          <p className="mt-1 text-right text-[11px] text-[var(--ops-text-muted)]">
             {finalResponse.length} characters
           </p>
         </div>

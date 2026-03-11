@@ -12,6 +12,8 @@ export function OverallScoreGauge({ score, confidence }: { score: number; confid
   return (
     <div data-score-tier={tier} className="flex flex-col items-center">
       <ChartContainer
+        aria-hidden="true"
+        role="presentation"
         className="h-[200px] w-[200px]"
         config={{ value: { label: "Score", color: fill } }}
       >
@@ -33,8 +35,8 @@ export function OverallScoreGauge({ score, confidence }: { score: number; confid
         </RadialBarChart>
       </ChartContainer>
       <div className="-mt-16 text-center">
-        <p className="text-[32px] font-bold text-[#1D1D1F]">{score}</p>
-        <p className="text-[12px] text-[#6E6E73]">
+        <p className="text-[32px] font-bold text-[var(--ops-text)]">{score}</p>
+        <p className="text-[12px] text-[var(--ops-text-subtle)]">
           {confidence !== null ? `${Math.round(confidence * 100)}% confidence` : "n/a confidence"}
         </p>
       </div>
