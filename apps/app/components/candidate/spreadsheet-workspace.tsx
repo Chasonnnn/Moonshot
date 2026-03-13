@@ -67,20 +67,19 @@ export function SpreadsheetWorkspace() {
 
   if (!workbook || !sheet) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#F8FAFC] text-[13px] text-[#64748B]">
+      <div className="flex h-full items-center justify-center bg-[var(--ops-surface-muted)] text-[13px] text-[var(--ops-text-subtle)]">
         Spreadsheet view is not configured for this simulation.
       </div>
     )
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#F8FAFC]">
-      <div className="border-b border-[#E2E8F0] bg-white px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2563EB]">Spreadsheet</p>
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full flex-col bg-[var(--ops-surface-muted)]">
+      <div className="border-b border-[var(--ops-border)] bg-white px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-[15px] font-semibold text-[#0F172A]">{workbook.workbookName}</h3>
-            <p className="text-[12px] text-[#475569]">Formula focus: {workbook.formulaSummary.join(" · ")}</p>
+            <h3 className="text-[15px] font-semibold text-[var(--ops-text)]">{workbook.workbookName}</h3>
+            <p className="text-[12px] text-[var(--ops-text-muted)]">{workbook.formulaSummary.join(" · ")}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {workbook.sheets.map((item, index) => (
@@ -89,10 +88,10 @@ export function SpreadsheetWorkspace() {
                 type="button"
                 onClick={() => setActiveSheet(index)}
                 className={[
-                  "rounded-full border px-3 py-1 text-[12px] font-medium",
+                  "min-h-10 rounded-full border px-4 py-2 text-[13px] font-medium md:min-h-8 md:px-3 md:py-1 md:text-[12px]",
                   index === activeSheet
-                    ? "border-[#2563EB] bg-[#DBEAFE] text-[#1D4ED8]"
-                    : "border-[#CBD5E1] bg-white text-[#475569]",
+                    ? "border-[var(--ops-accent)] bg-[var(--ops-accent-soft)] text-[var(--ops-accent-strong)]"
+                    : "border-[var(--ops-border-strong)] bg-white text-[var(--ops-text-muted)]",
                 ].join(" ")}
               >
                 {item.name}
@@ -104,17 +103,17 @@ export function SpreadsheetWorkspace() {
 
       <div className="flex-1 overflow-auto p-4">
         {sheet.note ? (
-          <div className="mb-4 rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3 text-[12px] leading-relaxed text-[#1E3A8A]">
+          <div className="mb-4 rounded-2xl border border-[var(--ops-accent-soft)] bg-[var(--ops-accent-soft)]/40 px-4 py-3 text-[12px] leading-relaxed text-[var(--ops-accent-strong)]">
             {sheet.note}
           </div>
         ) : null}
 
-        <div className="overflow-hidden rounded-[24px] border border-[#D7E0E4] bg-white shadow-sm">
-          <table className="min-w-full border-collapse text-left text-[12px] text-[#0F172A]">
-            <thead className="bg-[#F8FAFC]">
+        <div className="overflow-hidden rounded-2xl border border-[var(--ops-border)] bg-white">
+          <table className="min-w-full border-collapse text-left text-[12px] text-[var(--ops-text)]">
+            <thead className="bg-[var(--ops-surface-muted)]">
               <tr>
                 {sheet.columns.map((column) => (
-                  <th key={column} className="border-b border-[#E2E8F0] px-3 py-2 font-semibold text-[#475569]">
+                  <th key={column} className="border-b border-[var(--ops-border)] px-3 py-2 font-semibold text-[var(--ops-text-muted)]">
                     {column}
                   </th>
                 ))}
@@ -122,7 +121,7 @@ export function SpreadsheetWorkspace() {
             </thead>
             <tbody>
               {sheet.rows.map((row, rowIndex) => (
-                <tr key={`${sheet.name}-${rowIndex}`} className="even:bg-[#FCFDFE]">
+                <tr key={`${sheet.name}-${rowIndex}`} className="even:bg-[var(--ops-surface-muted)]/50">
                   {row.map((value, columnIndex) => {
                     const cellId = `${String.fromCharCode(65 + columnIndex)}${rowIndex + 2}`
                     const isHighlighted = sheet.highlightedCells?.includes(cellId)
@@ -130,12 +129,11 @@ export function SpreadsheetWorkspace() {
                       <td
                         key={cellId}
                         className={[
-                          "border-b border-[#EDF2F7] px-3 py-2 align-top",
-                          isHighlighted ? "bg-[#DCFCE7] font-semibold text-[#166534]" : "",
+                          "border-b border-[var(--ops-border)]/50 px-3 py-2",
+                          isHighlighted ? "bg-[var(--ops-success-soft)] font-semibold text-[var(--ops-success)]" : "",
                         ].join(" ")}
                       >
-                        <div className="text-[10px] uppercase tracking-[0.16em] text-[#94A3B8]">{cellId}</div>
-                        <div className="mt-1">{value}</div>
+                        {value}
                       </td>
                     )
                   })}

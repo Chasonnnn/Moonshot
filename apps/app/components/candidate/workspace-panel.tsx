@@ -13,6 +13,7 @@ import { SlidesWorkspace } from "@/components/candidate/slides-workspace"
 import { OralWorkspace } from "@/components/candidate/oral-workspace"
 import { useSession } from "@/components/candidate/session-context"
 import type { CaseDataset } from "@/lib/moonshot/types"
+import type { DemoDataset } from "@/lib/moonshot/demo-fixtures"
 
 function normalizeDataset(dataset: CaseDataset): CaseDatasetView {
   return {
@@ -27,8 +28,28 @@ function normalizeDataset(dataset: CaseDataset): CaseDatasetView {
   }
 }
 
+function mergeFixtureDatasetMetadata(
+  runtimeDataset: CaseDatasetView,
+  fixtureDataset: DemoDataset | undefined,
+): CaseDatasetView & Partial<DemoDataset> {
+  if (!fixtureDataset) {
+    return runtimeDataset
+  }
+  return {
+    ...runtimeDataset,
+    id: fixtureDataset.id ?? runtimeDataset.id,
+    name: fixtureDataset.name ?? runtimeDataset.name,
+    description: fixtureDataset.description || runtimeDataset.description,
+    row_count: fixtureDataset.row_count ?? runtimeDataset.row_count,
+    schema: fixtureDataset.schema ?? runtimeDataset.schema,
+    preview_rows: runtimeDataset.preview_rows.length > 0 ? runtimeDataset.preview_rows : fixtureDataset.preview_rows,
+    available_from_part_id: fixtureDataset.available_from_part_id,
+    status_label: fixtureDataset.status_label,
+  }
+}
+
 export function WorkspacePanel() {
-  const { api, fixtureData, workspaceAvailability, activeWorkspace, setActiveWorkspace } = useSession()
+  const { api, fixtureData, workspaceAvailability, activeWorkspace, setActiveWorkspace, parts, activePart } = useSession()
   const [runtimeDatasets, setRuntimeDatasets] = useState<CaseDatasetView[]>([])
 
   useEffect(() => {
@@ -77,10 +98,31 @@ export function WorkspacePanel() {
     }
   }, [api])
 
-  const datasets = useMemo(
-    () => (runtimeDatasets.length > 0 ? runtimeDatasets : fixtureData?.datasets ?? []),
-    [fixtureData?.datasets, runtimeDatasets]
-  )
+  const datasets = useMemo(() => {
+    const fixtureDatasets = fixtureData?.datasets ?? []
+    const activePartId = parts[activePart]?.id ?? null
+
+    const enrichedRuntimeDatasets =
+      runtimeDatasets.length > 0
+        ? runtimeDatasets.map((dataset) => {
+            const fixtureDataset =
+              fixtureDatasets.find((item) => item.name === dataset.name) ??
+              fixtureDatasets.find((item) => item.id === dataset.id)
+            return mergeFixtureDatasetMetadata(dataset, fixtureDataset)
+          })
+        : fixtureDatasets
+
+    const hasUnlockedStage = (dataset: Partial<DemoDataset>) => {
+      if (!dataset.available_from_part_id) return true
+      if (!activePartId) return false
+      const activeIndex = parts.findIndex((part) => part.id === activePartId)
+      const unlockIndex = parts.findIndex((part) => part.id === dataset.available_from_part_id)
+      if (unlockIndex < 0 || activeIndex < 0) return true
+      return activeIndex >= unlockIndex
+    }
+
+    return enrichedRuntimeDatasets.filter((dataset) => hasUnlockedStage(dataset))
+  }, [activePart, fixtureData?.datasets, parts, runtimeDatasets])
   const tabs = useMemo(() => {
     const items = [
       { value: "data", label: "Data", content: <DataWorkspace datasets={datasets} /> },
@@ -111,7 +153,7 @@ export function WorkspacePanel() {
       className="flex h-full flex-col"
     >
       <TabsList
-        className="mx-3 mt-2 flex h-auto w-auto max-w-[calc(100%-1.5rem)] gap-1 overflow-x-auto rounded-[22px] border border-[var(--ops-border,#d7e0e4)] bg-[var(--ops-surface-subtle,#f8fafc)] p-1 [scrollbar-width:none]"
+        className="mx-3 mt-2 flex h-11 w-auto max-w-[calc(100%-1.5rem)] items-stretch gap-1 overflow-x-auto rounded-[22px] border border-[var(--ops-border,#d7e0e4)] bg-[var(--ops-surface-subtle,#f8fafc)] p-1 [scrollbar-width:none]"
         tabIndex={0}
         aria-label="Workspace tools"
       >

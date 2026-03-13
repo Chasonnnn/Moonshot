@@ -38,6 +38,8 @@ export function TaskPanel() {
   } = useSession()
   const rules = getModeRules(mode)
   const currentRound = fixtureData?.rounds[currentRoundIndex] ?? null
+  const activeStage = parts[activePart] ?? null
+  const showStageFlow = parts.length > 0
 
   return (
     <ScrollArea className="h-full">
@@ -58,7 +60,7 @@ export function TaskPanel() {
 
         <Separator />
 
-        {currentRound && (
+        {currentRound && !showStageFlow && (
           <>
             <div>
               <h2 className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
@@ -80,11 +82,56 @@ export function TaskPanel() {
           </>
         )}
 
-        {parts.length > 0 && (
+        {showStageFlow && activeStage && (
           <>
             <div>
               <h2 className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
-                Assessment Parts
+                Current Stage
+              </h2>
+              <p className="mt-2 text-[14px] font-medium text-[var(--ops-text,#1d1d1f)]">
+                {activeStage.title} ({activePart + 1}/{parts.length})
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-[var(--ops-text-muted,#475569)]">
+                {activeStage.description}
+              </p>
+              {activeStage.purpose ? (
+                <p className="mt-2 text-[12px] leading-relaxed text-[var(--ops-text-subtle,#64748b)]">
+                  Purpose: {activeStage.purpose}
+                </p>
+              ) : null}
+              {activeStage.max_questions != null ? (
+                <p className="mt-2 text-[12px] text-[var(--ops-text-subtle,#64748b)]">
+                  Clarifying questions allowed: {activeStage.max_questions}
+                </p>
+              ) : null}
+              {activeStage.time_limit_minutes != null && (
+                <p className={`mt-2 text-[12px] ${isActivePartExpired ? "text-[#ef4444]" : "text-[var(--ops-text-subtle,#64748b)]"}`}>
+                  Stage timer: {formatTimer(activePartRemainingSeconds)}
+                </p>
+              )}
+              {activeStage.scripted_events && activeStage.scripted_events.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {activeStage.scripted_events.map((event) => (
+                    <div
+                      key={event.id}
+                      className={`rounded-2xl border px-3 py-3 text-[12px] ${
+                        event.type === "pivot"
+                          ? "border-[#f59e0b]/30 bg-[#fff7ed] text-[#9a3412]"
+                          : "border-[var(--ops-border,#d7e0e4)] bg-[var(--ops-surface-subtle,#f8fafc)] text-[var(--ops-text,#1d1d1f)]"
+                      }`}
+                    >
+                      <p className="font-medium uppercase tracking-wide">{event.title}</p>
+                      <p className="mt-1 leading-relaxed">{event.message}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <Separator />
+
+            <div>
+              <h2 className="text-[13px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
+                All Stages
               </h2>
               <div className="mt-2 space-y-1">
                 {parts.map((part, i) => (
@@ -97,24 +144,12 @@ export function TaskPanel() {
                         : "text-[var(--ops-text,#1d1d1f)] hover:bg-[var(--ops-surface-subtle,#f8fafc)]"
                     }`}
                   >
-                    <span className="text-[11px] text-[var(--ops-text-muted)]">Part {i + 1}</span>
+                    <span className="text-[11px] text-[var(--ops-text-muted)]">Stage {i + 1}</span>
                     <br />
                     {part.title}
                   </button>
                 ))}
               </div>
-              {parts[activePart] && (
-                <>
-                  <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text-muted,#475569)]">
-                    {parts[activePart].description}
-                  </p>
-                  {parts[activePart].time_limit_minutes != null && (
-                    <p className={`mt-2 text-[12px] ${isActivePartExpired ? "text-[#ef4444]" : "text-[var(--ops-text-subtle,#64748b)]"}`}>
-                      Part timer: {formatTimer(activePartRemainingSeconds)}
-                    </p>
-                  )}
-                </>
-              )}
             </div>
             <Separator />
           </>

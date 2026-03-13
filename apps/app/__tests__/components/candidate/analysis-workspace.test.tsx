@@ -20,6 +20,18 @@ vi.mock("@/components/ui/sheet", () => ({
 const mockRunPython = vi.fn()
 const mockGetPythonHistory = vi.fn()
 const mockTrack = vi.fn()
+const mockSetAnalysisReplayState = vi.fn()
+let mockAutoPlay = false
+let mockAnalysisReplayState = {
+  language: "python" as const,
+  code: "",
+  result: null,
+  error: null,
+  pythonHistory: [],
+  rHistory: [],
+  isRunning: false,
+  artifactRefs: [],
+}
 
 vi.mock("@/components/candidate/session-context", () => ({
   useSession: () => ({
@@ -29,6 +41,14 @@ vi.mock("@/components/candidate/session-context", () => ({
     },
     isSubmitted: false,
     isExpired: false,
+    fixtureData: null,
+    currentRoundIndex: 0,
+    session: { policy: {} },
+    parts: [],
+    activePart: 0,
+    autoPlay: mockAutoPlay,
+    analysisReplayState: mockAnalysisReplayState,
+    setAnalysisReplayState: mockSetAnalysisReplayState,
     track: mockTrack,
   }),
 }))
@@ -36,6 +56,17 @@ vi.mock("@/components/candidate/session-context", () => ({
 describe("AnalysisWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockAutoPlay = false
+    mockAnalysisReplayState = {
+      language: "python",
+      code: "",
+      result: null,
+      error: null,
+      pythonHistory: [],
+      rHistory: [],
+      isRunning: false,
+      artifactRefs: [],
+    }
     mockGetPythonHistory.mockResolvedValue({ items: [] })
     mockRunPython.mockResolvedValue({
       ok: true,
@@ -51,6 +82,34 @@ describe("AnalysisWorkspace", () => {
     render(<AnalysisWorkspace />)
     expect(screen.getByRole("button", { name: "Python" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "R (Mock)" })).toBeInTheDocument()
+  })
+
+  it("renders replayed code and output during autoplay", () => {
+    mockAutoPlay = true
+    mockAnalysisReplayState = {
+      language: "python",
+      code: 'print("hello replay")',
+      result: {
+        ok: true,
+        stdout: "hello replay",
+        stderr: null,
+        plot_url: null,
+        artifacts: [],
+        runtime_ms: 12,
+        source: "python_api",
+      },
+      error: null,
+      pythonHistory: [],
+      rHistory: [],
+      isRunning: false,
+      artifactRefs: ["analysis_notes.md"],
+    }
+
+    render(<AnalysisWorkspace />)
+
+    expect(screen.getByDisplayValue('print("hello replay")')).toBeInTheDocument()
+    expect(screen.getByText("Replay input/output")).toBeInTheDocument()
+    expect(screen.getByText("hello replay")).toBeInTheDocument()
   })
 
   it("runs R mock code and emits analysis_r_run telemetry", async () => {

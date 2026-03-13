@@ -25,25 +25,35 @@ const mockApi = {
   updateDeliverable: vi.fn(),
   createDeliverable: vi.fn(),
 }
+const mockSessionState = {
+  api: mockApi,
+  isSubmitted: false,
+  isExpired: false,
+  autoPlay: false,
+  track: mockTrack,
+  deliverableContent: "",
+  setDeliverableContent: mockSetDeliverableContent,
+  deliverableArtifacts: [],
+  deliverableId: null,
+  setDeliverableId: mockSetDeliverableId,
+  setDeliverableStatus: mockSetDeliverableStatus,
+}
 
 vi.mock("@/components/candidate/session-context", () => ({
-  useSession: () => ({
-    api: mockApi,
-    isSubmitted: false,
-    isExpired: false,
-    track: mockTrack,
-    deliverableContent: "",
-    setDeliverableContent: mockSetDeliverableContent,
-    deliverableArtifacts: [],
-    deliverableId: null,
-    setDeliverableId: mockSetDeliverableId,
-    setDeliverableStatus: mockSetDeliverableStatus,
-  }),
+  useSession: () => mockSessionState,
 }))
 
 describe("EditorWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    Object.assign(mockSessionState, {
+      isSubmitted: false,
+      isExpired: false,
+      autoPlay: false,
+      deliverableContent: "",
+      deliverableArtifacts: [],
+      deliverableId: null,
+    })
   })
 
   it("renders markdown textarea and preview", () => {
@@ -69,5 +79,17 @@ describe("EditorWorkspace", () => {
   it("shows section templates", () => {
     render(<EditorWorkspace />)
     expect(screen.getByText(/executive summary/i)).toBeInTheDocument()
+  })
+
+  it("shows replay artifacts when autoplay evidence exists", () => {
+    Object.assign(mockSessionState, {
+      autoPlay: true,
+      deliverableContent: "## Executive Summary\n\nFinal memo.",
+      deliverableArtifacts: ["executive_memo.md", "slide_outline.md"],
+    })
+    render(<EditorWorkspace />)
+    expect(screen.getByText("Replay input/output")).toBeInTheDocument()
+    expect(screen.getByText("executive_memo.md")).toBeInTheDocument()
+    expect(screen.getByText("slide_outline.md")).toBeInTheDocument()
   })
 })

@@ -22,6 +22,8 @@ export function CoachPanel() {
     fixtureData,
     currentRoundIndex,
     totalRounds,
+    parts,
+    activePart,
   } = useSession()
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
@@ -93,15 +95,22 @@ export function CoachPanel() {
     }
   }
 
+  const activeStage = parts[activePart] ?? null
+  const showStageFlow = parts.length > 0 && fixtureData?.rounds.length === parts.length
+
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-[var(--ops-border,#d7e0e4)] px-3 py-3 md:py-2">
         <h2 className="text-[13px] font-medium text-[var(--ops-text,#1d1d1f)]">Coach</h2>
-        {fixtureData && totalRounds > 0 && (
+        {showStageFlow && activeStage ? (
+          <p className="mt-0.5 text-[11px] text-[var(--ops-text-muted,#475569)]">
+            {activeStage.title} ({activePart + 1} / {parts.length})
+          </p>
+        ) : fixtureData && totalRounds > 0 ? (
           <p className="mt-0.5 text-[11px] text-[var(--ops-text-muted,#475569)]">
             Round {currentRoundIndex + 1} / {totalRounds}
           </p>
-        )}
+        ) : null}
       </div>
 
       <ScrollArea className="flex-1 p-3">

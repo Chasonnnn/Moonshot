@@ -41,12 +41,6 @@ function formatDuration(durationMs: number): string {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
 }
 
-function fallbackHighlights(prompts: OralPromptConfig[], transcripts: Partial<Record<OralClipType, string>>): string[] {
-  return prompts
-    .map((prompt) => transcripts[prompt.clipType]?.trim())
-    .filter((item): item is string => Boolean(item))
-    .slice(0, 3)
-}
 
 export function OralWorkspace() {
   const {
@@ -82,17 +76,6 @@ export function OralWorkspace() {
   const recordingTimeoutRef = useRef<number | null>(null)
   const draftChunksRef = useRef<BlobPart[]>([])
 
-  const transcriptHighlights = useMemo(() => {
-    if (fixtureData?.oralWorkspace?.transcriptHighlights?.length) {
-      return fixtureData.oralWorkspace.transcriptHighlights
-    }
-    return fallbackHighlights(
-      prompts,
-      Object.fromEntries(
-        Object.entries(latestOralResponses).map(([clipType, response]) => [clipType, response?.transcript_text ?? ""])
-      ) as Partial<Record<OralClipType, string>>
-    )
-  }, [fixtureData?.oralWorkspace?.transcriptHighlights, latestOralResponses, prompts])
 
   const clearRecordingResources = useCallback(() => {
     if (recordingTimerRef.current) {
@@ -309,64 +292,50 @@ export function OralWorkspace() {
 
   if (!oralRequirement.required && prompts.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#F8FAFC] text-[13px] text-[#64748B]">
+      <div className="flex h-full items-center justify-center bg-[var(--ops-surface-muted)] text-[13px] text-[var(--ops-text-subtle)]">
         Oral-defense prompts are not required for this simulation.
       </div>
     )
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#F8FAFC]">
-      <div className="border-b border-[#E2E8F0] bg-white px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2563EB]">Presentation &amp; defense</p>
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full flex-col bg-[var(--ops-surface-muted)]">
+      <div className="border-b border-[var(--ops-border)] bg-white px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-[15px] font-semibold text-[#0F172A]">Recorded oral-defense responses</h3>
-            <p className="text-[12px] text-[#475569]">
-              {oralRequirement.required ? "Required" : "Optional"} clips: {oralRequirement.requiredClipTypes.join(", ") || "none"}
+            <h3 className="text-[15px] font-semibold text-[var(--ops-text)]">Oral defense</h3>
+            <p className="text-[12px] text-[var(--ops-text-muted)]">
+              {oralRequirement.required ? "Required" : "Optional"} · {oralRequirement.requiredClipTypes.join(", ") || "no required clips"}
             </p>
           </div>
           <div
             className={[
               "rounded-full border px-3 py-1 text-[12px]",
-              isOralComplete ? "border-[#D1FAE5] bg-[#ECFDF5] text-[#047857]" : "border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]",
+              isOralComplete ? "border-[var(--ops-success)]/30 bg-[var(--ops-success-soft)] text-[var(--ops-success)]" : "border-[var(--ops-warning)]/30 bg-[var(--ops-warning-soft)] text-[var(--ops-warning)]",
             ].join(" ")}
           >
             {isOralComplete ? "Complete" : `Missing ${missingOralPromptLabels.length}`}
           </div>
         </div>
-        <p className="mt-2 text-[12px] text-[#64748B]">Weight {Math.round(oralRequirement.weight * 100)}%</p>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
         {!oralResponsesLoaded ? (
-          <div className="mb-4 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] px-4 py-3 text-[12px] text-[#1E3A8A]">
+          <div className="mb-4 rounded-2xl border border-[var(--ops-accent-soft)] bg-[var(--ops-accent-soft)]/40 px-4 py-3 text-[12px] text-[var(--ops-accent-strong)]">
             Loading saved oral responses...
           </div>
         ) : null}
         {oralResponsesError ? (
-          <div className="mb-4 rounded-2xl border border-[#FCA5A5] bg-[#FEF2F2] px-4 py-3 text-[12px] text-[#B91C1C]">
+          <div className="mb-4 rounded-2xl border border-[var(--ops-danger)]/30 bg-[var(--ops-danger-soft)] px-4 py-3 text-[12px] text-[var(--ops-danger)]">
             {oralResponsesError}
           </div>
         ) : null}
         {localError ? (
-          <div className="mb-4 rounded-2xl border border-[#FCA5A5] bg-[#FEF2F2] px-4 py-3 text-[12px] text-[#B91C1C]">
+          <div className="mb-4 rounded-2xl border border-[var(--ops-danger)]/30 bg-[var(--ops-danger-soft)] px-4 py-3 text-[12px] text-[var(--ops-danger)]">
             {localError}
           </div>
         ) : null}
 
-        {transcriptHighlights.length > 0 ? (
-          <div className="mb-4 rounded-[24px] border border-[#DBEAFE] bg-white p-5 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">Transcript highlights</p>
-            <ul className="mt-3 space-y-2 text-[12px] leading-relaxed text-[#334155]">
-              {transcriptHighlights.map((item) => (
-                <li key={item} className="rounded-xl bg-[#F8FAFC] px-3 py-2">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
 
         <div className="space-y-4">
           {prompts.map((prompt) => {
@@ -376,21 +345,21 @@ export function OralWorkspace() {
             const isMissing = missingOralClipTypes.includes(prompt.clipType)
 
             return (
-              <div key={prompt.clipType} className="rounded-[24px] border border-[#D7E0E4] bg-white p-5 shadow-sm">
+              <div key={prompt.clipType} className="rounded-2xl border border-[var(--ops-border)] bg-white p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="max-w-3xl">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#64748B]">{prompt.title}</p>
-                    <p className="mt-2 text-[13px] leading-relaxed text-[#0F172A]">{prompt.prompt}</p>
-                    <p className="mt-2 text-[11px] text-[#64748B]">Max duration: {prompt.maxDurationSeconds}s</p>
+                    <p className="text-[13px] font-semibold text-[var(--ops-text)]">{prompt.title}</p>
+                    <p className="mt-1 text-[13px] leading-relaxed text-[var(--ops-text-muted)]">{prompt.prompt}</p>
+                    <p className="mt-1 text-[11px] text-[var(--ops-text-subtle)]">Max {prompt.maxDurationSeconds}s</p>
                   </div>
                   <div
                     className={[
                       "rounded-full border px-3 py-1 text-[11px] font-semibold",
                       uploaded
-                        ? "border-[#D1FAE5] bg-[#ECFDF5] text-[#047857]"
+                        ? "border-[var(--ops-success)]/30 bg-[var(--ops-success-soft)] text-[var(--ops-success)]"
                         : isMissing
-                          ? "border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]"
-                          : "border-[#CBD5E1] bg-[#F8FAFC] text-[#475569]",
+                          ? "border-[var(--ops-warning)]/30 bg-[var(--ops-warning-soft)] text-[var(--ops-warning)]"
+                          : "border-[var(--ops-border-strong)] bg-[var(--ops-surface-muted)] text-[var(--ops-text-muted)]",
                     ].join(" ")}
                   >
                     {uploaded ? "Uploaded" : isMissing ? "Required" : "Ready"}
@@ -398,11 +367,10 @@ export function OralWorkspace() {
                 </div>
 
                 {uploaded ? (
-                  <div className="mt-4 rounded-2xl border border-[#D1FAE5] bg-[#ECFDF5] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#047857]">Transcript</p>
-                    <p className="mt-2 text-[13px] leading-relaxed text-[#166534]">{uploaded.transcript_text}</p>
-                    <p className="mt-3 text-[11px] text-[#047857]">
-                      {uploaded.transcription_model ?? "n/a"} · request {uploaded.request_id ?? "n/a"} · raw audio {uploaded.audio_retained ? "retained" : "discarded"}
+                  <div className="mt-4 border-t border-[var(--ops-border)] pt-4">
+                    <p className="text-[13px] leading-relaxed text-[var(--ops-text)]">{uploaded.transcript_text}</p>
+                    <p className="mt-2 text-[11px] text-[var(--ops-text-subtle)]">
+                      {uploaded.transcription_model ?? "n/a"} · {uploaded.audio_retained ? "audio retained" : "audio discarded"}
                     </p>
                   </div>
                 ) : null}
@@ -410,17 +378,14 @@ export function OralWorkspace() {
                 {!uploaded ? (
                   <div className="mt-4 space-y-3">
                     {draft ? (
-                      <div className="rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-4">
+                      <>
                         <audio controls src={draft.url} className="w-full" />
-                        <p className="mt-2 text-[12px] text-[#1E3A8A]">
-                          Draft duration: {formatDuration(draft.durationMs)}
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Button
                             type="button"
                             onClick={() => uploadDraft(prompt)}
                             disabled={uploadingClipType === prompt.clipType || isSubmitted || isExpired}
-                            className="h-9 rounded-full px-4 text-[12px]"
+                            className="h-10 rounded-full px-4 text-[13px] md:h-9 md:text-[12px]"
                           >
                             {uploadingClipType === prompt.clipType ? <Spinner className="h-3.5 w-3.5" /> : "Upload take"}
                           </Button>
@@ -429,12 +394,13 @@ export function OralWorkspace() {
                             variant="outline"
                             onClick={() => discardDraft(prompt.clipType)}
                             disabled={uploadingClipType === prompt.clipType}
-                            className="h-9 rounded-full px-4 text-[12px]"
+                            className="h-10 rounded-full px-4 text-[13px] md:h-9 md:text-[12px]"
                           >
                             Discard
                           </Button>
+                          <span className="text-[11px] text-[var(--ops-text-subtle)]">{formatDuration(draft.durationMs)}</span>
                         </div>
-                      </div>
+                      </>
                     ) : null}
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -442,15 +408,15 @@ export function OralWorkspace() {
                         type="button"
                         onClick={() => (isRecording ? stopRecording() : void startRecording(prompt))}
                         disabled={(recordingClipType !== null && !isRecording) || isSubmitted || isExpired || Boolean(supportError)}
-                        className="h-9 rounded-full px-4 text-[12px]"
+                        className="h-10 rounded-full px-4 text-[13px] md:h-9 md:text-[12px]"
                       >
                         {isRecording ? "Stop recording" : draft ? "Record another take" : "Start recording"}
                       </Button>
                       {isRecording ? (
-                        <p className="text-[12px] text-[#2563EB]">Recording {formatDuration(recordingElapsedMs)}</p>
+                        <p className="text-[12px] text-[var(--ops-accent)]">Recording {formatDuration(recordingElapsedMs)}</p>
                       ) : null}
                       {supportError ? (
-                        <p className="text-[12px] text-[#B91C1C]">{supportError}</p>
+                        <p className="text-[12px] text-[var(--ops-danger)]">{supportError}</p>
                       ) : null}
                     </div>
                   </div>

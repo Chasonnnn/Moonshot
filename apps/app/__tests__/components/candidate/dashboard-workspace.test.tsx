@@ -1,194 +1,98 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
+import { render, screen, waitFor } from "@testing-library/react"
 import { DashboardWorkspace } from "@/components/candidate/dashboard-workspace"
-import { CandidateApiError } from "@/lib/moonshot/candidate-client"
 
 const mockGetDashboardState = vi.fn()
 const mockDashboardAction = vi.fn()
-const mockTrack = vi.fn()
+const mockSetDashboardReplayState = vi.fn()
 
-// Stable reference to prevent useEffect re-fires on every render
-const mockApi = {
-  getDashboardState: mockGetDashboardState,
-  dashboardAction: mockDashboardAction,
+let mockAutoPlay = false
+let mockDashboardReplayState = {
+  state: null,
+  loading: false,
+  error: null,
+  actionError: null,
+  note: "",
+  lastActionLabel: null,
+  lastActionDetail: null,
+  artifactRefs: [] as string[],
 }
+
+vi.mock("@/components/ui/scroll-area", () => ({
+  ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}))
 
 vi.mock("@/components/candidate/session-context", () => ({
   useSession: () => ({
-    api: mockApi,
+    api: {
+      getDashboardState: mockGetDashboardState,
+      dashboardAction: mockDashboardAction,
+    },
     isSubmitted: false,
     isExpired: false,
-    track: mockTrack,
+    fixtureData: null,
+    currentRoundIndex: 0,
+    parts: [],
+    activePart: 0,
+    autoPlay: mockAutoPlay,
+    dashboardReplayState: mockDashboardReplayState,
+    setDashboardReplayState: mockSetDashboardReplayState,
   }),
 }))
 
 describe("DashboardWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it("renders annotations after successful load", async () => {
-    mockGetDashboardState.mockResolvedValueOnce({
+    mockAutoPlay = false
+    mockDashboardReplayState = {
+      state: null,
+      loading: false,
+      error: null,
+      actionError: null,
+      note: "",
+      lastActionLabel: null,
+      lastActionDetail: null,
+      artifactRefs: [],
+    }
+    mockGetDashboardState.mockResolvedValue({
+      view: "weekly_growth",
       filters: {},
-      view: "default",
-      annotations: ["First note", "Second note"],
-    })
-
-    render(<DashboardWorkspace />)
-
-    await waitFor(() => {
-      expect(screen.getByText("First note")).toBeInTheDocument()
-      expect(screen.getByText("Second note")).toBeInTheDocument()
-    })
-
-    expect(screen.getByText("Annotations (2)")).toBeInTheDocument()
-  })
-
-  it("shows error with retry button when initial load fails", async () => {
-    mockGetDashboardState.mockRejectedValueOnce(
-      new CandidateApiError("Session expired", 401, "auth_error")
-    )
-
-    render(<DashboardWorkspace />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Session expired")).toBeInTheDocument()
-    })
-
-    expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument()
-
-    // Annotations UI should not be rendered when state is null
-    expect(screen.queryByText(/annotations/i)).not.toBeInTheDocument()
-  })
-
-  it("retry button re-fetches dashboard state", async () => {
-    mockGetDashboardState.mockRejectedValueOnce(new Error("Network error"))
-
-    render(<DashboardWorkspace />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Network error")).toBeInTheDocument()
-    })
-
-    // Now mock a successful response for the retry
-    mockGetDashboardState.mockResolvedValueOnce({
-      filters: {},
-      view: "default",
       annotations: [],
     })
-
-    fireEvent.click(screen.getByRole("button", { name: /retry/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText("Annotations (0)")).toBeInTheDocument()
-    })
-
-    expect(screen.queryByText("Network error")).not.toBeInTheDocument()
-    expect(mockGetDashboardState).toHaveBeenCalledTimes(2)
   })
 
-  it("adds annotation and updates state", async () => {
-    mockGetDashboardState.mockResolvedValueOnce({
-      filters: {},
-      view: "default",
-      annotations: [],
-    })
-    mockDashboardAction.mockResolvedValueOnce({
-      filters: {},
-      view: "default",
-      annotations: ["New insight"],
-    })
+  it("renders replay input and output state during autoplay", async () => {
+    mockAutoPlay = true
+    mockDashboardReplayState = {
+      state: {
+        view: "Compare daily KPI totals against the dashboard export",
+        filters: { channel: "paid_social" },
+        annotations: ["Document the missing-date and mislabeled-segment defects before continuing"],
+      },
+      loading: false,
+      error: null,
+      actionError: null,
+      note: "",
+      lastActionLabel: "Dashboard 2",
+      lastActionDetail: "Document the missing-date and mislabeled-segment defects before continuing",
+      artifactRefs: ["qa_checklist.md"],
+    }
 
     render(<DashboardWorkspace />)
 
-    await waitFor(() => {
-      expect(screen.getByText("Annotations (0)")).toBeInTheDocument()
-    })
-
-    const input = screen.getByPlaceholderText("Add a note...")
-    await userEvent.type(input, "New insight")
-    fireEvent.click(screen.getByRole("button", { name: /add note/i }))
-
-    await waitFor(() => {
-      expect(mockDashboardAction).toHaveBeenCalledWith("annotate", { note: "New insight" })
-    })
-
-    await waitFor(() => {
-      expect(screen.getByText("New insight")).toBeInTheDocument()
-      expect(screen.getByText("Annotations (1)")).toBeInTheDocument()
-    })
-
-    // Input should be cleared after successful add
-    expect(input).toHaveValue("")
+    expect(screen.getByText("Replay Input / Output")).toBeInTheDocument()
+    expect(screen.getByText("Dashboard 2")).toBeInTheDocument()
+    expect(screen.getByText(/qa_checklist\.md/i)).toBeInTheDocument()
+    expect(screen.getByText("Compare daily KPI totals against the dashboard export")).toBeInTheDocument()
+    expect(screen.getByText(/paid_social/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/missing-date and mislabeled-segment defects/i).length).toBeGreaterThan(0)
   })
 
-  it("shows error when adding annotation fails", async () => {
-    mockGetDashboardState.mockResolvedValueOnce({
-      filters: {},
-      view: "default",
-      annotations: [],
-    })
-    mockDashboardAction.mockRejectedValueOnce(
-      new CandidateApiError("CSRF token mismatch", 403, "csrf_error")
-    )
-
+  it("loads dashboard state when replay state is empty", async () => {
     render(<DashboardWorkspace />)
 
     await waitFor(() => {
-      expect(screen.getByText("Annotations (0)")).toBeInTheDocument()
-    })
-
-    const input = screen.getByPlaceholderText("Add a note...")
-    await userEvent.type(input, "My note")
-    fireEvent.click(screen.getByRole("button", { name: /add note/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText("CSRF token mismatch")).toBeInTheDocument()
-    })
-  })
-
-  it("renders empty annotation list on successful load with no annotations", async () => {
-    mockGetDashboardState.mockResolvedValueOnce({
-      filters: {},
-      view: "default",
-      annotations: [],
-    })
-
-    render(<DashboardWorkspace />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Annotations (0)")).toBeInTheDocument()
-    })
-
-    expect(screen.getByPlaceholderText("Add a note...")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /add note/i })).toBeInTheDocument()
-  })
-
-  it("Enter key submits annotation", async () => {
-    mockGetDashboardState.mockResolvedValueOnce({
-      filters: {},
-      view: "default",
-      annotations: [],
-    })
-    mockDashboardAction.mockResolvedValueOnce({
-      filters: {},
-      view: "default",
-      annotations: ["Enter note"],
-    })
-
-    render(<DashboardWorkspace />)
-
-    await waitFor(() => {
-      expect(screen.getByText("Annotations (0)")).toBeInTheDocument()
-    })
-
-    const input = screen.getByPlaceholderText("Add a note...")
-    await userEvent.type(input, "Enter note")
-    fireEvent.keyDown(input, { key: "Enter" })
-
-    await waitFor(() => {
-      expect(mockDashboardAction).toHaveBeenCalledWith("annotate", { note: "Enter note" })
+      expect(screen.getByText("weekly_growth")).toBeInTheDocument()
     })
   })
 })

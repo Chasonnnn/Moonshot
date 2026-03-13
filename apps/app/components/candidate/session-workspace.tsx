@@ -81,7 +81,7 @@ function SessionWorkspaceContent() {
         {isMobile ? (
           <>
             <div
-              className="sticky top-14 z-40 border-b border-[var(--ops-border,#d7e0e4)] bg-white/92 px-3 py-3 backdrop-blur-xl"
+              className="border-b border-[var(--ops-border,#d7e0e4)] bg-white/92 px-3 py-3 backdrop-blur-xl"
               data-testid="candidate-mobile-section-switcher"
             >
               <div className="mx-auto max-w-4xl">
@@ -110,24 +110,21 @@ function SessionWorkspaceContent() {
             </div>
 
             <div className="min-h-0 flex-1">
-              <section
-                className={mobileSection === "task" ? "flex h-full min-h-0 flex-col" : "hidden"}
-                aria-label="Task panel"
-              >
-                <TaskPanel />
-              </section>
-              <section
-                className={mobileSection === "work" ? "flex h-full min-h-0 flex-col" : "hidden"}
-                aria-label="Work panel"
-              >
-                <WorkspacePanel />
-              </section>
-              <section
-                className={mobileSection === "coach" ? "flex h-full min-h-0 flex-col" : "hidden"}
-                aria-label="Coach panel"
-              >
-                <CoachPanel />
-              </section>
+              {mobileSection === "task" ? (
+                <section className="flex h-full min-h-0 flex-col" aria-label="Task panel">
+                  <TaskPanel />
+                </section>
+              ) : null}
+              {mobileSection === "work" ? (
+                <section className="flex h-full min-h-0 flex-col" aria-label="Work panel">
+                  <WorkspacePanel />
+                </section>
+              ) : null}
+              {mobileSection === "coach" ? (
+                <section className="flex h-full min-h-0 flex-col" aria-label="Coach panel">
+                  <CoachPanel />
+                </section>
+              ) : null}
             </div>
           </>
         ) : (

@@ -25,6 +25,7 @@ export function EditorWorkspace() {
     api,
     isSubmitted,
     isExpired,
+    autoPlay,
     deliverableContent,
     setDeliverableContent,
     deliverableArtifacts,
@@ -41,6 +42,7 @@ export function EditorWorkspace() {
     if (!trimmed) return 0
     return trimmed.split(/\s+/).length
   }, [deliverableContent])
+  const artifactLabel = autoPlay ? "Replay input/output" : "Attached artifacts"
 
   const insertSection = useCallback(
     (markdown: string) => {
@@ -135,6 +137,24 @@ export function EditorWorkspace() {
         <ResizablePanel defaultSize={50} minSize={30}>
           <ScrollArea className="h-full">
             <div className="p-4">
+              {deliverableArtifacts.length > 0 ? (
+                <div className="mb-4 rounded-2xl border border-[#D2D2D7] bg-[#F5F5F7] p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6E6E73]">
+                    {artifactLabel}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {deliverableArtifacts.map((artifact) => (
+                      <span
+                        key={artifact}
+                        className="inline-flex items-center gap-1 rounded-full border border-[#D2D2D7] bg-white px-3 py-1 text-[12px] text-[#1D1D1F]"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-[#0071E3]" />
+                        {artifact}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#86868B]">
                 Preview
               </p>

@@ -3,14 +3,21 @@ import { render, screen, waitFor } from "@testing-library/react"
 import { WorkspacePanel } from "@/components/candidate/workspace-panel"
 
 vi.mock("@/components/ui/tabs", () => ({
-  Tabs: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
+  Tabs: ({
+    children,
+    className,
+  }: React.HTMLAttributes<HTMLDivElement> & { onValueChange?: (value: string) => void; value?: string }) => (
+    <div className={className}>{children}</div>
+  ),
   TabsList: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
   TabsTrigger: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
   TabsContent: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
 }))
 
 vi.mock("@/components/candidate/data-workspace", () => ({
-  DataWorkspace: () => <div>data-workspace</div>,
+  DataWorkspace: ({ datasets }: { datasets: Array<{ name: string }> }) => (
+    <div data-testid="data-workspace">{datasets.map((dataset) => dataset.name).join(", ") || "no datasets"}</div>
+  ),
 }))
 vi.mock("@/components/candidate/sql-workspace", () => ({
   SqlWorkspace: () => <div>sql-workspace</div>,
@@ -48,12 +55,19 @@ let mockWorkspaceAvailability = {
   slides: false,
   oral: false,
 }
+let mockFixtureData = { datasets: [] as Array<Record<string, unknown>> }
+let mockParts: Array<{ id: string }> = []
+let mockActivePart = 0
 
 vi.mock("@/components/candidate/session-context", () => ({
   useSession: () => ({
     api: mockApi,
-    fixtureData: { datasets: [] },
+    fixtureData: mockFixtureData,
     workspaceAvailability: mockWorkspaceAvailability,
+    activeWorkspace: "data",
+    setActiveWorkspace: vi.fn(),
+    parts: mockParts,
+    activePart: mockActivePart,
   }),
 }))
 
@@ -66,6 +80,9 @@ describe("WorkspacePanel", () => {
       slides: false,
       oral: false,
     }
+    mockFixtureData = { datasets: [] }
+    mockParts = []
+    mockActivePart = 0
     mockApi.getDatasets.mockResolvedValue({ datasets: [] })
     mockApi.getDatasetPreview.mockResolvedValue({ columns: [], rows: [] })
   })
@@ -114,5 +131,67 @@ describe("WorkspacePanel", () => {
     })
 
     expect(screen.getByLabelText("Workspace tools")).toHaveAttribute("tabindex", "0")
+    expect(screen.getByLabelText("Workspace tools").className).toContain("h-11")
+    expect(screen.getByRole("button", { name: "Data" }).className).toContain("min-h-11")
+  })
+
+  it("hides gated datasets until the unlock stage is active", async () => {
+    mockFixtureData = {
+      datasets: [
+        {
+          id: "dataset_open",
+          name: "campaign_performance_snapshot.csv",
+          description: "Initial export",
+          row_count: 4,
+          schema: { columns: [] },
+          preview_rows: [{ campaign: "A" }],
+        },
+        {
+          id: "dataset_corrected",
+          name: "campaign_performance_corrected.csv",
+          description: "Corrected export",
+          row_count: 4,
+          schema: { columns: [] },
+          preview_rows: [{ campaign: "A" }],
+          available_from_part_id: "stage_analysis",
+        },
+      ],
+    }
+    mockParts = [{ id: "stage_triage" }, { id: "stage_analysis" }]
+    mockActivePart = 0
+    mockApi.getDatasets.mockResolvedValue({
+      datasets: [
+        {
+          id: "dataset_open",
+          name: "campaign_performance_snapshot.csv",
+          description: "Initial export",
+          row_count: 4,
+          schema: { columns: [] },
+          preview_rows: [{ campaign: "A" }],
+        },
+        {
+          id: "dataset_corrected",
+          name: "campaign_performance_corrected.csv",
+          description: "Corrected export",
+          row_count: 4,
+          schema: { columns: [] },
+          preview_rows: [{ campaign: "A" }],
+        },
+      ],
+    })
+
+    const { rerender } = render(<WorkspacePanel />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("data-workspace")).toHaveTextContent("campaign_performance_snapshot.csv")
+    })
+    expect(screen.getByTestId("data-workspace")).not.toHaveTextContent("campaign_performance_corrected.csv")
+
+    mockActivePart = 1
+    rerender(<WorkspacePanel />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("data-workspace")).toHaveTextContent("campaign_performance_corrected.csv")
+    })
   })
 })

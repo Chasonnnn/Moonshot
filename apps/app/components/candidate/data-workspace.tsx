@@ -65,8 +65,8 @@ function DatasetCard({ dataset }: { dataset: CaseDatasetView }) {
     <div className="space-y-4">
       <div>
         <div className="flex items-center gap-2">
-          <Database className="h-4 w-4 text-[#0071E3]" />
-          <h3 className="text-[14px] font-medium text-[#1D1D1F]">
+          <Database className="h-4 w-4 text-[var(--ops-accent)]" />
+          <h3 className="text-[14px] font-medium text-[var(--ops-text)]">
             {dataset.name}
           </h3>
           <Badge variant="secondary" className="text-[10px]">
@@ -85,9 +85,9 @@ function DatasetCard({ dataset }: { dataset: CaseDatasetView }) {
         <div className="mt-2 space-y-1">
           {dataset.schema.columns.map((col) => (
             <Collapsible key={col.name}>
-              <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-[12px] hover:bg-[#F5F5F7]">
+              <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-[12px] hover:bg-[var(--ops-surface-muted)]">
                 <ChevronRight className="h-3 w-3 text-[var(--ops-text-muted)] transition-transform [[data-state=open]_&]:rotate-90" />
-                <span className="font-mono text-[#1D1D1F]">{col.name}</span>
+                <span className="font-mono text-[var(--ops-text)]">{col.name}</span>
                 <Badge variant="outline" className="text-[10px]">
                   {col.dtype}
                 </Badge>
@@ -110,7 +110,7 @@ function DatasetCard({ dataset }: { dataset: CaseDatasetView }) {
           <h4 className="text-[12px] font-medium uppercase tracking-wide text-[var(--ops-text-muted)]">
             Preview
           </h4>
-          <div className="mt-2 overflow-x-auto rounded-lg border border-[#D2D2D7]">
+          <div className="mt-2 overflow-x-auto rounded-lg border border-[var(--ops-border)]">
             <Table>
               <TableHeader>
                 <TableRow>

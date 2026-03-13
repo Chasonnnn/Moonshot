@@ -23,6 +23,16 @@ vi.mock("@/components/ui/sheet", () => ({
 const mockRunSql = vi.fn()
 const mockGetSqlHistory = vi.fn()
 const mockTrack = vi.fn()
+const mockSetSqlReplayState = vi.fn()
+let mockAutoPlay = false
+let mockSqlReplayState = {
+  query: "",
+  result: null,
+  error: null,
+  history: [],
+  isRunning: false,
+  artifactRefs: [],
+}
 
 vi.mock("@/components/candidate/session-context", () => ({
   useSession: () => ({
@@ -31,6 +41,10 @@ vi.mock("@/components/candidate/session-context", () => ({
       getSqlHistory: mockGetSqlHistory,
     },
     isSubmitted: false,
+    isExpired: false,
+    autoPlay: mockAutoPlay,
+    sqlReplayState: mockSqlReplayState,
+    setSqlReplayState: mockSetSqlReplayState,
     track: mockTrack,
   }),
 }))
@@ -38,6 +52,15 @@ vi.mock("@/components/candidate/session-context", () => ({
 describe("SqlWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockAutoPlay = false
+    mockSqlReplayState = {
+      query: "",
+      result: null,
+      error: null,
+      history: [],
+      isRunning: false,
+      artifactRefs: [],
+    }
     mockGetSqlHistory.mockResolvedValue({ items: [] })
   })
 
@@ -50,6 +73,31 @@ describe("SqlWorkspace", () => {
   it("shows empty state text initially", () => {
     render(<SqlWorkspace />)
     expect(screen.getByText(/run a query to see results/i)).toBeInTheDocument()
+  })
+
+  it("renders replayed SQL input and output during autoplay", () => {
+    mockAutoPlay = true
+    mockSqlReplayState = {
+      query: "SELECT segment, conversions FROM campaign_performance_corrected",
+      result: {
+        ok: true,
+        row_count: 1,
+        columns: ["segment", "conversions"],
+        rows: [{ segment: "new_users", conversions: 302 }],
+        runtime_ms: 41,
+      },
+      error: null,
+      history: [],
+      isRunning: false,
+      artifactRefs: ["analysis_notes.md"],
+    }
+
+    render(<SqlWorkspace />)
+
+    expect(screen.getByDisplayValue(/SELECT segment, conversions/i)).toBeInTheDocument()
+    expect(screen.getByText("Replay input/output")).toBeInTheDocument()
+    expect(screen.getByText("new_users")).toBeInTheDocument()
+    expect(screen.getByText("302")).toBeInTheDocument()
   })
 
   it("typing a query and clicking Run shows results table", async () => {

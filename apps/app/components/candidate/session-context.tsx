@@ -24,6 +24,13 @@ import type {
   OralResponse,
   CandidateWorkspaceAvailability,
   SessionMode,
+  SqlRunResponse,
+  SqlHistoryItem,
+  DashboardState,
+  PythonRunResponse,
+  PythonHistoryItem,
+  RHistoryItem,
+  RRunResponse,
 } from "@/lib/moonshot/types"
 import type { DemoFixtureData } from "@/lib/moonshot/demo-fixtures"
 
@@ -40,6 +47,44 @@ export interface CoachChatMessage {
     blocked_rule_id: string | null
   }
   feedbackGiven?: "up" | "down" | null
+}
+
+type AnalysisLanguage = "python" | "r"
+
+interface AnalysisReplayResult extends Omit<PythonRunResponse, "ok"> {
+  ok: boolean
+  source: "python_api" | "r_mock"
+}
+
+interface SqlReplayState {
+  query: string
+  result: SqlRunResponse | null
+  error: string | null
+  history: SqlHistoryItem[]
+  isRunning: boolean
+  artifactRefs: string[]
+}
+
+interface AnalysisReplayState {
+  language: AnalysisLanguage
+  code: string
+  result: AnalysisReplayResult | null
+  error: string | null
+  pythonHistory: PythonHistoryItem[]
+  rHistory: RHistoryItem[]
+  isRunning: boolean
+  artifactRefs: string[]
+}
+
+interface DashboardReplayState {
+  state: DashboardState | null
+  loading: boolean
+  error: string | null
+  actionError: string | null
+  note: string
+  lastActionLabel: string | null
+  lastActionDetail: string | null
+  artifactRefs: string[]
 }
 
 interface SessionContextValue {
@@ -73,9 +118,17 @@ interface SessionContextValue {
     id: string
     title: string
     description: string
+    purpose?: string
     part_type?: string
     time_limit_minutes?: number
     deliverable_type?: string
+    max_questions?: number
+    scripted_events?: Array<{
+      id: string
+      type: "supervisor" | "pivot" | "system"
+      title: string
+      message: string
+    }>
   }>
   activePart: number
   setActivePart: (index: number) => void
@@ -98,6 +151,12 @@ interface SessionContextValue {
   missingOralClipTypes: OralClipType[]
   missingOralPromptLabels: string[]
   isOralComplete: boolean
+  sqlReplayState: SqlReplayState
+  setSqlReplayState: Dispatch<SetStateAction<SqlReplayState>>
+  analysisReplayState: AnalysisReplayState
+  setAnalysisReplayState: Dispatch<SetStateAction<AnalysisReplayState>>
+  dashboardReplayState: DashboardReplayState
+  setDashboardReplayState: Dispatch<SetStateAction<DashboardReplayState>>
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
@@ -106,9 +165,17 @@ const EMPTY_PARTS: Array<{
   id: string
   title: string
   description: string
+  purpose?: string
   part_type?: string
   time_limit_minutes?: number
   deliverable_type?: string
+  max_questions?: number
+  scripted_events?: Array<{
+    id: string
+    type: "supervisor" | "pivot" | "system"
+    title: string
+    message: string
+  }>
 }> = []
 
 const DEFAULT_ORAL_CLIP_TYPES: OralClipType[] = ["presentation", "follow_up_1", "follow_up_2"]
@@ -117,6 +184,34 @@ const DEFAULT_ORAL_REQUIREMENT: OralDefenseRequirement = {
   required: false,
   requiredClipTypes: [],
   weight: 0,
+}
+const DEFAULT_SQL_REPLAY_STATE: SqlReplayState = {
+  query: "",
+  result: null,
+  error: null,
+  history: [],
+  isRunning: false,
+  artifactRefs: [],
+}
+const DEFAULT_ANALYSIS_REPLAY_STATE: AnalysisReplayState = {
+  language: "python",
+  code: "",
+  result: null,
+  error: null,
+  pythonHistory: [],
+  rHistory: [],
+  isRunning: false,
+  artifactRefs: [],
+}
+const DEFAULT_DASHBOARD_REPLAY_STATE: DashboardReplayState = {
+  state: null,
+  loading: true,
+  error: null,
+  actionError: null,
+  note: "",
+  lastActionLabel: null,
+  lastActionDetail: null,
+  artifactRefs: [],
 }
 const CORE_WORKSPACE_TABS: CandidateWorkspaceTab[] = ["data", "sql", "python", "dashboard", "report"]
 const OPTIONAL_WORKSPACE_TAB_TO_FLAG: Array<[CandidateWorkspaceTab, keyof CandidateWorkspaceAvailability]> = [
@@ -395,8 +490,13 @@ export function SessionProvider({
   const pushCoachMessage = useCallback((msg: CoachChatMessage) => {
     setCoachMessages((prev) => [...prev, { ...msg, id: msg.id ?? createCoachMessageId() }])
   }, [])
-  const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
   const totalRounds = fixtureData?.rounds.length ?? 0
+  const parts = useMemo(
+    () => fixtureData?.parts ?? EMPTY_PARTS,
+    [fixtureData?.parts]
+  )
+  const hasStageMappedRounds = parts.length > 0 && totalRounds === parts.length
+  const [currentRoundIndexState, setCurrentRoundIndexState] = useState(0)
   const [deliverableContent, setDeliverableContent] = useState(
     session.final_response ?? ""
   )
@@ -406,10 +506,9 @@ export function SessionProvider({
   const [oralResponses, setOralResponses] = useState<OralResponse[]>(EMPTY_ORAL_RESPONSES)
   const [oralResponsesLoaded, setOralResponsesLoaded] = useState(false)
   const [oralResponsesError, setOralResponsesError] = useState<string | null>(null)
-  const parts = useMemo(
-    () => fixtureData?.parts ?? EMPTY_PARTS,
-    [fixtureData?.parts]
-  )
+  const [sqlReplayState, setSqlReplayState] = useState<SqlReplayState>(DEFAULT_SQL_REPLAY_STATE)
+  const [analysisReplayState, setAnalysisReplayState] = useState<AnalysisReplayState>(DEFAULT_ANALYSIS_REPLAY_STATE)
+  const [dashboardReplayState, setDashboardReplayState] = useState<DashboardReplayState>(DEFAULT_DASHBOARD_REPLAY_STATE)
   const oralRequirement = useMemo(
     () => resolveOralRequirement(session, fixtureData, activeTemplate, activeTemplateId),
     [activeTemplate, activeTemplateId, fixtureData, session]
@@ -449,6 +548,9 @@ export function SessionProvider({
   const [partStartTimes, setPartStartTimes] = useState<Record<number, string>>(
     () => ({ 0: session.created_at })
   )
+  const currentRoundIndex = hasStageMappedRounds
+    ? Math.min(activePart, Math.max(0, totalRounds - 1))
+    : currentRoundIndexState
 
   const activePartStart = partStartTimes[activePart] ?? session.created_at
   const activePartTimeLimit = parts[activePart]?.time_limit_minutes ?? null
@@ -532,12 +634,15 @@ export function SessionProvider({
       if (activePart !== 0) {
         setActivePartState(0)
       }
+      if (currentRoundIndexState !== 0) {
+        setCurrentRoundIndexState(0)
+      }
       return
     }
     if (activePart >= parts.length) {
       setActivePartState(parts.length - 1)
     }
-  }, [activePart, parts.length])
+  }, [activePart, currentRoundIndexState, parts.length])
 
   const setActivePart = useCallback(
     (index: number) => {
@@ -547,8 +652,25 @@ export function SessionProvider({
         prev[nextIndex] ? prev : { ...prev, [nextIndex]: new Date().toISOString() }
       )
       setActivePartState(nextIndex)
+      if (hasStageMappedRounds) {
+        setCurrentRoundIndexState(nextIndex)
+      }
     },
-    [parts.length]
+    [hasStageMappedRounds, parts.length]
+  )
+  const setCurrentRoundIndex = useCallback(
+    (index: number) => {
+      const boundedIndex = Math.min(Math.max(0, index), Math.max(0, totalRounds - 1))
+      setCurrentRoundIndexState(boundedIndex)
+      if (!hasStageMappedRounds || parts.length === 0) {
+        return
+      }
+      setPartStartTimes((prev) =>
+        prev[boundedIndex] ? prev : { ...prev, [boundedIndex]: new Date().toISOString() }
+      )
+      setActivePartState(Math.min(boundedIndex, parts.length - 1))
+    },
+    [hasStageMappedRounds, parts.length, totalRounds]
   )
   const setActiveWorkspace = useCallback((workspace: CandidateWorkspaceTab) => {
     setActiveWorkspaceState(workspace)
@@ -563,7 +685,10 @@ export function SessionProvider({
       [nextIndex]: prev[nextIndex] ?? new Date().toISOString(),
     }))
     setActivePartState(nextIndex)
-  }, [activePart, isActivePartExpired, parts.length])
+    if (hasStageMappedRounds) {
+      setCurrentRoundIndexState(nextIndex)
+    }
+  }, [activePart, hasStageMappedRounds, isActivePartExpired, parts.length])
 
   const value = useMemo(
     () => ({
@@ -615,6 +740,12 @@ export function SessionProvider({
       missingOralClipTypes,
       missingOralPromptLabels,
       isOralComplete,
+      sqlReplayState,
+      setSqlReplayState,
+      analysisReplayState,
+      setAnalysisReplayState,
+      dashboardReplayState,
+      setDashboardReplayState,
     }),
     [
       session,
@@ -656,6 +787,9 @@ export function SessionProvider({
       missingOralClipTypes,
       missingOralPromptLabels,
       isOralComplete,
+      sqlReplayState,
+      analysisReplayState,
+      dashboardReplayState,
     ]
   )
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Spinner } from "@/components/ui/spinner"
 import { useSession } from "@/components/candidate/session-context"
 import { getRoundToolActions, type DemoCoachTurn, type DemoFixtureData, type DemoToolAction } from "@/lib/moonshot/demo-fixtures"
+import type { DashboardState } from "@/lib/moonshot/types"
 
 interface AutoPlayStep {
   label: string
@@ -31,6 +32,30 @@ function toolLabel(action: DemoToolAction): string {
   return `${prefix} ${action.label}`
 }
 
+function applyAutoplayDashboardAction(
+  api: { getDashboardState: () => Promise<DashboardState>; dashboardAction: (actionType: string, payload: Record<string, unknown>) => Promise<DashboardState> },
+  action: DemoToolAction,
+): Promise<DashboardState> {
+  const raw = (action.action ?? action.detail ?? action.label).trim()
+  const filterMatch = raw.match(/^filter\s+([^=]+)=(.+)$/i)
+  if (filterMatch) {
+    const key = filterMatch[1].trim().replace(/\s+/g, "_").toLowerCase()
+    const value = filterMatch[2].trim()
+    return api.dashboardAction("apply_filter", { [key]: value })
+  }
+
+  const annotationMatch = raw.match(/^(?:add|publish)\s+annotation:\s*(.+)$/i)
+  if (annotationMatch) {
+    return api.dashboardAction("annotate", { note: annotationMatch[1].trim() })
+  }
+
+  if (/^(log|flag|document|capture)\s+/i.test(raw)) {
+    return api.dashboardAction("annotate", { note: raw })
+  }
+
+  return api.dashboardAction("set_view", { view: raw })
+}
+
 export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
   const {
     api,
@@ -41,6 +66,11 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
     track,
     pushCoachMessage,
     setCurrentRoundIndex,
+    setSqlReplayState,
+    setAnalysisReplayState,
+    setDashboardReplayState,
+    setDeliverableContent,
+    setDeliverableArtifacts,
   } = useSession()
   const [currentStep, setCurrentStep] = useState(0)
   const [currentRound, setCurrentRound] = useState(0)
@@ -81,12 +111,49 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
               switch (toolAction.tool) {
                 case "sql": {
                   setActiveWorkspace("sql")
-                  if (!toolAction.query) return
-                  await api.runSql(toolAction.query)
+                  setSqlReplayState((prev) => ({
+                    ...prev,
+                    query: toolAction.query ?? "",
+                    result: null,
+                    error: null,
+                    isRunning: true,
+                    artifactRefs: toolAction.artifactRefs ?? [],
+                  }))
+                  if (!toolAction.query) {
+                    setSqlReplayState((prev) => ({ ...prev, isRunning: false }))
+                    return
+                  }
+                  const response = await api.runSql(toolAction.query)
+                  setSqlReplayState((prev) => ({
+                    ...prev,
+                    result: response,
+                    error: null,
+                    isRunning: false,
+                    history: [
+                      ...prev.history,
+                      {
+                        query: toolAction.query ?? "",
+                        ok: response.ok,
+                        row_count: response.row_count,
+                        columns: response.columns,
+                        error: null,
+                        executed_at: new Date().toISOString(),
+                      },
+                    ],
+                  }))
                   return
                 }
                 case "python": {
                   setActiveWorkspace("python")
+                  setAnalysisReplayState((prev) => ({
+                    ...prev,
+                    language: "python",
+                    code: toolAction.code ?? "",
+                    result: null,
+                    error: null,
+                    isRunning: true,
+                    artifactRefs: toolAction.artifactRefs ?? [],
+                  }))
                   if (!toolAction.code) return
                   const runtimeContext =
                     templateId && toolAction.datasetId
@@ -97,6 +164,26 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
                         }
                       : undefined
                   const response = await api.runPython(toolAction.code, runtimeContext)
+                  setAnalysisReplayState((prev) => ({
+                    ...prev,
+                    result: { ...response, source: "python_api" },
+                    error: null,
+                    isRunning: false,
+                    pythonHistory: [
+                      ...prev.pythonHistory,
+                      {
+                        code: toolAction.code ?? "",
+                        ok: response.ok,
+                        stdout: response.stdout,
+                        stderr: response.stderr,
+                        plot_url: response.plot_url,
+                        artifacts: response.artifacts,
+                        error: null,
+                        runtime_ms: response.runtime_ms,
+                        executed_at: new Date().toISOString(),
+                      },
+                    ],
+                  }))
                   track("python_code_run", {
                     source: "autoplay",
                     round_id: round.id,
@@ -107,6 +194,36 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
                 }
                 case "r": {
                   setActiveWorkspace("python")
+                  setAnalysisReplayState((prev) => ({
+                    ...prev,
+                    language: "r",
+                    code: toolAction.code ?? "",
+                    error: null,
+                    isRunning: false,
+                    artifactRefs: toolAction.artifactRefs ?? [],
+                    result: {
+                      ok: true,
+                      stdout: toolAction.plotUrl ? "" : "R mock execution complete.",
+                      stderr: null,
+                      plot_url: toolAction.plotUrl ?? null,
+                      artifacts: [],
+                      runtime_ms: 31,
+                      source: "r_mock",
+                    },
+                    rHistory: [
+                      ...prev.rHistory,
+                      {
+                        code: toolAction.code ?? "",
+                        ok: true,
+                        stdout: toolAction.plotUrl ? "" : "R mock execution complete.",
+                        stderr: null,
+                        plot_url: toolAction.plotUrl ?? null,
+                        error: null,
+                        runtime_ms: 31,
+                        executed_at: new Date().toISOString(),
+                      },
+                    ],
+                  }))
                   track("analysis_r_run", {
                     source: "autoplay_mock",
                     round_id: round.id,
@@ -117,6 +234,21 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
                 }
                 case "dashboard": {
                   setActiveWorkspace("dashboard")
+                  setDashboardReplayState((prev) => ({
+                    ...prev,
+                    loading: true,
+                    error: null,
+                    actionError: null,
+                    lastActionLabel: toolAction.label,
+                    lastActionDetail: toolAction.action ?? toolAction.detail ?? toolAction.label,
+                    artifactRefs: toolAction.artifactRefs ?? [],
+                  }))
+                  const nextState = await applyAutoplayDashboardAction(api, toolAction)
+                  setDashboardReplayState((prev) => ({
+                    ...prev,
+                    loading: false,
+                    state: nextState,
+                  }))
                   track("dashboard_action", {
                     source: "autoplay",
                     round_id: round.id,
@@ -243,11 +375,28 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
       action: async () => {
         setActiveWorkspace("report")
         setFinalResponse(fixture.finalResponse)
+        setDeliverableContent(fixture.finalResponse)
+        setDeliverableArtifacts(fixture.rounds.at(-1)?.mockedArtifacts ?? [])
       },
     })
 
     return steps
-  }, [fixture, api, isAiDisabled, pushCoachMessage, session.policy, setActiveWorkspace, setFinalResponse, setCurrentRoundIndex, track])
+  }, [
+    fixture,
+    api,
+    isAiDisabled,
+    pushCoachMessage,
+    session.policy,
+    setActiveWorkspace,
+    setFinalResponse,
+    setCurrentRoundIndex,
+    track,
+    setSqlReplayState,
+    setAnalysisReplayState,
+    setDashboardReplayState,
+    setDeliverableContent,
+    setDeliverableArtifacts,
+  ])
 
   useEffect(() => {
     if (runningRef.current) return
@@ -292,10 +441,21 @@ export function AutoPlayController({ fixture }: { fixture: DemoFixtureData }) {
   const handleSkipToEnd = useCallback(() => {
     setActiveWorkspace("report")
     setFinalResponse(fixture.finalResponse)
+    setDeliverableContent(fixture.finalResponse)
+    setDeliverableArtifacts(fixture.rounds.at(-1)?.mockedArtifacts ?? [])
     setCurrentRoundIndex(Math.max(0, (fixture.rounds.length || 1) - 1))
     setIsComplete(true)
     window.parent?.postMessage({ type: AUTOPLAY_COMPLETE_MESSAGE, sessionId: session.id }, window.location.origin)
-  }, [fixture.finalResponse, fixture.rounds.length, session.id, setActiveWorkspace, setCurrentRoundIndex, setFinalResponse])
+  }, [
+    fixture.finalResponse,
+    fixture.rounds,
+    session.id,
+    setActiveWorkspace,
+    setCurrentRoundIndex,
+    setFinalResponse,
+    setDeliverableContent,
+    setDeliverableArtifacts,
+  ])
 
   const handleRetry = useCallback(() => {
     setFailure(null)
