@@ -40,7 +40,11 @@ const EVENT_CATEGORY: Record<string, Category> = {
   task_generation_completed: "workflow",
   round_started: "workflow",
   round_completed: "workflow",
+  checkpoint_saved: "workflow",
+  deliverable_draft_saved: "workflow",
+  coach_message: "workflow",
   sql_query_run: "tool",
+  python_code_run: "tool",
   python_run: "tool",
   analysis_r_run: "tool",
   dashboard_action: "tool",
@@ -48,6 +52,8 @@ const EVENT_CATEGORY: Record<string, Category> = {
   tab_blur_detected: "integrity",
   copy_paste_detected: "integrity",
   copilot_invoked: "ai",
+  copilot_output_accepted: "ai",
+  copilot_output_edited: "ai",
 }
 
 function getCategory(eventType: string): Category {

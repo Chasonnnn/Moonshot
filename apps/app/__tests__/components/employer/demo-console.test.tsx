@@ -66,7 +66,7 @@ const BASE_REPORT_SNAPSHOT = {
   timeline_warning: null,
   interpretation: null,
   human_review: null,
-  demo_template_id: "tpl_data_analyst",
+  demo_template_id: "tpl_jda_first_hour",
   co_design_bundle: null,
   round_blueprint: [],
   evaluation_bundle: null,
@@ -160,75 +160,68 @@ describe("DemoConsole template selection", () => {
     mockedLoadReportDetailSnapshot.mockResolvedValue(BASE_REPORT_SNAPSHOT as never)
   })
 
-  it("defaults to the flagship analyst selection and renders the story summary", () => {
+  it("defaults to the sponsor flagship selection and renders only the sponsor-facing templates", () => {
     renderConsole()
 
     const launchBand = screen.getByTestId("demo-launch-band")
 
-    expect(screen.getByText("Operator-led demo story")).toBeInTheDocument()
-    expect(screen.getByText("KPI Discrepancy Investigation")).toBeInTheDocument()
-    expect(screen.getByText("SQL Data Quality Triage")).toBeInTheDocument()
-    expect(screen.getByText("Stakeholder Ambiguity Handling")).toBeInTheDocument()
-    expect(screen.getByText("RevOps Forecast Variance Review")).toBeInTheDocument()
-    expect(screen.getByText("Ops Capacity Escalation Simulation")).toBeInTheDocument()
-    expect(screen.getByText("Customer Support Escalation Judgment")).toBeInTheDocument()
-    expect(screen.getByText("Marketplace Growth Strategy Simulation")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /KPI Discrepancy Investigation/i })).toHaveAttribute("aria-pressed", "true")
-    expect(within(launchBand).getByRole("button", { name: "Hybrid fixture path" })).toBeInTheDocument()
-    expect(within(launchBand).getByRole("button", { name: "Fully live mode" })).toBeInTheDocument()
-    expect(within(launchBand).getByRole("button", { name: "Start flagship demo" })).toBeInTheDocument()
+    expect(screen.getByText("Sponsor-ready demo story")).toBeInTheDocument()
+    expect(screen.getAllByText("JDA First-Hour Work Sample").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Customer Support Escalation Judgment").length).toBeGreaterThan(0)
+    expect(screen.queryByText("Marketplace Growth Strategy Simulation")).not.toBeInTheDocument()
+    expect(within(launchBand).getByRole("button", { name: "Hybrid fixture" })).toBeInTheDocument()
+    expect(within(launchBand).getByRole("button", { name: "Fully live" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Start sponsor demo" })).toBeInTheDocument()
   })
 
   it("shows the updated narrative and step indicators initially", () => {
     renderConsole()
 
-    expect(screen.getAllByText("Simulation Gallery").length).toBeGreaterThan(0)
-    expect(screen.getByText("Co-design")).toBeInTheDocument()
-    expect(screen.getByText("Candidate work trace")).toBeInTheDocument()
-    expect(screen.getByText("Presentation & defense")).toBeInTheDocument()
-    expect(screen.getByText("Evaluation")).toBeInTheDocument()
-    expect(screen.getByText("Governance")).toBeInTheDocument()
-    expect(screen.getByText("What the candidate was asked to do")).toBeInTheDocument()
-    expect(screen.getByText("What evidence Moonshot captured")).toBeInTheDocument()
-    expect(screen.getByText("Why the employer can trust the decision")).toBeInTheDocument()
+    expect(screen.getByText("Lead with one flagship work sample, then show the reusable second skin.")).toBeInTheDocument()
+    expect(screen.getByText("Four demo surfaces")).toBeInTheDocument()
+    expect(screen.getByText("Co-Design")).toBeInTheDocument()
+    expect(screen.getByText("Build")).toBeInTheDocument()
+    expect(screen.getByText("Evaluation Setup")).toBeInTheDocument()
+    expect(screen.getByText("Candidate Work Trace")).toBeInTheDocument()
+    expect(screen.getByText("Evaluation + Governance")).toBeInTheDocument()
+    expect(screen.getByText(/Seeded employer authoring/i)).toBeInTheDocument()
+    expect(screen.getByText(/Assessment dashboard that leads with seven dimensions/i)).toBeInTheDocument()
   })
 
   it("renders hybrid and full live mode controls", () => {
     renderConsole()
 
-    expect(screen.getByRole("button", { name: "Hybrid fixture path" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Fully live mode" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Hybrid fixture" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Fully live" })).toBeInTheDocument()
   })
 
-  it("surfaces the new simulation tool mix and oral metadata in the launch gallery", async () => {
+  it("keeps customer support visible as the reusable second skin", async () => {
     const user = userEvent.setup()
     renderConsole()
 
-    await user.click(screen.getByRole("button", { name: /RevOps Forecast Variance Review/i }))
+    await user.click(screen.getByRole("button", { name: /Customer Support Escalation Judgment/i }))
 
-    expect(screen.getAllByText("Executive readout + follow-up defense").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("Spreadsheet").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("BI").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("Slides").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("Oral").length).toBeGreaterThan(0)
+    expect(screen.getByText(/same evidence model, same auditability, different job family/i)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Start second-skin demo" })).toBeInTheDocument()
   })
 
-  it("marks junior analyst scenarios as requiring slides and oral defense", async () => {
+  it("keeps the flagship junior analyst path focused on staged work instead of oral defense", async () => {
     const user = userEvent.setup()
     renderConsole()
 
-    await user.click(screen.getByRole("button", { name: /SQL Data Quality Triage/i }))
+    await user.click(screen.getByRole("button", { name: /JDA First-Hour Work Sample/i }))
 
-    expect(screen.getAllByText("3-slide readout + 60-second defense").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("Slides").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("Oral").length).toBeGreaterThan(0)
+    const flagshipCard = screen.getByRole("button", { name: /JDA First-Hour Work Sample/i })
+    expect(flagshipCard).toHaveTextContent(/8\s+stages/i)
+    expect(flagshipCard).toHaveTextContent(/60 min\s+duration/i)
+    expect(flagshipCard).not.toHaveTextContent(/oral/i)
   })
 
   it("shows operators panel in fully live mode", async () => {
     const user = userEvent.setup()
     renderConsole()
 
-    await user.click(screen.getByRole("button", { name: "Fully live mode" }))
+    await user.click(screen.getByRole("button", { name: "Fully live" }))
 
     expect(screen.getByText("Operators Panel")).toBeInTheDocument()
     expect(screen.getByText(/anthropic\/claude-opus-4-6/)).toBeInTheDocument()
@@ -239,8 +232,8 @@ describe("DemoConsole template selection", () => {
     const user = userEvent.setup()
     renderConsole()
 
-    await user.click(screen.getByRole("button", { name: "Fully live mode" }))
-    await user.click(screen.getByRole("button", { name: "Start flagship demo" }))
+    await user.click(screen.getByRole("button", { name: "Fully live" }))
+    await user.click(screen.getByRole("button", { name: "Start sponsor demo" }))
 
     const jobDescriptionHeader = screen.getByText("Detailed Job Description").parentElement
     expect(jobDescriptionHeader).toBeTruthy()
@@ -285,13 +278,13 @@ describe("DemoConsole template selection", () => {
     const user = userEvent.setup()
     renderConsole()
 
-    await user.click(screen.getByRole("button", { name: "Start flagship demo" }))
+    await user.click(screen.getByRole("button", { name: "Start sponsor demo" }))
     await user.click(screen.getByRole("button", { name: "Continue to Generate" }))
     await user.click(screen.getByRole("button", { name: "Complete generation" }))
 
     expect(screen.getByText("Co-design alignment")).toBeInTheDocument()
     expect(screen.getByText("Trigger rationale to preview")).toBeInTheDocument()
-    expect(screen.getByText("Round progression")).toBeInTheDocument()
+    expect(screen.getByText("Stage progression")).toBeInTheDocument()
   })
 
   it("renders explicit live proof failure state without falling back to fixture success", async () => {
@@ -319,7 +312,7 @@ describe("DemoConsole template selection", () => {
 
     renderConsole()
 
-    await user.click(screen.getByRole("button", { name: "Start flagship demo" }))
+    await user.click(screen.getByRole("button", { name: "Start sponsor demo" }))
     await user.click(screen.getByRole("button", { name: "Run live co-design/generation proof" }))
 
     expect(await screen.findByText("Live Proof Step Failed")).toBeInTheDocument()
@@ -329,11 +322,11 @@ describe("DemoConsole template selection", () => {
     expect(mockedRunDemoFastPath).not.toHaveBeenCalled()
   })
 
-  it("renders the strategy teaser after the report phase", async () => {
+  it("renders the customer-support second skin after the report phase", async () => {
     const user = userEvent.setup()
     renderConsole()
 
-    await user.click(screen.getByRole("button", { name: "Start flagship demo" }))
+    await user.click(screen.getByRole("button", { name: "Start sponsor demo" }))
     await user.click(screen.getByRole("button", { name: "Continue to Generate" }))
     await user.click(screen.getByRole("button", { name: "Complete generation" }))
     await user.click(screen.getByRole("button", { name: "Confirm & Start Session" }))
@@ -341,9 +334,9 @@ describe("DemoConsole template selection", () => {
     await user.click(screen.getByRole("button", { name: "Skip to Report" }))
 
     expect(await screen.findByTestId("report-review-console")).toBeInTheDocument()
-    expect(screen.getByText("Breadth teaser")).toBeInTheDocument()
-    expect(screen.getByText("Marketplace Growth Strategy Simulation")).toBeInTheDocument()
-    expect(screen.getByText("Why this proves breadth")).toBeInTheDocument()
+    expect(screen.getByText("Second skin")).toBeInTheDocument()
+    expect(screen.getByText("Customer Support Escalation Judgment")).toBeInTheDocument()
+    expect(screen.getByText("Why the same engine transfers")).toBeInTheDocument()
   })
 
   it("builds stable stage diagnostic keys from request id or composite fallback", () => {

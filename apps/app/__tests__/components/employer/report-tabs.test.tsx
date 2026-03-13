@@ -118,7 +118,7 @@ const BASE_SNAPSHOT: ReportDetailSnapshot = {
   fairnessRuns: [],
   interpretation: null,
   human_review: null,
-  demo_template_id: null,
+  demo_template_id: "tpl_jda_first_hour",
   co_design_bundle: null,
   round_blueprint: [],
   evaluation_bundle: {
@@ -215,10 +215,12 @@ describe("ReportReviewConsole tabs", () => {
 
     expect(screen.getByText("Report Summary")).toBeInTheDocument()
     expect(screen.getByText("Why this score is credible")).toBeInTheDocument()
+    expect(screen.getByText("Practice Retry")).toBeInTheDocument()
     expect(screen.getByText("Approach Narrative")).toBeInTheDocument()
     expect(screen.getByText("Governance Trace")).toBeInTheDocument()
     // Scoring label for assessment_ai_assisted
     expect(screen.getByText("AI-Assisted")).toBeInTheDocument()
+    expect(await screen.findByText("Sponsor Evidence Summary")).toBeInTheDocument()
     expect(await screen.findByText("AI Analysis")).toBeInTheDocument()
   })
 
@@ -262,6 +264,87 @@ describe("ReportReviewConsole tabs", () => {
     expect(screen.getByText(/SELECT COUNT/)).toBeInTheDocument()
   })
 
+  it("surfaces sponsor evidence sections on the Output tab when replay data exists", async () => {
+    const user = userEvent.setup()
+    const snapshot = {
+      ...BASE_SNAPSHOT,
+      round_blueprint: [
+        {
+          id: "stage_triage",
+          title: "Data triage",
+          objective: "Catch the broken join and escalate cleanly.",
+          deliverables: ["Escalation note"],
+          sqlQueries: [],
+          pythonScripts: [],
+          rScripts: [],
+          dashboardActions: [],
+          coachScript: [
+            {
+              role: "coach" as const,
+              content: "The join key looks unstable. Confirm before proceeding.",
+              allowed: true,
+            },
+          ],
+          mockedArtifacts: ["campaign_performance_snapshot.csv"],
+          toolActions: [
+            {
+              tool: "sql" as const,
+              label: "Check duplicate join keys",
+              artifactRefs: ["campaign_performance_corrected.csv"],
+            },
+          ],
+        },
+      ],
+      events: [
+        ...MOCK_EVENTS,
+        {
+          event_type: "checkpoint_saved",
+          payload: { checkpoint: "initial_plan" },
+          timestamp: "2026-03-01T10:03:00Z",
+        },
+        {
+          event_type: "coach_message",
+          payload: { direction: "Escalate the defect before analysis." },
+          timestamp: "2026-03-01T10:04:00Z",
+        },
+        {
+          event_type: "copilot_invoked",
+          payload: { source: "assistant" },
+          timestamp: "2026-03-01T10:05:00Z",
+        },
+        {
+          event_type: "copilot_output_edited",
+          payload: { reason: "verified wording before reuse" },
+          timestamp: "2026-03-01T10:06:00Z",
+        },
+      ],
+      report: {
+        score_result: {
+          dimension_evidence: {
+            task_framing: {
+              score: 4,
+              confidence: 0.92,
+              rationale: "Asked the right clarifying questions before touching the data.",
+            },
+          },
+        },
+      },
+    } satisfies ReportDetailSnapshot
+
+    render(<ReportReviewConsole sessionId="sess-1" snapshot={snapshot} />)
+
+    await user.click(screen.getByRole("tab", { name: /output/i }))
+
+    expect(screen.getByText("Artifact Inventory")).toBeInTheDocument()
+    expect(screen.getByText("Supervisor / Coach Log")).toBeInTheDocument()
+    expect(screen.getByText("Revision History")).toBeInTheDocument()
+    expect(screen.getByText("AI / Tool Trace")).toBeInTheDocument()
+    expect(screen.getByText("Dimension Evidence")).toBeInTheDocument()
+    expect(screen.getByText("campaign_performance_snapshot.csv")).toBeInTheDocument()
+    expect(screen.getByText(/The join key looks unstable/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/verified wording before reuse/i).length).toBeGreaterThan(0)
+  })
+
   it("shows oral defense evidence on Output tab when transcripts are available", async () => {
     const user = userEvent.setup()
     const snapshot = {
@@ -286,8 +369,8 @@ describe("ReportReviewConsole tabs", () => {
     await user.click(screen.getByRole("tab", { name: /output/i }))
 
     expect(screen.getByText("Oral Defense Evidence")).toBeInTheDocument()
-    expect(screen.getByText(/discarded after transcription/i)).toBeInTheDocument()
-    expect(screen.getByText(/request_id=req-oral-1/i)).toBeInTheDocument()
+    expect(screen.getByText(/audio discarded/i)).toBeInTheDocument()
+    expect(screen.getByText(/78s · gpt-4o-transcribe/i)).toBeInTheDocument()
     expect(screen.getByText(/I would escalate the ETL defect/i)).toBeInTheDocument()
   })
 
@@ -354,10 +437,10 @@ describe("ReportReviewConsole tabs", () => {
     expect(screen.getAllByText(/Audit chain verified across 8 tenant entries/i).length).toBeGreaterThan(0)
   })
 
-  it("renders Overall Score section on Overview tab", async () => {
+  it("renders Overall Score Benchmark section on Overview tab", async () => {
     render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
 
-    expect(await screen.findByText("Overall Score")).toBeInTheDocument()
+    expect(await screen.findByText("Overall Score Benchmark")).toBeInTheDocument()
   })
 
   it("wires human review fields to their visible labels", async () => {
@@ -368,6 +451,22 @@ describe("ReportReviewConsole tabs", () => {
     expect(screen.getByLabelText(/dimension overrides \(json\)/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/override overall score \(0-1\)/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/override confidence \(0-1\)/i)).toBeInTheDocument()
+  })
+
+  it("preserves in-progress human review draft values across rerenders", async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<ReportReviewConsole sessionId="sess-1" snapshot={BASE_SNAPSHOT} />)
+
+    const notesField = await screen.findByLabelText(/notes \(markdown\)/i)
+    const overrideScoreField = screen.getByLabelText(/override overall score \(0-1\)/i)
+
+    await user.type(notesField, "draft should persist")
+    await user.type(overrideScoreField, "2")
+
+    rerender(<ReportReviewConsole sessionId="sess-1" snapshot={{ ...BASE_SNAPSHOT }} />)
+
+    expect(screen.getByLabelText(/notes \(markdown\)/i)).toHaveValue("draft should persist")
+    expect(screen.getByLabelText(/override overall score \(0-1\)/i)).toHaveValue("2")
   })
 
   it("uses human override score in gauge when final score source is human_override", async () => {
@@ -431,9 +530,9 @@ describe("ReportReviewConsole tabs", () => {
 
     expect(screen.queryByText("Dimension Radar")).not.toBeInTheDocument()
     expect(screen.queryByText("Dimension Scores")).not.toBeInTheDocument()
-    // Smart Summary and Overall Score should still render (with zero state)
+    // Smart Summary and overall benchmark should still render (with zero state)
     expect(await screen.findByText("Smart Summary")).toBeInTheDocument()
-    expect(await screen.findByText("Overall Score")).toBeInTheDocument()
+    expect(await screen.findByText("Overall Score Benchmark")).toBeInTheDocument()
   })
 
   it("shows interpretation from snapshot.interpretation when report payload does not include it", async () => {

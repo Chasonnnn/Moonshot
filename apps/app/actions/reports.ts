@@ -17,6 +17,7 @@ import {
 } from "@/lib/moonshot/types"
 import { getMockSessionEvents } from "@/lib/mock-events"
 import { DEMO_FIXTURES, type DemoCoDesignBundle, type DemoEvaluationBundle, type DemoRound } from "@/lib/moonshot/demo-fixtures"
+import { INITIAL_PRACTICE_RETRY_ACTION_STATE, type PracticeRetryActionState } from "@/lib/practice-retry-action-state"
 import { INITIAL_REPORT_ACTION_STATE, type ReportActionState } from "@/lib/report-action-state"
 import { computeSmartSummary, type SmartSummary } from "@/lib/report-analysis"
 
@@ -632,5 +633,66 @@ export async function updateHumanReviewAction(
   } catch (error) {
     const parsed = parseActionError(error)
     return { ...INITIAL_REPORT_ACTION_STATE, error: parsed.error, requestId: parsed.requestId }
+  }
+}
+
+export async function createPracticeRetryAction(
+  _prev: PracticeRetryActionState,
+  formData: FormData,
+): Promise<PracticeRetryActionState> {
+  try {
+    const sessionId = String(formData.get("session_id") ?? "").trim()
+    if (!sessionId) {
+      return { ...INITIAL_PRACTICE_RETRY_ACTION_STATE, error: "session_id is required" }
+    }
+
+    const client = createMoonshotClientFromEnv()
+    const reviewer = await client.issueToken("reviewer", client.config.reviewerUserId)
+    const sourceSession = await client.getSession(reviewer.access_token, sessionId)
+    const demoTemplateId =
+      typeof sourceSession.policy?.demo_template_id === "string" ? sourceSession.policy.demo_template_id : null
+    const demoMode =
+      typeof sourceSession.policy?.demo_mode === "string" ? sourceSession.policy.demo_mode : "fixture"
+    const retentionDays =
+      typeof sourceSession.policy?.retention_ttl_days === "number" ? sourceSession.policy.retention_ttl_days : 30
+    const timeLimitMinutes =
+      typeof sourceSession.policy?.time_limit_minutes === "number" ? sourceSession.policy.time_limit_minutes : 60
+
+    const practiceSession = await client.createSession(
+      reviewer.access_token,
+      sourceSession.task_family_id,
+      typeof sourceSession.candidate_id === "string" && sourceSession.candidate_id.trim().length > 0
+        ? sourceSession.candidate_id
+        : client.config.candidateUserId,
+      {
+        raw_content_opt_in: true,
+        retention_ttl_days: retentionDays,
+        time_limit_minutes: timeLimitMinutes,
+        demo_template_id: demoTemplateId ?? undefined,
+        demo_mode: demoMode,
+        sample_script_version: "practice-retry-v1",
+        oral_defense_required: false,
+        oral_weight: 0,
+        practice_retry: true,
+        source_session_id: sessionId,
+      },
+    )
+    await client.setSessionMode(reviewer.access_token, practiceSession.id, "practice")
+
+    revalidatePath(`/reports/${sessionId}`)
+    return {
+      ok: true,
+      message: "Practice retry ready",
+      error: null,
+      requestId: null,
+      practiceUrl: `/session/${practiceSession.id}/start?practice_retry=1`,
+    }
+  } catch (error) {
+    const parsed = parseActionError(error)
+    return {
+      ...INITIAL_PRACTICE_RETRY_ACTION_STATE,
+      error: parsed.error,
+      requestId: parsed.requestId,
+    }
   }
 }

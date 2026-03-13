@@ -2,7 +2,11 @@
 
 import { useActionState, useState } from "react"
 
-import { updateHumanReviewAction, type ReportDetailSnapshot } from "@/actions/reports"
+import {
+  createPracticeRetryAction,
+  updateHumanReviewAction,
+  type ReportDetailSnapshot,
+} from "@/actions/reports"
 import {
   ReportIntegrityTab,
   ReportOutputTab,
@@ -12,12 +16,18 @@ import {
 import { useActionStateToast } from "@/components/employer/action-state-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { IntegrityTier } from "@/lib/integrity-tiers"
+import { INITIAL_PRACTICE_RETRY_ACTION_STATE } from "@/lib/practice-retry-action-state"
 import { INITIAL_REPORT_ACTION_STATE } from "@/lib/report-action-state"
 
 export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string; snapshot: ReportDetailSnapshot }) {
   const [humanState, humanFormAction, isHumanPending] = useActionState(updateHumanReviewAction, INITIAL_REPORT_ACTION_STATE)
+  const [practiceState, practiceFormAction, isPracticePending] = useActionState(
+    createPracticeRetryAction,
+    INITIAL_PRACTICE_RETRY_ACTION_STATE,
+  )
   const [integrityTier, setIntegrityTier] = useState<IntegrityTier>("standard")
   useActionStateToast(humanState)
+  useActionStateToast(practiceState)
 
   if (snapshot.error) {
     return (
@@ -50,6 +60,9 @@ export function ReportReviewConsole({ sessionId, snapshot }: { sessionId: string
           snapshot={snapshot}
           humanFormAction={humanFormAction}
           isHumanPending={isHumanPending}
+          practiceState={practiceState}
+          practiceFormAction={practiceFormAction}
+          isPracticePending={isPracticePending}
         />
       </TabsContent>
 

@@ -15,7 +15,16 @@ vi.mock("@/lib/mock-events", () => ({
   getMockSessionEvents: mockGetMockSessionEvents,
 }))
 
-import { loadReportDetailSnapshot, updateHumanReviewAction } from "@/actions/reports"
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}))
+
+import {
+  createPracticeRetryAction,
+  loadReportDetailSnapshot,
+  updateHumanReviewAction,
+} from "@/actions/reports"
+import { INITIAL_PRACTICE_RETRY_ACTION_STATE } from "@/lib/practice-retry-action-state"
 import { INITIAL_REPORT_ACTION_STATE } from "@/lib/report-action-state"
 
 function buildClient(overrides: Partial<Record<string, unknown>> = {}) {
@@ -92,6 +101,28 @@ function buildClient(overrides: Partial<Record<string, unknown>> = {}) {
       next_cursor: null,
       limit: 250,
       total: 1,
+    }),
+    createSession: vi.fn().mockResolvedValue({
+      id: "practice-sess-1",
+      tenant_id: "tenant_a",
+      task_family_id: "tf-1",
+      candidate_id: "candidate_1",
+      status: "active",
+      policy: {},
+      final_response: null,
+      created_at: "2026-03-01T11:00:00Z",
+      updated_at: "2026-03-01T11:00:00Z",
+    }),
+    setSessionMode: vi.fn().mockResolvedValue({
+      id: "practice-sess-1",
+      tenant_id: "tenant_a",
+      task_family_id: "tf-1",
+      candidate_id: "candidate_1",
+      status: "active",
+      policy: { coach_mode: "practice" },
+      final_response: null,
+      created_at: "2026-03-01T11:00:00Z",
+      updated_at: "2026-03-01T11:00:00Z",
     }),
     ...overrides,
   }
@@ -353,5 +384,59 @@ describe("updateHumanReviewAction validation", () => {
     expect(result.ok).toBe(false)
     expect(result.error).toBe("override_confidence must be between 0 and 1")
     expect(mockCreateMoonshotClientFromEnv).not.toHaveBeenCalled()
+  })
+})
+
+describe("createPracticeRetryAction", () => {
+  beforeEach(() => {
+    mockCreateMoonshotClientFromEnv.mockReset()
+  })
+
+  it("creates a derived practice session with sponsor-safe policy overrides", async () => {
+    const client = buildClient({
+      getSession: vi.fn().mockResolvedValue({
+        id: "sess-1",
+        tenant_id: "tenant_a",
+        task_family_id: "tf-1",
+        candidate_id: "candidate_1",
+        status: "scored",
+        policy: {
+          coach_mode: "assessment_ai_assisted",
+          demo_template_id: "tpl_jda_first_hour",
+          demo_mode: "fixture",
+          raw_content_opt_in: true,
+          retention_ttl_days: 30,
+          time_limit_minutes: 60,
+        },
+        final_response: "done",
+        created_at: "2026-03-01T10:00:00Z",
+        updated_at: "2026-03-01T10:10:00Z",
+      }),
+    })
+    mockCreateMoonshotClientFromEnv.mockReturnValue(client)
+
+    const formData = new FormData()
+    formData.set("session_id", "sess-1")
+
+    const result = await createPracticeRetryAction(INITIAL_PRACTICE_RETRY_ACTION_STATE, formData)
+
+    expect(result.ok).toBe(true)
+    expect(result.practiceUrl).toBe("/session/practice-sess-1/start?practice_retry=1")
+    expect(client.createSession).toHaveBeenCalledWith(
+      "reviewer-token",
+      "tf-1",
+      "candidate_1",
+      expect.objectContaining({
+        raw_content_opt_in: true,
+        demo_template_id: "tpl_jda_first_hour",
+        demo_mode: "fixture",
+        sample_script_version: "practice-retry-v1",
+        oral_defense_required: false,
+        oral_weight: 0,
+        practice_retry: true,
+        source_session_id: "sess-1",
+      }),
+    )
+    expect(client.setSessionMode).toHaveBeenCalledWith("reviewer-token", "practice-sess-1", "practice")
   })
 })

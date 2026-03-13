@@ -1,9 +1,10 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { CodeIcon, FileTextIcon, LinkIcon, BrainIcon, ScaleIcon, ShieldCheckIcon } from "lucide-react"
 
-import type { ReportDetailSnapshot } from "@/actions/reports"
+import type { PracticeRetryActionState, ReportDetailSnapshot } from "@/actions/reports"
 import { EventTimeline } from "@/components/employer/event-timeline"
 import { IntegrityTierSelect } from "@/components/employer/integrity-tier-select"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { IntegrityTier } from "@/lib/integrity-tiers"
 import { DEMO_CASE_TEMPLATES } from "@/lib/moonshot/demo-case-templates"
+import { getRoundToolActions } from "@/lib/moonshot/demo-fixtures"
 import type { SessionMode } from "@/lib/moonshot/types"
 import { getScoringLabel } from "@/lib/scoring-labels"
 
@@ -92,6 +94,46 @@ function ReportOverviewAnalyticsLoading() {
   )
 }
 
+interface HumanReviewDraft {
+  notesMarkdown: string
+  tagsCsv: string
+  dimensionOverridesJson: string
+  overrideOverallScore: string
+  overrideConfidence: string
+}
+
+function getInitialHumanReviewDraft(snapshot: ReportDetailSnapshot): HumanReviewDraft {
+  return {
+    notesMarkdown: snapshot.human_review?.notes_markdown ?? "",
+    tagsCsv: snapshot.human_review?.tags.join(", ") ?? "",
+    dimensionOverridesJson: snapshot.human_review?.dimension_overrides
+      ? JSON.stringify(snapshot.human_review.dimension_overrides)
+      : "",
+    overrideOverallScore:
+      snapshot.human_review?.override_overall_score === null ||
+      snapshot.human_review?.override_overall_score === undefined
+        ? ""
+        : String(snapshot.human_review.override_overall_score),
+    overrideConfidence:
+      snapshot.human_review?.override_confidence === null ||
+      snapshot.human_review?.override_confidence === undefined
+        ? ""
+        : String(snapshot.human_review.override_confidence),
+  }
+}
+
+function getHumanReviewDraftKey(sessionId: string, snapshot: ReportDetailSnapshot): string {
+  const initialDraft = getInitialHumanReviewDraft(snapshot)
+  return [
+    sessionId,
+    initialDraft.notesMarkdown,
+    initialDraft.tagsCsv,
+    initialDraft.dimensionOverridesJson,
+    initialDraft.overrideOverallScore,
+    initialDraft.overrideConfidence,
+  ].join("::")
+}
+
 function HumanReviewForm({
   sessionId,
   snapshot,
@@ -108,6 +150,7 @@ function HumanReviewForm({
   const dimensionOverridesFieldId = `human-review-dimension-overrides-${sessionId}`
   const overrideScoreFieldId = `human-review-override-score-${sessionId}`
   const overrideConfidenceFieldId = `human-review-override-confidence-${sessionId}`
+  const [draft, setDraft] = useState<HumanReviewDraft>(() => getInitialHumanReviewDraft(snapshot))
 
   return (
     <div className="ops-surface p-6">
@@ -119,7 +162,8 @@ function HumanReviewForm({
           <Textarea
             id={notesFieldId}
             name="notes_markdown"
-            defaultValue={snapshot.human_review?.notes_markdown ?? ""}
+            value={draft.notesMarkdown}
+            onChange={(event) => setDraft((current) => ({ ...current, notesMarkdown: event.target.value }))}
             className="mt-1 min-h-[120px] rounded-3xl border-[var(--ops-border-strong)] bg-white px-4 py-3 text-[13px]"
           />
         </div>
@@ -129,7 +173,8 @@ function HumanReviewForm({
             <Input
               id={tagsFieldId}
               name="tags_csv"
-              defaultValue={snapshot.human_review?.tags.join(", ") ?? ""}
+              value={draft.tagsCsv}
+              onChange={(event) => setDraft((current) => ({ ...current, tagsCsv: event.target.value }))}
               className="mt-1 h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px] md:h-9"
             />
           </div>
@@ -138,10 +183,9 @@ function HumanReviewForm({
             <Input
               id={dimensionOverridesFieldId}
               name="dimension_overrides_json"
-              defaultValue={
-                snapshot.human_review?.dimension_overrides
-                  ? JSON.stringify(snapshot.human_review.dimension_overrides)
-                  : ""
+              value={draft.dimensionOverridesJson}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, dimensionOverridesJson: event.target.value }))
               }
               className="mt-1 h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px] md:h-9"
             />
@@ -153,7 +197,10 @@ function HumanReviewForm({
             <Input
               id={overrideScoreFieldId}
               name="override_overall_score"
-              defaultValue={snapshot.human_review?.override_overall_score ?? ""}
+              value={draft.overrideOverallScore}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, overrideOverallScore: event.target.value }))
+              }
               className="mt-1 h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px] md:h-9"
             />
           </div>
@@ -162,7 +209,10 @@ function HumanReviewForm({
             <Input
               id={overrideConfidenceFieldId}
               name="override_confidence"
-              defaultValue={snapshot.human_review?.override_confidence ?? ""}
+              value={draft.overrideConfidence}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, overrideConfidence: event.target.value }))
+              }
               className="mt-1 h-11 rounded-2xl border-[var(--ops-border-strong)] bg-white text-[13px] md:h-9"
             />
           </div>
@@ -223,11 +273,17 @@ export function ReportOverviewTab({
   snapshot,
   humanFormAction,
   isHumanPending,
+  practiceState,
+  practiceFormAction,
+  isPracticePending,
 }: {
   sessionId: string
   snapshot: ReportDetailSnapshot
   humanFormAction: (payload: FormData) => void
   isHumanPending: boolean
+  practiceState: PracticeRetryActionState
+  practiceFormAction: (payload: FormData) => void
+  isPracticePending: boolean
 }) {
   const scoringLabel = getScoringLabel(toSessionMode(snapshot.session?.policy?.coach_mode))
   const smartSummary = getSmartSummary(snapshot)
@@ -254,11 +310,12 @@ export function ReportOverviewTab({
           </div>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Confidence</p>
-            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{formatConfidence(snapshot.summary?.confidence)}</p>
-          </div>
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Final Confidence</p>
-            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{formatConfidence(snapshot.summary?.final_confidence)}</p>
+            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">
+              {formatConfidence(snapshot.summary?.confidence)}
+              {snapshot.summary?.final_confidence && snapshot.summary.final_confidence !== snapshot.summary.confidence
+                ? ` → ${formatConfidence(snapshot.summary.final_confidence)}`
+                : ""}
+            </p>
           </div>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Template</p>
@@ -282,19 +339,44 @@ export function ReportOverviewTab({
             </div>
           </div>
         </div>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Final Score Source</p>
-            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{snapshot.summary?.final_score_source ?? "n/a"}</p>
-          </div>
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Model Confidence</p>
-            <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{formatConfidence(snapshot.summary?.confidence)}</p>
-          </div>
+        <div className="mt-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Score source</p>
+          <p className="mt-0.5 text-[13px] text-[var(--ops-text)]">{snapshot.summary?.final_score_source ?? "n/a"}</p>
         </div>
       </div>
 
       <ScoreCredibilityCard snapshot={snapshot} />
+
+      <div className="ops-surface p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Practice Retry</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text-muted)]">
+              Launch a derived practice-mode retry from this report. The retry reuses the same template and task family,
+              disables oral scoring, and preserves a separate evidence trail for before-and-after comparison.
+            </p>
+          </div>
+          {practiceState.practiceUrl ? (
+            <Button asChild className="min-h-11 bg-[var(--ops-accent)] px-5 text-[12px] text-white hover:bg-[var(--ops-accent-strong)]">
+              <a href={practiceState.practiceUrl}>Open Practice Retry</a>
+            </Button>
+          ) : null}
+        </div>
+        <form action={practiceFormAction} className="mt-4 flex flex-wrap items-center gap-3">
+          <input type="hidden" name="session_id" value={sessionId} />
+          <Button
+            type="submit"
+            disabled={isPracticePending}
+            variant="outline"
+            className="min-h-11 px-5 text-[12px]"
+          >
+            {isPracticePending ? "Creating practice retry..." : "Create Practice Retry"}
+          </Button>
+          {practiceState.message ? (
+            <p className="text-[12px] text-[var(--ops-text-subtle)]">{practiceState.message}</p>
+          ) : null}
+        </form>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <div className="ops-surface p-6">
@@ -382,6 +464,7 @@ export function ReportOverviewTab({
       />
 
       <HumanReviewForm
+        key={getHumanReviewDraftKey(sessionId, snapshot)}
         sessionId={sessionId}
         snapshot={snapshot}
         humanFormAction={humanFormAction}
@@ -394,16 +477,38 @@ export function ReportOverviewTab({
 export function ReportOutputTab({ snapshot }: { snapshot: ReportDetailSnapshot }) {
   const dimensionEvidence = getDimensionEvidence(snapshot)
   const oralResponses = snapshot.oral_responses
+  const artifactRefs = [...new Set(
+    snapshot.round_blueprint.flatMap((round) => [
+      ...round.mockedArtifacts,
+      ...getRoundToolActions(round).flatMap((action) => action.artifactRefs ?? []),
+    ]),
+  )]
+  const supervisorLog = snapshot.round_blueprint.flatMap((round) =>
+    round.coachScript.map((item, index) => ({
+      id: `${round.id}-${index}`,
+      roundTitle: round.title,
+      role: item.role,
+      content: item.content,
+      allowed: item.allowed,
+      policyReason: item.policyReason,
+    })),
+  )
+  const revisionHistory = snapshot.events.filter((event) =>
+    ["checkpoint_saved", "deliverable_draft_saved", "copilot_output_accepted", "copilot_output_edited"].includes(event.event_type),
+  )
+  const aiTrace = snapshot.events.filter((event) =>
+    ["copilot_invoked", "copilot_output_accepted", "copilot_output_edited", "coach_message"].includes(event.event_type),
+  )
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <CodeIcon className="size-5 text-[#6E6E73]" />
-          <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Candidate Output</h2>
+          <CodeIcon className="size-5 text-[var(--ops-text-subtle)]" />
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Candidate Output</h2>
         </div>
         {snapshot.session?.final_response ? (
-          <pre className="mt-3 overflow-x-auto rounded-lg bg-[#F5F5F7] p-4 font-mono text-[13px] text-[#1D1D1F]">
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-[var(--ops-page-bg)] p-4 font-mono text-[13px] text-[var(--ops-text)]">
             {snapshot.session.final_response}
           </pre>
         ) : (
@@ -418,35 +523,32 @@ export function ReportOutputTab({ snapshot }: { snapshot: ReportDetailSnapshot }
       </div>
 
       {oralResponses.length > 0 && (
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2">
-            <BrainIcon className="size-5 text-[#0F766E]" />
-            <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Oral Defense Evidence</h2>
+            <BrainIcon className="size-5 text-[var(--ops-success)]" />
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Oral Defense Evidence</h2>
           </div>
-          <p className="mt-2 text-[13px] leading-relaxed text-[#6E6E73]">
+          <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text-subtle)]">
             Presentation and follow-up responses were transcribed, attached to the session evidence graph, and scored alongside the written work.
           </p>
           <div className="mt-4 grid gap-3">
             {oralResponses.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-[#CCFBF1] bg-[#F0FDFA] p-4">
+              <div key={item.id} className="rounded-2xl border border-[var(--ops-success)]/20 bg-[var(--ops-success-soft)] p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className="border-[#99F6E4] bg-white text-[11px] text-[#115E59]">
+                  <Badge variant="outline" className="border-[var(--ops-success)]/30 bg-white text-[11px] text-[var(--ops-success)]">
                     {item.clip_type.replace(/_/g, " ")}
                   </Badge>
-                  <span className="text-[11px] text-[#0F766E]">
+                  <span className="text-[11px] text-[var(--ops-text-subtle)]">
                     {Math.round(item.duration_ms / 1000)}s · {item.transcription_model}
                   </span>
-                  {item.request_id ? (
-                    <span className="font-mono text-[11px] text-[#134E4A]">request_id={item.request_id}</span>
-                  ) : null}
-                  <span className="text-[11px] text-[#134E4A]">
-                    raw audio {item.audio_retained ? "retained" : "discarded after transcription"}
+                  <span className="text-[11px] text-[var(--ops-text-subtle)]">
+                    {item.audio_retained ? "audio retained" : "audio discarded"}
                   </span>
                 </div>
                 {item.question_id ? (
-                  <p className="mt-2 text-[12px] font-medium text-[#0F172A]">Question: {item.question_id}</p>
+                  <p className="mt-2 text-[12px] font-medium text-[var(--ops-text)]">Question: {item.question_id}</p>
                 ) : null}
-                <p className="mt-2 text-[13px] leading-relaxed text-[#0F172A]">{item.transcript_text}</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text)]">{item.transcript_text}</p>
               </div>
             ))}
           </div>
@@ -454,11 +556,11 @@ export function ReportOutputTab({ snapshot }: { snapshot: ReportDetailSnapshot }
       )}
 
       {snapshot.evaluation_bundle && (
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-          <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Trigger and Rationale</h2>
-          <div className="mt-3 overflow-x-auto rounded-lg border border-[#E5E5EA]">
+        <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Trigger and Rationale</h2>
+          <div className="mt-3 overflow-x-auto rounded-lg border border-[var(--ops-border)]">
             <table className="min-w-full text-left text-[12px]">
-              <thead className="bg-[#F5F5F7] text-[#4D4D52]">
+              <thead className="bg-[var(--ops-page-bg)] text-[var(--ops-text-muted)]">
                 <tr>
                   <th className="px-3 py-2 font-medium">Code</th>
                   <th className="px-3 py-2 font-medium">Rationale</th>
@@ -467,10 +569,10 @@ export function ReportOutputTab({ snapshot }: { snapshot: ReportDetailSnapshot }
               </thead>
               <tbody>
                 {snapshot.evaluation_bundle.triggerRationale.map((item) => (
-                  <tr key={item.code} className="border-t border-[#F0F0F2]">
-                    <td className="px-3 py-2 font-mono text-[#1D1D1F]">{item.code}</td>
-                    <td className="px-3 py-2 text-[#6E6E73]">{item.rationale}</td>
-                    <td className="px-3 py-2 text-[#1D1D1F]">{item.impact}</td>
+                  <tr key={item.code} className="border-t border-[var(--ops-border)]/50">
+                    <td className="px-3 py-2 font-mono text-[var(--ops-text)]">{item.code}</td>
+                    <td className="px-3 py-2 text-[var(--ops-text-subtle)]">{item.rationale}</td>
+                    <td className="px-3 py-2 text-[var(--ops-text)]">{item.impact}</td>
                   </tr>
                 ))}
               </tbody>
@@ -480,11 +582,11 @@ export function ReportOutputTab({ snapshot }: { snapshot: ReportDetailSnapshot }
       )}
 
       {dimensionEvidence && Object.keys(dimensionEvidence).length > 0 && (
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-          <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Dimension Evidence</h2>
-          <div className="mt-3 overflow-x-auto rounded-lg border border-[#E5E5EA]">
+        <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Dimension Evidence</h2>
+          <div className="mt-3 overflow-x-auto rounded-lg border border-[var(--ops-border)]">
             <table className="min-w-full text-left text-[12px]">
-              <thead className="bg-[#F5F5F7] text-[#4D4D52]">
+              <thead className="bg-[var(--ops-page-bg)] text-[var(--ops-text-muted)]">
                 <tr>
                   <th className="px-3 py-2 font-medium">Dimension</th>
                   <th className="px-3 py-2 font-medium">Score</th>
@@ -496,16 +598,89 @@ export function ReportOutputTab({ snapshot }: { snapshot: ReportDetailSnapshot }
                 {Object.entries(dimensionEvidence).map(([key, value]) => {
                   const item = asRecord(value)
                   return (
-                    <tr key={key} className="border-t border-[#F0F0F2]">
-                      <td className="px-3 py-2 text-[#1D1D1F]">{key}</td>
-                      <td className="px-3 py-2 text-[#1D1D1F]">{String(item?.score ?? "n/a")}</td>
-                      <td className="px-3 py-2 text-[#1D1D1F]">{String(item?.confidence ?? "n/a")}</td>
-                      <td className="px-3 py-2 text-[#6E6E73]">{String(item?.rationale ?? "n/a")}</td>
+                    <tr key={key} className="border-t border-[var(--ops-border)]/50">
+                      <td className="px-3 py-2 text-[var(--ops-text)]">{key}</td>
+                      <td className="px-3 py-2 text-[var(--ops-text)]">{String(item?.score ?? "n/a")}</td>
+                      <td className="px-3 py-2 text-[var(--ops-text)]">{String(item?.confidence ?? "n/a")}</td>
+                      <td className="px-3 py-2 text-[var(--ops-text-subtle)]">{String(item?.rationale ?? "n/a")}</td>
                     </tr>
                   )
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {artifactRefs.length > 0 && (
+        <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Artifact Inventory</h2>
+          <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text-subtle)]">
+            Frozen artifacts, generated drafts, and tool-linked outputs available for sponsor replay.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {artifactRefs.map((artifact) => (
+              <Badge key={artifact} variant="outline" className="text-[11px]">
+                {artifact}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {supervisorLog.length > 0 && (
+        <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Supervisor / Coach Log</h2>
+          <div className="mt-4 grid gap-3">
+            {supervisorLog.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-[var(--ops-border)]/70 bg-[var(--ops-surface-muted)] p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="text-[11px]">{item.roundTitle}</Badge>
+                  <Badge variant="outline" className="text-[11px]">{item.role}</Badge>
+                  {item.allowed === false ? (
+                    <Badge variant="outline" className="border-[var(--ops-warning)]/40 bg-[var(--ops-warning)]/10 text-[11px] text-[var(--ops-warning)]">
+                      blocked
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-[13px] leading-relaxed text-[var(--ops-text)]">{item.content}</p>
+                {item.policyReason ? (
+                  <p className="mt-2 text-[12px] text-[var(--ops-text-subtle)]">{item.policyReason}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(revisionHistory.length > 0 || aiTrace.length > 0) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Revision History</h2>
+            <div className="mt-4 space-y-2">
+              {revisionHistory.length > 0 ? revisionHistory.map((event, index) => (
+                <div key={`${event.event_type}-${event.timestamp ?? index}`} className="rounded-xl bg-[var(--ops-surface-muted)] px-3 py-3">
+                  <p className="text-[12px] font-semibold text-[var(--ops-text)]">{event.event_type.replace(/_/g, " ")}</p>
+                  <p className="mt-1 text-[12px] text-[var(--ops-text-subtle)]">{JSON.stringify(event.payload)}</p>
+                </div>
+              )) : (
+                <p className="text-[13px] text-[var(--ops-text-subtle)]">No revision events captured.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">AI / Tool Trace</h2>
+            <div className="mt-4 space-y-2">
+              {aiTrace.length > 0 ? aiTrace.map((event, index) => (
+                <div key={`${event.event_type}-${event.timestamp ?? index}`} className="rounded-xl bg-[var(--ops-surface-muted)] px-3 py-3">
+                  <p className="text-[12px] font-semibold text-[var(--ops-text)]">{event.event_type.replace(/_/g, " ")}</p>
+                  <p className="mt-1 text-[12px] text-[var(--ops-text-subtle)]">{JSON.stringify(event.payload)}</p>
+                </div>
+              )) : (
+                <p className="text-[13px] text-[var(--ops-text-subtle)]">No AI trace captured.</p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -526,16 +701,16 @@ export function ReportIntegrityTab({
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Event Timeline</h2>
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Event Timeline</h2>
           <div className="flex items-center gap-2">
-            <span className="text-[12px] text-[#6E6E73]">Source</span>
+            <span className="text-[12px] text-[var(--ops-text-subtle)]">Source</span>
             <Badge variant="outline" className="text-[11px]">{snapshot.timeline_source}</Badge>
           </div>
         </div>
         {snapshot.timeline_warning ? (
-          <div className="mb-4 rounded-lg border border-[#FF9F0A]/40 bg-[#FF9F0A]/10 px-3 py-2 text-[12px] text-[#A05A00]">
+          <div className="mb-4 rounded-lg border border-[var(--ops-warning)]/40 bg-[var(--ops-warning)]/10 px-3 py-2 text-[12px] text-[var(--ops-warning)]">
             {snapshot.timeline_warning}
           </div>
         ) : null}
@@ -546,17 +721,17 @@ export function ReportIntegrityTab({
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2">
-            <ShieldCheckIcon className="size-5 text-[#6E6E73]" />
-            <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Red-Team Runs</h2>
+            <ShieldCheckIcon className="size-5 text-[var(--ops-text-subtle)]" />
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Red-Team Runs</h2>
           </div>
           <div className="mt-3 space-y-2">
             {snapshot.redteamRuns.map((run) => (
               <div key={run.id} className="flex items-center gap-2 text-[12px]">
                 <Badge variant="outline" className="text-[11px]">{run.status}</Badge>
-                <span className="font-mono text-[#1D1D1F]">{run.id.slice(0, 8)}</span>
-                <span className="text-[#6E6E73]">{run.findings.length} findings</span>
+                <span className="font-mono text-[var(--ops-text)]">{run.id.slice(0, 8)}</span>
+                <span className="text-[var(--ops-text-subtle)]">{run.findings.length} findings</span>
               </div>
             ))}
             {snapshot.redteamRuns.length === 0 && (
@@ -570,17 +745,17 @@ export function ReportIntegrityTab({
             )}
           </div>
         </div>
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2">
-            <ScaleIcon className="size-5 text-[#6E6E73]" />
-            <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Fairness Runs</h2>
+            <ScaleIcon className="size-5 text-[var(--ops-text-subtle)]" />
+            <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Fairness Runs</h2>
           </div>
           <div className="mt-3 space-y-2">
             {snapshot.fairnessRuns.map((run) => (
               <div key={run.id} className="flex items-center gap-2 text-[12px]">
                 <Badge variant="outline" className="text-[11px]">{run.status}</Badge>
-                <span className="font-mono text-[#1D1D1F]">{run.id.slice(0, 8)}</span>
-                <span className="text-[#6E6E73]">Sample: {String(run.summary["sample_size"] ?? "n/a")}</span>
+                <span className="font-mono text-[var(--ops-text)]">{run.id.slice(0, 8)}</span>
+                <span className="text-[var(--ops-text-subtle)]">Sample: {String(run.summary["sample_size"] ?? "n/a")}</span>
               </div>
             ))}
             {snapshot.fairnessRuns.length === 0 && (
@@ -608,39 +783,39 @@ export function ReportProvenanceTab({
 }) {
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <LinkIcon className="size-5 text-[#6E6E73]" />
-          <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Scoring Version Lock</h2>
+          <LinkIcon className="size-5 text-[var(--ops-text-subtle)]" />
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Scoring Version Lock</h2>
         </div>
         {snapshot.summary?.scoring_version_lock ? (
           <div className="mt-3 grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Scorer Version</p>
-              <p className="mt-0.5 font-mono text-[13px] text-[#1D1D1F]">{snapshot.summary.scoring_version_lock.scorer_version}</p>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Scorer Version</p>
+              <p className="mt-0.5 font-mono text-[13px] text-[var(--ops-text)]">{snapshot.summary.scoring_version_lock.scorer_version}</p>
             </div>
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Rubric Version</p>
-              <p className="mt-0.5 font-mono text-[13px] text-[#1D1D1F]">{snapshot.summary.scoring_version_lock.rubric_version}</p>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Rubric Version</p>
+              <p className="mt-0.5 font-mono text-[13px] text-[var(--ops-text)]">{snapshot.summary.scoring_version_lock.rubric_version}</p>
             </div>
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Task Family Version</p>
-              <p className="mt-0.5 font-mono text-[13px] text-[#1D1D1F]">{snapshot.summary.scoring_version_lock.task_family_version}</p>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Task Family Version</p>
+              <p className="mt-0.5 font-mono text-[13px] text-[var(--ops-text)]">{snapshot.summary.scoring_version_lock.task_family_version}</p>
             </div>
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Model Hash</p>
-              <p className="mt-0.5 font-mono text-[13px] text-[#1D1D1F]">{snapshot.summary.scoring_version_lock.model_hash}</p>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Model Hash</p>
+              <p className="mt-0.5 font-mono text-[13px] text-[var(--ops-text)]">{snapshot.summary.scoring_version_lock.model_hash}</p>
             </div>
           </div>
         ) : (
-          <p className="mt-2 text-[13px] text-[#6E6E73]">No scoring version lock available.</p>
+          <p className="mt-2 text-[13px] text-[var(--ops-text-subtle)]">No scoring version lock available.</p>
         )}
       </div>
 
       {snapshot.summary?.trigger_codes && snapshot.summary.trigger_codes.length > 0 && (
-        <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-          <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Trigger Codes</h2>
-          <p className="mt-1 text-[11px] text-[#6E6E73]">{snapshot.summary.trigger_count} trigger(s) detected</p>
+        <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
+          <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Trigger Codes</h2>
+          <p className="mt-1 text-[11px] text-[var(--ops-text-subtle)]">{snapshot.summary.trigger_count} trigger(s) detected</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {snapshot.summary.trigger_codes.map((code) => (
               <Badge key={code} variant="outline" className="font-mono text-[11px]">{code}</Badge>
@@ -649,34 +824,34 @@ export function ReportProvenanceTab({
         </div>
       )}
 
-      <div className="rounded-2xl border border-[#E5E5EA] bg-white p-6 shadow-sm">
-        <h2 className="text-[18px] font-semibold text-[#1D1D1F]">Audit Trail</h2>
+      <div className="rounded-2xl border border-[var(--ops-border)] bg-white p-6 shadow-sm">
+        <h2 className="text-[18px] font-semibold text-[var(--ops-text)]">Audit Trail</h2>
         {snapshot.governance_trace ? (
           <>
-            <p className="mt-2 text-[13px] text-[#6E6E73]">
+            <p className="mt-2 text-[13px] text-[var(--ops-text-subtle)]">
               {snapshot.governance_trace.audit_chain_detail}
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <div className="rounded-lg border border-[#E5E5EA] bg-[#FAFAFB] p-3">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Entries Reviewed</p>
-                <p className="mt-1 text-[13px] text-[#1D1D1F]">{snapshot.governance_trace.audit_checked_entries}</p>
+              <div className="rounded-lg border border-[var(--ops-border)] bg-[var(--ops-surface-muted)] p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Entries Reviewed</p>
+                <p className="mt-1 text-[13px] text-[var(--ops-text)]">{snapshot.governance_trace.audit_checked_entries}</p>
               </div>
-              <div className="rounded-lg border border-[#E5E5EA] bg-[#FAFAFB] p-3">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Report Audit Entries</p>
-                <p className="mt-1 text-[13px] text-[#1D1D1F]">{snapshot.governance_trace.audit_entry_count}</p>
+              <div className="rounded-lg border border-[var(--ops-border)] bg-[var(--ops-surface-muted)] p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Report Audit Entries</p>
+                <p className="mt-1 text-[13px] text-[var(--ops-text)]">{snapshot.governance_trace.audit_entry_count}</p>
               </div>
-              <div className="rounded-lg border border-[#E5E5EA] bg-[#FAFAFB] p-3">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Red-Team Runs</p>
-                <p className="mt-1 text-[13px] text-[#1D1D1F]">{snapshot.governance_trace.redteam_run_count}</p>
+              <div className="rounded-lg border border-[var(--ops-border)] bg-[var(--ops-surface-muted)] p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Red-Team Runs</p>
+                <p className="mt-1 text-[13px] text-[var(--ops-text)]">{snapshot.governance_trace.redteam_run_count}</p>
               </div>
-              <div className="rounded-lg border border-[#E5E5EA] bg-[#FAFAFB] p-3">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-[#6E6E73]">Fairness Runs</p>
-                <p className="mt-1 text-[13px] text-[#1D1D1F]">{snapshot.governance_trace.fairness_run_count}</p>
+              <div className="rounded-lg border border-[var(--ops-border)] bg-[var(--ops-surface-muted)] p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ops-text-subtle)]">Fairness Runs</p>
+                <p className="mt-1 text-[13px] text-[var(--ops-text)]">{snapshot.governance_trace.fairness_run_count}</p>
               </div>
             </div>
           </>
         ) : (
-          <p className="mt-2 text-[13px] text-[#6E6E73]">
+          <p className="mt-2 text-[13px] text-[var(--ops-text-subtle)]">
             Session <span className="font-mono">{sessionId}</span> has no governance trace available.
           </p>
         )}

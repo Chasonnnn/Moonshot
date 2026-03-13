@@ -29,10 +29,8 @@ import {
   DemoErrorBanner,
   LiveProofPanel,
   type LiveProofPanelState,
-  NarrativeSequence,
   StageDiagnosticsPanel,
   StepIndicator,
-  StorySummaryStrip,
 } from "@/components/employer/demo-console-fragments"
 import { DemoGeneratingAnimation } from "@/components/employer/demo-generating-animation"
 import { DemoTemplateCard } from "@/components/employer/demo-template-card"
@@ -47,8 +45,8 @@ import { DEMO_FIXTURES, getRoundToolActions, type DemoDifficultyLevel, type Demo
 import type { DemoRunPhase, PilotSnapshot } from "@/lib/moonshot/pilot-flow"
 import { cn } from "@/lib/utils"
 
-const FLAGSHIP_TEMPLATE_ID = "tpl_data_analyst"
-const STRATEGY_TEASER_TEMPLATE_ID = "tpl_doordash_enablement"
+const FLAGSHIP_TEMPLATE_ID = "tpl_jda_first_hour"
+const SECOND_SKIN_TEMPLATE_ID = "tpl_customer_support_judgment"
 
 const GENERATING_STEPS = [
   "Synthesizing role requirements and JD constraints...",
@@ -500,13 +498,16 @@ function EvaluationPreviewPanel({
   if (!fixture) {
     return null
   }
+  const stageLabel = fixture.parts.length > 0 ? "Stages" : "Rounds"
+  const progressionLabel = fixture.parts.length > 0 ? "Stage progression" : "Round progression"
+  const progressionCountLabel = fixture.parts.length > 0 ? "stages" : "rounds"
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 lg:grid-cols-4">
         {[
           { label: "Variants", value: String(previewVariantCount) },
-          { label: "Rounds", value: String(fixture.rounds.length) },
+          { label: stageLabel, value: String(fixture.rounds.length) },
           { label: "Rubric dimensions", value: String(previewRubricCount) },
           { label: "Tool families", value: String(uniqueToolLabels(fixture).length || fixture.evaluationBundle.toolProficiency.length) },
         ].map((item) => (
@@ -521,11 +522,11 @@ function EvaluationPreviewPanel({
         <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#64748B]">Round progression</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#64748B]">{progressionLabel}</p>
               <p className="mt-1 text-[13px] text-[#475569]">Show the audience how the difficulty and deliverables build over the session.</p>
             </div>
             <Badge variant="outline" className="border-[#BFDBFE] bg-[#EFF6FF] text-[11px] text-[#1D4ED8]">
-              {fixture.rounds.length} rounds
+              {fixture.rounds.length} {progressionCountLabel}
             </Badge>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -682,7 +683,7 @@ function StrategyTeaserSection({
     <div className="rounded-[32px] border border-[#0F766E]/20 bg-[linear-gradient(145deg,rgba(15,118,110,0.08),rgba(255,255,255,0.96))] p-6 shadow-[0_20px_40px_rgba(15,118,110,0.08)]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-3xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0F766E]">Breadth teaser</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0F766E]">Second skin</p>
           <h3 className="mt-2 text-[28px] font-semibold tracking-tight text-[#0F172A]">{template.title}</h3>
           <p className="mt-3 text-[14px] leading-relaxed text-[#334155]">{template.heroDescription}</p>
           <p className="mt-3 text-[13px] leading-relaxed text-[#0F172A]">{template.candidateAsk}</p>
@@ -712,7 +713,7 @@ function StrategyTeaserSection({
         </div>
 
         <div className="rounded-2xl border border-[#D1FAE5] bg-white/90 p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0F766E]">Why this proves breadth</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0F766E]">Why the same engine transfers</p>
           <ul className="mt-4 space-y-2 text-[13px] leading-relaxed text-[#0F172A]">
             {template.trustHighlights.map((item) => (
               <li key={item} className="rounded-xl bg-[#F0FDFA] px-3 py-2">{item}</li>
@@ -732,124 +733,59 @@ function StrategyTeaserSection({
 }
 
 function DemoConsoleHeader({
-  template,
   demoMode,
   phase,
   snapshotOk,
-  startLabel,
   onSelectFixtureMode,
   onSelectLiveMode,
-  onStartDemo,
 }: {
-  template: DemoCaseTemplate | null
   demoMode: DemoExecutionMode
   phase: DemoRunPhase
   snapshotOk: boolean
-  startLabel: string
   onSelectFixtureMode: () => void
   onSelectLiveMode: () => void
-  onStartDemo: () => void
 }) {
   const isIdle = phase === "idle"
 
   return (
-    <div
-      className={cn(
-        "mb-6 rounded-[32px] border border-[#0F172A]/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(241,245,249,0.94))] shadow-[0_24px_55px_rgba(15,46,61,0.10)]",
-        isIdle ? "p-6 md:p-7" : "p-5 md:p-6",
-      )}
-      data-testid={isIdle ? "demo-launch-band" : undefined}
-    >
-      <div className={cn("grid gap-5", isIdle ? "xl:grid-cols-[minmax(0,1.35fr)_360px]" : "lg:grid-cols-[minmax(0,1fr)_auto]")}>
-        <div className={cn("min-w-0", isIdle ? "order-2 xl:order-1" : "order-1")}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#2563EB]">Operator-led demo story</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {template ? (
-              <Badge variant="outline" className="border-[#BFDBFE] bg-[#EFF6FF] text-[11px] text-[#1D4ED8]">
-                {template.operatorLabel}
-              </Badge>
-            ) : null}
-            <Badge variant="outline" className="border-[#D7E0E4] bg-white text-[11px] text-[#475569]">
-              {demoMode === "fixture" ? "Hybrid fixture path" : "Fully live mode"}
-            </Badge>
-            {template?.requiresOralDefense ? (
-              <Badge variant="outline" className="border-[#BBF7D0] bg-[#F0FDF4] text-[11px] text-[#15803D]">
-                {template.oralDefenseLabel ?? "Oral defense required"}
-              </Badge>
-            ) : null}
-          </div>
-          <h2 className={cn("mt-4 font-semibold tracking-tight text-[#0F172A]", isIdle ? "max-w-4xl text-[30px] leading-[1.04] sm:text-[34px] md:text-[46px] md:leading-[1.02]" : "text-[30px]")}>
-            {template?.heroHeadline ?? "Show how Moonshot evaluates how people actually work, not just what they submit."}
-          </h2>
-          <p className="mt-3 max-w-4xl text-[14px] leading-relaxed text-[#475569]">
-            {template?.heroDescription ??
-              "Keep the flagship path fixture-backed, use one explicit live proof step for credibility, and then close on evaluation plus governance."}
-          </p>
-          <p className="mt-3 text-[12px] text-[#334155]">
-            Current path: <span className="font-semibold text-[#0F172A]">{demoMode === "fixture" ? "prepared hybrid demo" : "fully live walkthrough"}</span>
-            {" · "}State: <span className="font-semibold text-[#0F172A]">{phase.replace(/_/g, " ")}</span>
-          </p>
-          {template ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {template.workspaceModes.map((tool) => (
-                <span key={tool} className="rounded-full border border-[#DBEAFE] bg-white px-3 py-1 text-[11px] font-medium text-[#1E3A8A]">
-                  {TOOL_LABELS[tool]}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div className={cn("flex flex-col gap-4 rounded-[28px] border border-[#0F172A]/10 bg-[#0F172A] p-5 text-white", isIdle ? "order-1 xl:order-2" : "order-2")}>
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#93C5FD]">Launch controls</p>
-            <p className="mt-2 text-[14px] leading-relaxed text-[#CBD5E1]">
-              Keep the flagship analyst story fixture-backed, use the live proof beat explicitly, and start the walkthrough from here.
-            </p>
-          </div>
-          <div className="inline-flex w-fit rounded-full border border-white/10 bg-white/5 p-1 shadow-sm">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onSelectFixtureMode}
-              disabled={!isIdle}
-              className={cn(
-                "min-h-11 rounded-full px-4 py-2 text-[12px] font-semibold",
-                demoMode === "fixture" ? "bg-white text-[#0F172A] hover:bg-white/90" : "text-white",
-              )}
-            >
-              Hybrid fixture path
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onSelectLiveMode}
-              disabled={!isIdle}
-              className={cn(
-                "min-h-11 rounded-full px-4 py-2 text-[12px] font-semibold",
-                demoMode === "live" ? "bg-white text-[#0F172A] hover:bg-white/90" : "text-white",
-              )}
-            >
-              Fully live mode
-            </Button>
-          </div>
-          <Button
+    <div className="mb-6" data-testid={isIdle ? "demo-launch-band" : undefined}>
+      {isIdle ? (
+        <div className="inline-flex rounded-full border border-[var(--ops-border)] bg-white p-1">
+          <button
             type="button"
-            onClick={onStartDemo}
-            disabled={!snapshotOk || !isIdle}
-            className="h-12 rounded-full bg-[#34C759] px-5 text-[14px] font-semibold text-[#052E16] hover:bg-[#22C55E]"
+            onClick={onSelectFixtureMode}
+            className={cn(
+              "min-h-10 rounded-full px-4 py-2 text-[13px] font-medium md:min-h-8 md:px-3 md:py-1 md:text-[12px]",
+              demoMode === "fixture" ? "bg-[var(--ops-text)] text-white" : "text-[var(--ops-text)]",
+            )}
           >
-            {startLabel}
-          </Button>
-          {!snapshotOk ? (
-            <div className="rounded-2xl border border-[#F97316]/35 bg-[#431407] px-4 py-3 text-[12px] text-[#FED7AA]">
-              Backend disconnected
-            </div>
-          ) : null}
+            Hybrid fixture
+          </button>
+          <button
+            type="button"
+            onClick={onSelectLiveMode}
+            className={cn(
+              "min-h-10 rounded-full px-4 py-2 text-[13px] font-medium md:min-h-8 md:px-3 md:py-1 md:text-[12px]",
+              demoMode === "live" ? "bg-[var(--ops-text)] text-white" : "text-[var(--ops-text)]",
+            )}
+          >
+            Fully live
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge variant="outline" className="border-[var(--ops-border)] text-[11px] text-[var(--ops-text-muted)]">
+            {demoMode === "fixture" ? "Hybrid fixture" : "Fully live"}
+          </Badge>
+          <span className="text-[12px] text-[var(--ops-text-muted)]">{phase.replace(/_/g, " ")}</span>
+        </div>
+      )}
+
+      {!snapshotOk && isIdle ? (
+        <div className="mt-3 rounded-xl border border-[var(--ops-danger)]/20 bg-[var(--ops-danger)]/5 px-4 py-2 text-[12px] text-[var(--ops-danger)]">
+          Backend disconnected
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -958,96 +894,134 @@ function LiveOperatorsPanel({
   )
 }
 
-function TemplateSelectionSection({
-  template,
-  templateId,
-  onSelectTemplate,
+interface RoleGroup {
+  role: string
+  templates: DemoCaseTemplate[]
+  toolLabels: string[]
+  durationRange: string
+}
+
+function RoleCard({
+  group,
+  selected,
+  compact,
+  onClick,
 }: {
-  template: DemoCaseTemplate | null
-  templateId: string
-  onSelectTemplate: (id: string) => void
+  group: RoleGroup
+  selected: boolean
+  compact?: boolean
+  onClick: () => void
 }) {
-  const flagshipCount = DEMO_CASE_TEMPLATES.filter((item) => item.priority === "flagship").length
-  const teaserCount = DEMO_CASE_TEMPLATES.filter((item) => item.priority === "teaser").length
-  const supportCount = DEMO_CASE_TEMPLATES.filter((item) => item.priority === "support").length
+  const count = group.templates.length
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full rounded-xl border text-left transition-colors",
+        selected
+          ? "border-[var(--ops-accent)] bg-[var(--ops-accent)]/5"
+          : "border-[var(--ops-border)] bg-white hover:border-[var(--ops-text-muted)]/40",
+        compact ? "p-3" : "p-3.5",
+      )}
+    >
+      <h4 className="text-[13px] font-semibold text-[var(--ops-text)]">{group.role}</h4>
+      <p className="mt-1 text-[12px] text-[var(--ops-text-muted)]">
+        {count} {count === 1 ? "simulation" : "simulations"} &middot; {group.durationRange}
+      </p>
+      <div className="mt-2 flex flex-wrap gap-1">
+        {group.toolLabels.map((label) => (
+          <span
+            key={label}
+            className="rounded-full border border-[var(--ops-border)] px-2 py-0.5 text-[10px] text-[var(--ops-text-muted)]"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    </button>
+  )
+}
+
+function TemplateSelectionSection({
+  templateId,
+  snapshotOk,
+  startLabel,
+  onSelectTemplate,
+  onStartDemo,
+}: {
+  templateId: string
+  snapshotOk: boolean
+  startLabel: string
+  onSelectTemplate: (id: string) => void
+  onStartDemo: () => void
+}) {
+  const sponsorTemplates = useMemo(
+    () =>
+      DEMO_CASE_TEMPLATES.filter((tpl) => [FLAGSHIP_TEMPLATE_ID, SECOND_SKIN_TEMPLATE_ID].includes(tpl.id)),
+    [],
+  )
+  const activeTemplate = sponsorTemplates.find((tpl) => tpl.id === templateId) ?? sponsorTemplates[0] ?? null
 
   return (
     <div className="space-y-4">
-      {template ? (
-        <div className="rounded-[28px] border border-[#0F172A]/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(241,245,249,0.92))] p-5 shadow-[0_20px_40px_rgba(15,23,42,0.08)] md:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="max-w-3xl">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#2563EB]">{template.operatorLabel}</p>
-              <h3 className="mt-2 text-[24px] font-semibold leading-tight tracking-tight text-[#0F172A] md:text-[30px]">{template.heroHeadline}</h3>
-              <p className="mt-3 text-[13px] leading-relaxed text-[#475569] md:text-[14px]">{template.heroDescription}</p>
-              <div className="mt-4 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">Candidate brief</p>
-                <p className="mt-2 text-[13px] leading-relaxed text-[#0F172A]">{template.candidateAsk}</p>
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {template.workspaceModes.map((tool) => (
-                  <span key={tool} className="rounded-full border border-[#DBEAFE] bg-white px-3 py-1 text-[11px] font-medium text-[#1E3A8A]">
-                    {TOOL_LABELS[tool]}
-                  </span>
-                ))}
-                {template.requiresOralDefense ? (
-                  <Badge variant="outline" className="border-[#BBF7D0] bg-[#F0FDF4] text-[11px] text-[#15803D]">
-                    {template.oralDefenseLabel ?? "Oral defense required"}
-                  </Badge>
-                ) : null}
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {template.teaserStats.map((stat) => (
-                <div key={stat.label} className="min-w-[120px] rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ops-text-muted)]">{stat.label}</p>
-                  <p className="mt-1 text-[18px] font-semibold text-[#0F172A]">{stat.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <div className="rounded-[28px] border border-[#E2E8F0] bg-white p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#2563EB]">Sponsor-ready demo story</p>
+        <h2 className="mt-2 text-[30px] font-semibold tracking-tight text-[#0F172A]">
+          Lead with one flagship work sample, then show the reusable second skin.
+        </h2>
+        <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-[#475569]">
+          The primary demo is the 60-minute junior analyst first-hour simulation. Customer Support stays visible as the only
+          second skin on the same engine. Legacy analyst, strategy, and ops templates remain in the repo, but they do not lead
+          this sponsor story.
+        </p>
+      </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        {[
-          {
-            title: "Start with the flagship story",
-            body: "Lead with the fixture-backed analyst case so the first demo always lands cleanly.",
-          },
-          {
-            title: "Use one live proof beat",
-            body: "Run live co-design and generation only as an explicit credibility step, not as the whole narrative.",
-          },
-          {
-            title: "Close on trust",
-            body: "Tie evaluation, governance, fairness, and auditability together before you show breadth with strategy.",
-          },
-        ].map((item) => (
-          <div key={item.title} className="rounded-2xl border border-[#E2E8F0] bg-white p-4">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--ops-text-muted)]">{item.title}</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#0F172A]">{item.body}</p>
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ops-text-muted)]">Simulation Gallery</p>
-          <p className="mt-1 text-[13px] text-[#475569]">The analyst flow is the narrated default. The rest are fully fixture-backed simulations you can switch into without risking the first demo.</p>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
+        <div className="space-y-3">
+          {sponsorTemplates.map((tpl) => (
+            <DemoTemplateCard
+              key={tpl.id}
+              template={tpl}
+              selected={templateId === tpl.id}
+              onSelect={() => onSelectTemplate(tpl.id)}
+            />
+          ))}
         </div>
-        <Badge variant="outline" className="border-[#CBD5E1] bg-white text-[11px] text-[#475569]">
-          {flagshipCount} flagship · {teaserCount} teaser · {supportCount} supporting scenarios
-        </Badge>
+        <div className="rounded-[28px] border border-[#E2E8F0] bg-[#F8FAFC] p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#64748B]">Four demo surfaces</p>
+          <div className="mt-4 space-y-3">
+            {[
+              "Seeded employer authoring with light edits to the role brief, artifacts, and failure cases",
+              "Candidate simulation in the existing three-pane shell with staged timers and the supervisor pivot",
+              "Assessment dashboard that leads with seven dimensions plus artifact, tool, and message evidence",
+              "Practice retry that reuses the same engine for targeted feedback and one revision attempt",
+            ].map((item, index) => (
+              <div key={item} className="rounded-2xl border border-white bg-white px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2563EB]">Surface {index + 1}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-[#0F172A]">{item}</p>
+              </div>
+            ))}
+          </div>
+          {activeTemplate ? (
+            <div className="mt-4 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] px-4 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">Selected sponsor path</p>
+              <p className="mt-1 text-[16px] font-semibold text-[#0F172A]">{activeTemplate.title}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#334155]">{activeTemplate.heroDescription}</p>
+            </div>
+          ) : null}
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {DEMO_CASE_TEMPLATES.map((tpl) => (
-          <DemoTemplateCard
-            key={tpl.id}
-            template={tpl}
-            selected={templateId === tpl.id}
-            onSelect={() => onSelectTemplate(tpl.id)}
-          />
-        ))}
+
+      <div className="flex items-center justify-end pt-2">
+        <Button
+          type="button"
+          onClick={onStartDemo}
+          disabled={!snapshotOk}
+          className="h-11 rounded-full bg-[var(--ops-accent)] px-6 text-[14px] font-semibold text-white hover:bg-[var(--ops-accent)]/90"
+        >
+          {startLabel}
+        </Button>
       </div>
     </div>
   )
@@ -1354,6 +1328,9 @@ function PreviewSection({
   onDifficultyFilterChange: (value: string) => void
   onConfirmAndStart: () => void
 }) {
+  const stageLabel = fixture?.parts.length ? "Stage" : "Round"
+  const stepLabel = fixture?.parts.length ? "Stage" : "Step"
+
   return (
     <div className="space-y-4">
       <div className="grid gap-4 xl:grid-cols-[1.25fr_0.9fr]">
@@ -1371,11 +1348,11 @@ function PreviewSection({
 
         {template ? (
           <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6">
-            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#64748B]">Round plan to narrate</p>
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#64748B]">{stageLabel} plan to narrate</p>
             <div className="mt-3 space-y-3">
               {template.roundHighlights.map((item, index) => (
                 <div key={item} className="rounded-xl bg-[#F8FAFC] px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2563EB]">Step {index + 1}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2563EB]">{stepLabel} {index + 1}</p>
                   <p className="mt-1 text-[13px] text-[#0F172A]">{item}</p>
                 </div>
               ))}
@@ -1439,7 +1416,7 @@ function PreviewSection({
                 <th className="px-3 py-2 font-medium">Variant</th>
                 <th className="px-3 py-2 font-medium">Skill</th>
                 <th className="px-3 py-2 font-medium">Difficulty</th>
-                <th className="px-3 py-2 font-medium">Round</th>
+                <th className="px-3 py-2 font-medium">{stageLabel}</th>
                 <th className="px-3 py-2 font-medium">Prompt Summary</th>
                 <th className="px-3 py-2 font-medium">Deliverables</th>
                 <th className="px-3 py-2 font-medium">ETA</th>
@@ -1518,6 +1495,8 @@ function SessionReadySection({
   onSkipToReport: () => void
   onRetry: () => void
 }) {
+  const stageCountLabel = fixture?.parts.length ? "Stages" : "Rounds"
+
   return (
     <div className="rounded-[28px] border border-[#E2E8F0] bg-white p-8">
       {isFastPathPending ? (
@@ -1544,7 +1523,7 @@ function SessionReadySection({
           {fixture ? (
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { label: "Rounds", value: String(fixture.rounds.length) },
+                { label: stageCountLabel, value: String(fixture.rounds.length) },
                 { label: "Evidence events", value: String(fixture.sampleEvents.length) },
                 { label: "Coach turns", value: String(fixture.coachScript.length) },
               ].map((item) => (
@@ -1654,8 +1633,8 @@ function ReportPhaseSection({
   showStrategyTeaser: boolean
   onReset: () => void
 }) {
-  const strategyTemplate = getTemplateById(STRATEGY_TEASER_TEMPLATE_ID)
-  const strategyFixture = DEMO_FIXTURES[STRATEGY_TEASER_TEMPLATE_ID] ?? null
+  const strategyTemplate = getTemplateById(SECOND_SKIN_TEMPLATE_ID)
+  const strategyFixture = DEMO_FIXTURES[SECOND_SKIN_TEMPLATE_ID] ?? null
 
   return (
     <div className="space-y-4">
@@ -2240,9 +2219,11 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
   if (state.run.phase === "idle") {
     phaseContent = (
       <TemplateSelectionSection
-        template={activeTemplate}
         templateId={state.run.templateId}
+        snapshotOk={snapshot.ok}
+        startLabel={state.run.templateId === FLAGSHIP_TEMPLATE_ID ? "Start sponsor demo" : "Start second-skin demo"}
         onSelectTemplate={handlers.handleTemplateSelect}
+        onStartDemo={handlers.startDemo}
       />
     )
   } else if (state.run.phase === "co_design" && fixture) {
@@ -2334,23 +2315,12 @@ export function DemoConsole({ snapshot }: { snapshot: PilotSnapshot }) {
   return (
     <section className="rounded-[36px] border border-[#D7E0E4] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,247,248,0.92))] p-5 shadow-[0_24px_60px_rgba(15,46,61,0.10)] md:p-8">
       <DemoConsoleHeader
-        template={activeTemplate}
         demoMode={state.run.demoMode}
         phase={state.run.phase}
         snapshotOk={snapshot.ok}
-        startLabel={state.run.templateId === FLAGSHIP_TEMPLATE_ID ? "Start flagship demo" : "Start selected demo"}
         onSelectFixtureMode={handlers.handleSelectFixtureMode}
         onSelectLiveMode={handlers.handleSelectLiveMode}
-        onStartDemo={handlers.startDemo}
       />
-
-      <StorySummaryStrip
-        template={activeTemplate}
-        fixture={fixture}
-        reportSnapshot={state.run.reportSnapshot}
-      />
-
-      <NarrativeSequence phase={state.run.phase} />
 
       <div className="ops-scroll-region mb-6 min-h-11 overflow-x-auto py-2" tabIndex={0} aria-label="Demo phase progress">
         <StepIndicator phase={state.run.phase} />
