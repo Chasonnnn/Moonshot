@@ -26,8 +26,64 @@ export interface DemoCaseTemplate {
 
 export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
   {
+    id: "tpl_jda_first_hour",
+    role: "Junior Data Analyst",
+    skills: ["framing", "data_hygiene", "analysis", "communication", "ai_collaboration"],
+    title: "JDA First-Hour Work Sample",
+    scenario:
+      "Simulate the first hour on the job: frame the ask, catch the data issue, adapt to a supervisor pivot, and ship a decision-ready readout.",
+    artifacts: [
+      { type: "brief", name: "weekly_review_brief.md" },
+      { type: "csv", name: "campaign_performance_snapshot.csv" },
+      { type: "dashboard", name: "weekly_dashboard_export.png" },
+      { type: "csv", name: "campaign_performance_corrected.csv" },
+      { type: "md", name: "executive_memo_template.md" },
+    ],
+    description:
+      "A sponsor-ready, 60-minute analyst simulation grounded in real workflow pressure: clarification, planning, QA, analysis, AI use, supervisor sync, pivot handling, and executive communication.",
+    skillTags: ["Task Framing", "Data QA", "Analytical Judgment", "AI Collaboration", "Executive Writing"],
+    estimatedDuration: "60 min",
+    priority: "flagship",
+    operatorLabel: "Sponsor-ready flagship",
+    heroHeadline:
+      "Simulate the first hour on the job, not a generic test: frame the ask, catch the bad data, adapt to the pivot, and ship a usable readout.",
+    heroDescription:
+      "This is the center-of-gravity demo for sponsors. It shows whether a candidate can become productive quickly in an AI-mediated analyst role, with visible artifacts and auditable evidence instead of a black-box score.",
+    candidateAsk:
+      "Your manager needs a fast weekly performance readout. Use the brief, messy dataset, dashboard export, and AI assistant to identify the right story, handle the data issue honestly, respond to a supervisor pivot, and deliver a concise memo or slide outline.",
+    evidenceHighlights: [
+      "Clarifying questions and scoped initial plan before analysis starts",
+      "Broken-data detection with an explicit escalation and corrected-data release",
+      "Observable AI collaboration with verification before reuse",
+      "Supervisor sync and midstream pivot handling captured in the evidence trail",
+      "Executive-ready memo or slide-outline artifact with caveats and next step",
+    ],
+    trustHighlights: [
+      "Dimension-first rubric with auditable evidence per skill area",
+      "AI usage, tool traces, and supervisor messages survive replay",
+      "Version-locked scoring and provenance remain visible in the sponsor report",
+      "Practice retry creates before-and-after evidence instead of generic coaching copy",
+    ],
+    teaserStats: [
+      { label: "Stages", value: "8" },
+      { label: "Duration", value: "60 min" },
+      { label: "Artifact", value: "Memo / slide outline" },
+    ],
+    roundHighlights: [
+      "Clarify the ask and ask only the questions that matter",
+      "Write the initial plan and commit to first-check metrics",
+      "Catch the broken data and escalate with honesty",
+      "Run a light but defensible analysis",
+      "Use AI for the right subtask and verify it",
+      "Sync concisely with the supervisor",
+      "Adapt when the sponsor metric changes midstream",
+      "Ship an executive-ready artifact with evidence and caveats",
+    ],
+    workspaceModes: ["sql", "python", "dashboard"],
+  },
+  {
     id: "tpl_data_analyst",
-    role: "Data Analyst",
+    role: "Junior Data Analyst",
     skills: ["sql", "analytics", "investigation"],
     title: "KPI Discrepancy Investigation",
     scenario: "Find root cause of conversion decline and propose next actions with uncertainty caveats.",
@@ -38,8 +94,8 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
     description: "Investigate a sudden 18% conversion drop using funnel data. Requires segmentation, root cause analysis, and communicating findings with appropriate caveats.",
     skillTags: ["SQL", "Analytics", "Root Cause Analysis", "Communication"],
     estimatedDuration: "15 min",
-    priority: "flagship",
-    operatorLabel: "Flagship analyst story",
+    priority: "support",
+    operatorLabel: "Legacy analyst simulation",
     heroHeadline: "Turn one KPI anomaly into a decision-ready recommendation with a visible work trace.",
     heroDescription:
       "This is the anchor demo path: short enough to present live, rich enough to show co-design, tool use, evaluation, and governance in one continuous story.",
@@ -170,7 +226,7 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
   },
   {
     id: "tpl_revops_forecast_variance",
-    role: "RevOps / Business Analyst",
+    role: "Operations & Strategy",
     skills: ["spreadsheet", "bi", "slides", "root_cause", "forecasting"],
     title: "RevOps Forecast Variance Review",
     scenario:
@@ -219,7 +275,7 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
   },
   {
     id: "tpl_ops_capacity_escalation",
-    role: "Support Operations / Operations Manager",
+    role: "Operations & Strategy",
     skills: ["spreadsheet", "bi", "slides", "capacity_planning", "judgment"],
     title: "Ops Capacity Escalation Simulation",
     scenario:
@@ -281,10 +337,10 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
     skillTags: ["Policy Judgment", "Escalation", "Empathy", "Written Communication"],
     estimatedDuration: "14 min",
     priority: "support",
-    operatorLabel: "Additional simulation",
-    heroHeadline: "Operational judgment, policy application, and empathy under queue pressure.",
+    operatorLabel: "Second skin on the same engine",
+    heroHeadline: "Show the same engine handling queue triage, policy judgment, empathy, and escalation under pressure.",
     heroDescription:
-      "A more intuitive non-technical path for mixed audiences that still preserves evidence, rubric scoring, and reviewable governance context.",
+      "This is the visible second skin for the sponsor story: same evidence model, same auditability, different job family.",
     candidateAsk:
       "Prioritize the ticket queue, apply refund policy correctly, and draft an escalation-ready reply without losing empathy.",
     evidenceHighlights: [
@@ -313,7 +369,7 @@ export const DEMO_CASE_TEMPLATES: DemoCaseTemplate[] = [
   },
   {
     id: "tpl_doordash_enablement",
-    role: "Strategy / Senior Analyst",
+    role: "Operations & Strategy",
     skills: ["sql", "python", "experimentation", "storytelling", "roi"],
     title: "Marketplace Growth Strategy Simulation",
     scenario:

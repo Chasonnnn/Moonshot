@@ -25,6 +25,166 @@ _MAX_VARIANT_COUNT = 20
 
 
 _FIXTURE_PROFILES: dict[str, dict[str, Any]] = {
+    "tpl_jda_first_hour": {
+        "task_prompt": (
+            "Work through the first hour of a junior data analyst request: clarify the ask, catch the broken input, "
+            "run a light analysis on corrected data, use AI responsibly, adapt to a supervisor pivot, and deliver an executive-ready memo."
+        ),
+        "skills": ["framing", "data_hygiene", "analysis", "communication", "ai_collaboration"],
+        "difficulty_plan": [
+            "foundation",
+            "foundation",
+            "intermediate",
+            "intermediate",
+            "intermediate",
+            "advanced",
+            "advanced",
+            "advanced",
+            "expert",
+            "expert",
+            "expert",
+            "capstone",
+        ],
+        "rubric_dimensions": [
+            {
+                "key": "task_framing",
+                "anchor": "Clarifies the ask and creates a focused first-pass plan before analysis starts.",
+                "evaluation_points": [
+                    "Asks only high-value clarifying questions",
+                    "Defines first-check metrics and risks",
+                    "Creates a bounded approach instead of jumping straight into tooling",
+                ],
+                "evidence_signals": ["clarification log", "initial plan", "metric prioritization"],
+                "common_failure_modes": ["jumps into analysis", "asks low-value questions", "no plan"],
+                "score_bands": {
+                    "1": "Weak or missing framing",
+                    "2": "Partial framing with unclear priorities",
+                    "3": "Solid first-pass plan",
+                    "4": "Strong first-hour framing and prioritization",
+                },
+            },
+            {
+                "key": "analytical_judgment",
+                "anchor": "Chooses meaningful metrics, interprets them correctly, and keeps the analysis proportionate to the ask.",
+                "evaluation_points": [
+                    "Selects decision-relevant comparisons",
+                    "Separates observation from inference",
+                    "Keeps analysis light but defensible",
+                ],
+                "evidence_signals": ["analysis summary", "metric comparisons", "interpretation note"],
+                "common_failure_modes": ["busywork analysis", "wrong metric focus", "unsupported inference"],
+                "score_bands": {
+                    "1": "Weak analytical read",
+                    "2": "Partial signal with notable gaps",
+                    "3": "Solid defensible analysis",
+                    "4": "Strong analytical judgment with caveats",
+                },
+            },
+            {
+                "key": "data_hygiene",
+                "anchor": "Inspects the input critically, finds the issue, and explains why it matters before proceeding.",
+                "evaluation_points": [
+                    "Detects malformed or duplicate rows",
+                    "Explains how the defect affects the readout",
+                    "Requests corrected data before continuing",
+                ],
+                "evidence_signals": ["qa note", "issue escalation", "corrected-data usage"],
+                "common_failure_modes": ["misses broken input", "continues without flagging", "overstates certainty"],
+                "score_bands": {
+                    "1": "Misses or ignores data issues",
+                    "2": "Partial detection with weak escalation",
+                    "3": "Solid QA and escalation behavior",
+                    "4": "Strong, audit-ready data hygiene",
+                },
+            },
+            {
+                "key": "human_ai_collaboration",
+                "anchor": "Uses AI for the right subtask, captures the interaction, and verifies before reuse.",
+                "evaluation_points": [
+                    "Delegates a bounded drafting or brainstorming task",
+                    "Verifies AI output against evidence",
+                    "Avoids blind copy/paste behavior",
+                ],
+                "evidence_signals": ["prompt log", "coach interactions", "edited AI output"],
+                "common_failure_modes": ["asks AI for the final answer", "copies without verification", "uses AI for the wrong task"],
+                "score_bands": {
+                    "1": "Poor AI usage",
+                    "2": "Some useful AI usage but weak verification",
+                    "3": "Solid bounded use with verification",
+                    "4": "Strong human-AI collaboration",
+                },
+            },
+            {
+                "key": "collaboration_escalation",
+                "anchor": "Keeps the supervisor informed, escalates clearly, and distinguishes knowns from unknowns.",
+                "evaluation_points": [
+                    "Escalates the defect in a usable format",
+                    "Sends a concise supervisor update",
+                    "Names uncertainty without blocking progress",
+                ],
+                "evidence_signals": ["supervisor sync", "escalation note", "decision log"],
+                "common_failure_modes": ["late escalation", "vague updates", "hides uncertainty"],
+                "score_bands": {
+                    "1": "Weak collaboration behavior",
+                    "2": "Partial collaboration with gaps",
+                    "3": "Solid transparency and escalation",
+                    "4": "Strong collaboration and escalation quality",
+                },
+            },
+            {
+                "key": "adaptability_under_pivot",
+                "anchor": "Adjusts quickly when priorities change without losing the thread of the work.",
+                "evaluation_points": [
+                    "Acknowledges the pivot clearly",
+                    "Re-prioritizes the output",
+                    "Maintains alignment with the new ask",
+                ],
+                "evidence_signals": ["pivot replan", "updated summary", "changed headline emphasis"],
+                "common_failure_modes": ["ignores pivot", "restarts from scratch", "fails to update final output"],
+                "score_bands": {
+                    "1": "Weak pivot handling",
+                    "2": "Partial adaptation",
+                    "3": "Solid pivot handling",
+                    "4": "Strong adaptability and re-planning",
+                },
+            },
+            {
+                "key": "executive_communication",
+                "anchor": "Produces a concise artifact with insight, evidence, caveat, recommendation, and next step.",
+                "evaluation_points": [
+                    "Leads with the decision-relevant insight",
+                    "Supports the claim with concrete evidence",
+                    "States caveat and next step concisely",
+                ],
+                "evidence_signals": ["executive memo", "slide outline", "structured summary"],
+                "common_failure_modes": ["buries the insight", "missing caveat", "too much detail for the audience"],
+                "score_bands": {
+                    "1": "Weak executive communication",
+                    "2": "Partially structured output",
+                    "3": "Solid executive-ready output",
+                    "4": "Strong concise decision-ready communication",
+                },
+            },
+        ],
+        "failure_modes": [
+            "Skips framing and starts computing immediately.",
+            "Uses broken input without escalating.",
+            "Copies AI output without verification.",
+        ],
+        "mock_score": {
+            "confidence": 0.90,
+            "dimension_scores": {
+                "task_framing": 0.91,
+                "analytical_judgment": 0.87,
+                "data_hygiene": 0.95,
+                "human_ai_collaboration": 0.84,
+                "collaboration_escalation": 0.89,
+                "adaptability_under_pivot": 0.86,
+                "executive_communication": 0.90,
+            },
+            "trigger_codes": ["sponsor_ready_trace", "verified_ai_use", "pivot_handled_cleanly"],
+        },
+    },
     "tpl_data_analyst": {
         "task_prompt": (
             "Investigate a conversion-rate decline, isolate likely root causes, validate with multiple checks, "

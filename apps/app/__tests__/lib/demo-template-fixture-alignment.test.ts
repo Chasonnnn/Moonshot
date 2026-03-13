@@ -40,24 +40,26 @@ describe("DoorDash enablement demo fixture alignment", () => {
 })
 
 describe("Flagship analyst demo alignment", () => {
-  it("keeps the analyst scenario as the default flagship entry", () => {
-    const template = DEMO_CASE_TEMPLATES.find((item) => item.id === "tpl_data_analyst")
-    expect(DEMO_CASE_TEMPLATES[0]?.id).toBe("tpl_data_analyst")
+  it("keeps the first-hour JDA scenario as the default flagship entry", () => {
+    const template = DEMO_CASE_TEMPLATES.find((item) => item.id === "tpl_jda_first_hour")
+    expect(DEMO_CASE_TEMPLATES[0]?.id).toBe("tpl_jda_first_hour")
     expect(template?.priority).toBe("flagship")
-    expect(template?.operatorLabel).toContain("Flagship")
-    expect(template?.requiresOralDefense).toBe(true)
-    expect(template?.workspaceModes).toEqual(expect.arrayContaining(["oral"]))
+    expect(template?.estimatedDuration).toBe("60 min")
+    expect(template?.requiresOralDefense).toBeUndefined()
+    expect(template?.workspaceModes).toEqual(expect.arrayContaining(["sql", "python", "dashboard"]))
   })
 
-  it("keeps the analyst rounds and variant catalog ready for the main demo flow", () => {
-    const fixture = DEMO_FIXTURES.tpl_data_analyst
-    expect(fixture.rounds).toHaveLength(3)
+  it("keeps the staged flagship fixture ready for the sponsor demo flow", () => {
+    const fixture = DEMO_FIXTURES.tpl_jda_first_hour
+    expect(fixture.rounds).toHaveLength(8)
+    expect(fixture.parts).toHaveLength(8)
     expect(fixture.variantCatalog.length).toBeGreaterThan(0)
     expect(fixture.evaluationBundle.coDesignAlignment.length).toBeGreaterThan(0)
+    expect(fixture.datasets.some((item) => item.available_from_part_id === "stage_analysis")).toBe(true)
   })
 
-  it("derives normalized tool steps from legacy analyst round data", () => {
-    const firstRoundTools = getRoundToolActions(DEMO_FIXTURES.tpl_data_analyst.rounds[0]!).map((action) => action.tool)
+  it("derives normalized tool steps from the staged flagship round data", () => {
+    const firstRoundTools = getRoundToolActions(DEMO_FIXTURES.tpl_jda_first_hour.rounds[2]!).map((action) => action.tool)
 
     expect(firstRoundTools).toEqual(expect.arrayContaining(["sql", "dashboard"]))
   })

@@ -606,7 +606,7 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
         scenario: template.scenario,
         artifacts: template.artifacts,
         metrics: [],
-        allowed_tools: ["sql_workspace", "dashboard_workspace", "copilot"],
+        allowed_tools: ["sql_workspace", "python_workspace", "dashboard_workspace", "copilot"],
       })
 
       const generateJob = await client.generateCase(adminToken.access_token, createdCase.id, `demo-generate-${randomUUID()}`)
@@ -689,7 +689,20 @@ export async function runJdaDemoFlow(previous: DemoRunState, formData: FormData)
         }
       }
 
-      const session = await client.createSession(reviewerToken.access_token, taskFamilyId, client.config.candidateUserId)
+      const session = await client.createSession(
+        reviewerToken.access_token,
+        taskFamilyId,
+        client.config.candidateUserId,
+        {
+          demo_template_id: selectedTemplateId,
+          demo_mode: "fixture",
+          sample_script_version: "fixture-v3",
+          raw_content_opt_in: true,
+          time_limit_minutes: 60,
+          oral_defense_required: false,
+          oral_weight: 0,
+        },
+      )
       await client.setSessionMode(reviewerToken.access_token, session.id, assessmentMode)
       steps.push(toStep("create_session", `Session created (${session.id})`))
       steps.push(toStep("candidate_handoff", `Candidate session ready at /session/${session.id}/start`))
@@ -1501,10 +1514,14 @@ export async function runDemoFastPath(
       {
         demo_template_id: templateId,
         demo_mode: mode,
-        sample_script_version: mode === "live" ? "live-v1" : "fixture-v2",
+        sample_script_version: mode === "live" ? "live-v1" : "fixture-v3",
+        raw_content_opt_in: true,
+        time_limit_minutes: 60,
+        oral_defense_required: false,
+        oral_weight: 0,
       },
     )
-    await client.setSessionMode(reviewerToken.access_token, session.id, "assessment")
+    await client.setSessionMode(reviewerToken.access_token, session.id, "assessment_ai_assisted")
     diagnostics.push({
       stage: "create_session",
       status: "ok",

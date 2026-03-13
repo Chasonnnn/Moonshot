@@ -1,0 +1,37 @@
+{
+  "name": "campaign_performance_corrected",
+  "description": "Corrected extract released after the candidate reports the snapshot defects. Use this dataset for the analysis stage.",
+  "row_count": 11,
+  "columns": [
+    {
+      "name": "report_date",
+      "dtype": "string",
+      "description": "Reporting date for the daily campaign rollup",
+      "sample_values": ["2026-03-02", "2026-03-03", "2026-03-05"]
+    },
+    {
+      "name": "segment",
+      "dtype": "string",
+      "description": "Normalized audience segment label",
+      "sample_values": ["new_users", "returning_users", "enterprise_retention"]
+    },
+    {
+      "name": "spend_usd",
+      "dtype": "integer",
+      "description": "Daily spend in USD",
+      "sample_values": ["3900", "3200", "1000"]
+    },
+    {
+      "name": "signups",
+      "dtype": "integer",
+      "description": "Daily signups attributed to the segment",
+      "sample_values": ["190", "140", "35"]
+    },
+    {
+      "name": "conversions",
+      "dtype": "integer",
+      "description": "Daily conversions attributed to the segment",
+      "sample_values": ["49", "34", "36"]
+    }
+  ]
+}

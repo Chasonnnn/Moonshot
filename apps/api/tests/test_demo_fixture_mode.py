@@ -27,7 +27,7 @@ def test_generate_fixture_mode_returns_deterministic_family(client, admin_header
     gen_res = client.post(
         f"/v1/cases/{case_id}/generate",
         headers={**admin_headers, "Idempotency-Key": "fixture-generate-1"},
-        json={"mode": "fixture", "template_id": "tpl_jda_quality", "variant_count": 12},
+        json={"mode": "fixture", "template_id": "tpl_jda_first_hour", "variant_count": 12},
     )
     assert gen_res.status_code == 202
 
@@ -52,8 +52,9 @@ def test_generate_fixture_mode_returns_deterministic_family(client, admin_header
     assert isinstance(first_dimension["score_bands"], dict)
     assert isinstance(first_dimension["weight"], float)
     rubric_keys = {item["key"] for item in rubric["dimensions"]}
-    assert "sql_accuracy" in rubric_keys
-    assert "data_quality_process" in rubric_keys
+    assert "task_framing" in rubric_keys
+    assert "data_hygiene" in rubric_keys
+    assert "executive_communication" in rubric_keys
 
 
 def test_generate_fixture_mode_supports_doordash_enablement_template(client, admin_headers):
@@ -256,6 +257,97 @@ def test_score_fixture_mode_uses_fixture_score_payload(client, admin_headers, re
     assert events.status_code == 200
     event_types = {item["event_type"] for item in events.json()["items"]}
     assert "oral_response_seeded" in event_types
+
+
+def test_score_fixture_mode_supports_sponsor_first_hour_profile(
+    client, admin_headers, reviewer_headers, candidate_headers
+):
+    case_res = client.post(
+        "/v1/cases",
+        headers=admin_headers,
+        json={
+            "title": "Sponsor First-Hour Fixture Score Case",
+            "scenario": "Sponsor first-hour fixture score scenario",
+            "artifacts": [],
+            "metrics": [],
+            "allowed_tools": ["sql_workspace", "python_workspace", "dashboard_workspace"],
+        },
+    )
+    assert case_res.status_code == 201
+    case_id = case_res.json()["id"]
+
+    gen_res = client.post(
+        f"/v1/cases/{case_id}/generate",
+        headers={**admin_headers, "Idempotency-Key": "fixture-generate-jda-first-hour-1"},
+        json={"mode": "fixture", "template_id": "tpl_jda_first_hour"},
+    )
+    assert gen_res.status_code == 202
+    generated = _job_result(client, gen_res.json()["job_id"], admin_headers)
+    task_family_id = generated["task_family"]["id"]
+
+    review = client.post(
+        f"/v1/task-families/{task_family_id}/review",
+        headers=reviewer_headers,
+        json={"decision": "approve"},
+    )
+    assert review.status_code == 200
+    publish = client.post(f"/v1/task-families/{task_family_id}/publish", headers=reviewer_headers, json={})
+    assert publish.status_code == 200
+
+    session_res = client.post(
+        "/v1/sessions",
+        headers=reviewer_headers,
+        json={
+            "task_family_id": task_family_id,
+            "candidate_id": "candidate_1",
+            "policy": {
+                "raw_content_opt_in": True,
+                "retention_ttl_days": 30,
+                "demo_template_id": "tpl_jda_first_hour",
+                "oral_defense_required": False,
+                "oral_weight": 0,
+            },
+        },
+    )
+    assert session_res.status_code == 201
+    session_id = session_res.json()["id"]
+
+    ingest = client.post(
+        f"/v1/sessions/{session_id}/events",
+        headers=candidate_headers,
+        json={
+            "events": [
+                {"event_type": "sql_query_run", "payload": {"runtime_ms": 24}},
+                {"event_type": "copilot_invoked", "payload": {"source": "coach", "prompt_logged": True}},
+                {"event_type": "checkpoint_saved", "payload": {"stage_id": "stage_initial_plan"}},
+            ]
+        },
+    )
+    assert ingest.status_code == 202
+
+    submit = client.post(
+        f"/v1/sessions/{session_id}/submit",
+        headers=candidate_headers,
+        json={"final_response": "Escalate the bad snapshot, analyze the corrected extract, and focus leadership on new-user conversion quality."},
+    )
+    assert submit.status_code == 200
+
+    score_res = client.post(
+        f"/v1/sessions/{session_id}/score",
+        headers={**reviewer_headers, "Idempotency-Key": "fixture-score-jda-first-hour-1"},
+        json={"mode": "fixture", "template_id": "tpl_jda_first_hour"},
+    )
+    assert score_res.status_code == 202
+
+    scored = _job_result(client, score_res.json()["job_id"], reviewer_headers)
+    assert scored["confidence"] == 0.9
+    assert scored["dimension_scores"]["task_framing"] == 0.91
+    assert scored["dimension_scores"]["data_hygiene"] == 0.95
+    assert scored["dimension_scores"]["executive_communication"] == 0.9
+    assert "oral_communication" not in scored["dimension_scores"]
+    assert "dimension_evidence" in scored
+    assert "task_framing" in scored["dimension_evidence"]
+    assert "fixture_score_profile" in scored["trigger_codes"]
 
 
 def test_score_fixture_mode_uses_doordash_enablement_score_profile(

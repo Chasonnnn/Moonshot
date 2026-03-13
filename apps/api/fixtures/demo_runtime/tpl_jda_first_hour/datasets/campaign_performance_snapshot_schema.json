@@ -1,0 +1,37 @@
+{
+  "name": "campaign_performance_snapshot",
+  "description": "Initial weekly review extract. Intentionally includes duplicate and malformed rows so candidates must inspect before using it.",
+  "row_count": 8,
+  "columns": [
+    {
+      "name": "report_date",
+      "dtype": "string",
+      "description": "Reporting date for the daily campaign rollup",
+      "sample_values": ["2026-03-02", "2026-03-03", ""]
+    },
+    {
+      "name": "segment",
+      "dtype": "string",
+      "description": "Audience segment label from the marketing export",
+      "sample_values": ["new_users", "returning_users", "enterprise-retentoin"]
+    },
+    {
+      "name": "spend_usd",
+      "dtype": "integer",
+      "description": "Daily spend in USD",
+      "sample_values": ["7100", "3200", "2600"]
+    },
+    {
+      "name": "signups",
+      "dtype": "integer",
+      "description": "Daily signups attributed to the segment",
+      "sample_values": ["340", "140", "65"]
+    },
+    {
+      "name": "conversions",
+      "dtype": "integer",
+      "description": "Daily conversions attributed to the segment",
+      "sample_values": ["88", "44", "22"]
+    }
+  ]
+}

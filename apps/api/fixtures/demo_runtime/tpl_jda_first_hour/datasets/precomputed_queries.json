@@ -1,0 +1,49 @@
+[
+  {
+    "pattern": "SELECT report_date, segment, COUNT(*) AS row_count, SUM(spend_usd) AS spend_usd, SUM(signups) AS signups FROM campaign_performance_snapshot GROUP BY report_date, segment ORDER BY report_date, segment",
+    "columns": ["report_date", "segment", "row_count", "spend_usd", "signups"],
+    "rows": [
+      { "report_date": "2026-03-02", "segment": "new_users", "row_count": 2, "spend_usd": 14200, "signups": 650 },
+      { "report_date": "2026-03-02", "segment": "returning_users", "row_count": 1, "spend_usd": 3200, "signups": 140 },
+      { "report_date": "2026-03-03", "segment": "new_users", "row_count": 1, "spend_usd": 6900, "signups": 310 },
+      { "report_date": null, "segment": "new_users", "row_count": 1, "spend_usd": 7100, "signups": 0 },
+      { "report_date": "2026-03-04", "segment": "enterprise-retentoin", "row_count": 1, "spend_usd": 2600, "signups": 65 },
+      { "report_date": "2026-03-05", "segment": "new_users", "row_count": 1, "spend_usd": 8500, "signups": 420 },
+      { "report_date": "2026-03-05", "segment": "returning_users", "row_count": 1, "spend_usd": 3000, "signups": 140 }
+    ]
+  },
+  {
+    "pattern": "SELECT COUNT(*) AS total_rows, COUNT(DISTINCT report_date || '-' || segment) AS distinct_day_segments FROM campaign_performance_snapshot",
+    "columns": ["total_rows", "distinct_day_segments"],
+    "rows": [
+      { "total_rows": 8, "distinct_day_segments": 6 }
+    ]
+  },
+  {
+    "pattern": "SELECT report_date, segment, spend_usd, signups, conversions FROM campaign_performance_snapshot WHERE report_date IS NULL OR segment LIKE '%retentoin%'",
+    "columns": ["report_date", "segment", "spend_usd", "signups", "conversions"],
+    "rows": [
+      { "report_date": null, "segment": "new_users", "spend_usd": 7100, "signups": 0, "conversions": 0 },
+      { "report_date": "2026-03-04", "segment": "enterprise-retentoin", "spend_usd": 2600, "signups": 65, "conversions": 22 }
+    ]
+  },
+  {
+    "pattern": "SELECT segment, SUM(spend_usd) AS spend_usd, SUM(signups) AS signups, SUM(conversions) AS conversions, ROUND(SUM(conversions)::numeric / NULLIF(SUM(signups), 0), 4) AS signup_to_conversion FROM campaign_performance_corrected GROUP BY segment ORDER BY signup_to_conversion DESC",
+    "columns": ["segment", "spend_usd", "signups", "conversions", "signup_to_conversion"],
+    "rows": [
+      { "segment": "enterprise_retention", "spend_usd": 5100, "signups": 170, "conversions": 73, "signup_to_conversion": 0.4294 },
+      { "segment": "returning_users", "spend_usd": 6200, "signups": 280, "conversions": 96, "signup_to_conversion": 0.3429 },
+      { "segment": "new_users", "spend_usd": 27200, "signups": 1260, "conversions": 302, "signup_to_conversion": 0.2397 }
+    ]
+  },
+  {
+    "pattern": "SELECT report_date, SUM(spend_usd) AS spend_usd, SUM(conversions) AS conversions, ROUND(SUM(conversions)::numeric / NULLIF(SUM(spend_usd), 0) * 1000, 2) AS conversions_per_k FROM campaign_performance_corrected GROUP BY report_date ORDER BY report_date",
+    "columns": ["report_date", "spend_usd", "conversions", "conversions_per_k"],
+    "rows": [
+      { "report_date": "2026-03-02", "spend_usd": 8700, "conversions": 83, "conversions_per_k": 9.54 },
+      { "report_date": "2026-03-03", "spend_usd": 10800, "conversions": 118, "conversions_per_k": 10.93 },
+      { "report_date": "2026-03-04", "spend_usd": 9600, "conversions": 122, "conversions_per_k": 12.71 },
+      { "report_date": "2026-03-05", "spend_usd": 9400, "conversions": 148, "conversions_per_k": 15.74 }
+    ]
+  }
+]

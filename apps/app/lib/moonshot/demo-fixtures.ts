@@ -35,6 +35,13 @@ export interface DemoToolAction {
   durationSeconds?: number
 }
 
+export interface DemoPartEvent {
+  id: string
+  type: "supervisor" | "pivot" | "system"
+  title: string
+  message: string
+}
+
 export interface DemoEventEntry {
   event_type: string
   payload: Record<string, unknown>
@@ -163,15 +170,27 @@ export interface DemoDataset {
   row_count: number
   schema: DemoDatasetSchema
   preview_rows: Record<string, unknown>[]
+  available_from_part_id?: string
+  status_label?: string
 }
 
 export interface DemoPart {
   id: string
   title: string
   description: string
+  purpose?: string
   part_type?: string
   time_limit_minutes?: number
   deliverable_type?: string
+  max_questions?: number
+  scripted_events?: DemoPartEvent[]
+  sqlQueries?: DemoSqlQuery[]
+  pythonScripts?: DemoPythonScript[]
+  rScripts?: DemoPythonScript[]
+  dashboardActions?: string[]
+  coachScript?: DemoCoachTurn[]
+  mockedArtifacts?: string[]
+  toolActions?: DemoToolAction[]
 }
 
 export interface DemoFixtureData {
@@ -304,6 +323,294 @@ function buildLegacyToolActions(round: DemoRound): DemoToolAction[] {
 export function getRoundToolActions(round: DemoRound): DemoToolAction[] {
   return [...buildLegacyToolActions(round), ...(round.toolActions ?? [])]
 }
+
+function buildRoundFromPart(part: DemoPart, index: number): DemoRound {
+  return {
+    id: part.id,
+    title: part.title,
+    objective: part.purpose ?? part.description,
+    deliverables: part.deliverable_type ? [part.deliverable_type] : [],
+    sqlQueries: part.sqlQueries ?? [],
+    pythonScripts: part.pythonScripts ?? [],
+    rScripts: part.rScripts ?? [],
+    dashboardActions: part.dashboardActions ?? [],
+    coachScript: part.coachScript ?? [],
+    mockedArtifacts: part.mockedArtifacts ?? [],
+    toolActions: part.toolActions ?? [],
+  }
+}
+
+function buildRoundsFromParts(parts: DemoPart[]): DemoRound[] {
+  return parts.map((part, index) => buildRoundFromPart(part, index))
+}
+
+const JDA_FIRST_HOUR_VARIANTS = buildVariantCatalog(
+  "Frame the weekly performance ask, catch the data issue, respond to the pivot, and ship an executive-ready update.",
+  ["framing", "data_hygiene", "analysis", "communication", "ai_collaboration"],
+).map((item, index) => ({
+  ...item,
+  id: `jda_first_hour_${index + 1}`,
+  roundHint: `stage_${(index % 8) + 1}`,
+  deliverables: ["clarification_log", "analysis_summary", "executive_memo"],
+  artifactRefs: [
+    "weekly_review_brief.md",
+    "campaign_performance_snapshot.csv",
+    "weekly_dashboard_export.png",
+    "campaign_performance_corrected.csv",
+    "executive_memo_template.md",
+  ],
+}))
+
+const JDA_FIRST_HOUR_PARTS: DemoPart[] = [
+  {
+    id: "stage_clarification",
+    title: "Stage 1 - Clarification",
+    description: "Read the brief, narrow the ask, and ask only the questions that meaningfully change the work.",
+    purpose: "Test task framing before analysis starts.",
+    part_type: "clarification",
+    time_limit_minutes: 6,
+    deliverable_type: "clarification_log",
+    max_questions: 3,
+    scripted_events: [
+      {
+        id: "brief-arrival",
+        type: "supervisor",
+        title: "Manager brief",
+        message:
+          "Leadership needs a fast readout for the weekly growth review. Prioritize signal, call out data issues early, and keep the output executive-ready.",
+      },
+    ],
+    mockedArtifacts: ["clarification_log.md"],
+  },
+  {
+    id: "stage_initial_plan",
+    title: "Stage 2 - Initial Plan",
+    description: "Write the initial approach: goal, first metrics, risks, and who you would sync with.",
+    purpose: "Measure planning discipline and business judgment.",
+    part_type: "planning",
+    time_limit_minutes: 6,
+    deliverable_type: "initial_plan",
+    toolActions: [
+      {
+        tool: "dashboard",
+        label: "Weekly dashboard export",
+        detail: "Open the frozen dashboard export and note the first KPI cuts to validate.",
+        artifactRefs: ["weekly_dashboard_export.png", "initial_plan.md"],
+      },
+    ],
+    mockedArtifacts: ["initial_plan.md"],
+  },
+  {
+    id: "stage_data_triage",
+    title: "Stage 3 - Data Triage / QA",
+    description: "Inspect the snapshot, notice the issue, and escalate clearly before continuing.",
+    purpose: "Measure data hygiene, honesty under uncertainty, and escalation behavior.",
+    part_type: "qa",
+    time_limit_minutes: 10,
+    deliverable_type: "issue_escalation_note",
+    scripted_events: [
+      {
+        id: "triage-nudge",
+        type: "supervisor",
+        title: "Supervisor note",
+        message:
+          "If something in the extract looks off, stop and flag it. Do not build a story on top of broken inputs.",
+      },
+      {
+        id: "corrected-data-release",
+        type: "system",
+        title: "Corrected dataset available",
+        message:
+          "After a clean escalation, the corrected extract becomes available for the analysis stage.",
+      },
+    ],
+    sqlQueries: [
+      {
+        query:
+          "SELECT report_date, segment, COUNT(*) AS row_count, SUM(spend_usd) AS spend_usd, SUM(signups) AS signups FROM campaign_performance_snapshot GROUP BY report_date, segment ORDER BY report_date, segment;",
+        columns: ["report_date", "segment", "row_count", "spend_usd", "signups"],
+        rows: [
+          { report_date: "2026-03-02", segment: "new_users", row_count: 2, spend_usd: 14200, signups: 650 },
+          { report_date: "2026-03-02", segment: "returning_users", row_count: 1, spend_usd: 3200, signups: 140 },
+          { report_date: "2026-03-03", segment: "new_users", row_count: 1, spend_usd: 6900, signups: 310 },
+          { report_date: null, segment: "new_users", row_count: 1, spend_usd: 7100, signups: 0 },
+          { report_date: "2026-03-04", segment: "enterprise-retentoin", row_count: 1, spend_usd: 2600, signups: 65 },
+        ],
+      },
+      {
+        query:
+          "SELECT COUNT(*) AS total_rows, COUNT(DISTINCT report_date || '-' || segment) AS distinct_day_segments FROM campaign_performance_snapshot;",
+        columns: ["total_rows", "distinct_day_segments"],
+        rows: [{ total_rows: 8, distinct_day_segments: 6 }],
+      },
+      {
+        query:
+          "SELECT report_date, segment, spend_usd, signups, conversions FROM campaign_performance_snapshot WHERE report_date IS NULL OR segment LIKE '%retentoin%';",
+        columns: ["report_date", "segment", "spend_usd", "signups", "conversions"],
+        rows: [
+          { report_date: null, segment: "new_users", spend_usd: 7100, signups: 0, conversions: 0 },
+          { report_date: "2026-03-04", segment: "enterprise-retentoin", spend_usd: 2600, signups: 65, conversions: 22 },
+        ],
+      },
+    ],
+    dashboardActions: [
+      "Compare daily KPI totals against the dashboard export",
+      "Flag duplicate day/segment combinations",
+      "Document the missing-date and mislabeled-segment defects before continuing",
+    ],
+    coachScript: [
+      {
+        role: "user",
+        content: "I found duplicate rows, a missing date, and a mislabeled segment. I should escalate before calculating anything, right?",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content:
+          "Yes. Record the issue clearly, say what it breaks, and continue only after you receive the corrected extract.",
+        allowed: true,
+      },
+    ],
+    mockedArtifacts: ["data_issue_escalation.md", "qa_checklist.md"],
+  },
+  {
+    id: "stage_analysis",
+    title: "Stage 4 - Analysis & Interpretation",
+    description: "Run a light but defensible analysis on the corrected extract and explain the signal.",
+    purpose: "Measure analytical judgment, accuracy, and caveat quality.",
+    part_type: "analysis",
+    time_limit_minutes: 12,
+    deliverable_type: "analysis_summary",
+    sqlQueries: [
+      {
+        query:
+          "SELECT segment, SUM(spend_usd) AS spend_usd, SUM(signups) AS signups, SUM(conversions) AS conversions, ROUND(SUM(conversions)::numeric / NULLIF(SUM(signups), 0), 4) AS signup_to_conversion FROM campaign_performance_corrected GROUP BY segment ORDER BY signup_to_conversion DESC;",
+        columns: ["segment", "spend_usd", "signups", "conversions", "signup_to_conversion"],
+        rows: [
+          { segment: "enterprise_retention", spend_usd: 5100, signups: 170, conversions: 73, signup_to_conversion: 0.4294 },
+          { segment: "returning_users", spend_usd: 6200, signups: 280, conversions: 96, signup_to_conversion: 0.3429 },
+          { segment: "new_users", spend_usd: 27200, signups: 1260, conversions: 302, signup_to_conversion: 0.2397 },
+        ],
+      },
+      {
+        query:
+          "SELECT report_date, SUM(spend_usd) AS spend_usd, SUM(conversions) AS conversions, ROUND(SUM(conversions)::numeric / NULLIF(SUM(spend_usd), 0) * 1000, 2) AS conversions_per_k FROM campaign_performance_corrected GROUP BY report_date ORDER BY report_date;",
+        columns: ["report_date", "spend_usd", "conversions", "conversions_per_k"],
+        rows: [
+          { report_date: "2026-03-02", spend_usd: 8700, conversions: 83, conversions_per_k: 9.54 },
+          { report_date: "2026-03-03", spend_usd: 10800, conversions: 118, conversions_per_k: 10.93 },
+          { report_date: "2026-03-04", spend_usd: 9600, conversions: 122, conversions_per_k: 12.71 },
+          { report_date: "2026-03-05", spend_usd: 9400, conversions: 148, conversions_per_k: 15.74 },
+        ],
+      },
+    ],
+    pythonScripts: [
+      {
+        code:
+          'import pandas as pd\n\ndf = pd.read_csv(DATASET_PATH)\nsegment = (\n    df.groupby("segment")[["spend_usd", "signups", "conversions"]]\n    .sum()\n    .assign(signup_to_conversion=lambda x: (x["conversions"] / x["signups"]).round(4))\n    .sort_values("signup_to_conversion", ascending=False)\n)\nprint(segment.to_string())',
+        stdout:
+          "                     spend_usd  signups  conversions  signup_to_conversion\nsegment                                                                     \nenterprise_retention       5100      170           73                0.4294\nreturning_users            6200      280           96                0.3429\nnew_users                 27200     1260          302                0.2397",
+        datasetId: "campaign_performance_corrected",
+      },
+      {
+        code:
+          'import pandas as pd\nimport matplotlib.pyplot as plt\n\ndf = pd.read_csv(DATASET_PATH)\ndaily = df.groupby("report_date")[["spend_usd", "conversions"]].sum().reset_index()\ndaily["conversions_per_k"] = (daily["conversions"] / daily["spend_usd"] * 1000).round(2)\nplt.plot(daily["report_date"], daily["conversions_per_k"], marker="o")\nplt.title("Conversions per $1K Spend")\nplt.ylabel("Conversions per $1K")\nplt.xticks(rotation=20)\nplt.tight_layout()\nplt.show()',
+        stdout: "",
+        plotUrl: "/runtime/jda_first_hour_conversions_per_k.png",
+        datasetId: "campaign_performance_corrected",
+      },
+    ],
+    dashboardActions: [
+      "Compare the corrected extract to the frozen dashboard headline",
+      "Note that new-user spend is highest but conversion efficiency trails other segments",
+      "Write one interpretation paragraph with one caveat",
+    ],
+    mockedArtifacts: ["analysis_notes.md", "segment_efficiency_table.csv"],
+  },
+  {
+    id: "stage_ai_checkpoint",
+    title: "Stage 5 - AI Collaboration Checkpoint",
+    description: "Use AI for the right subtask, then explicitly verify before reusing the output.",
+    purpose: "Measure human-AI collaboration quality and verification behavior.",
+    part_type: "ai_collaboration",
+    time_limit_minutes: 6,
+    deliverable_type: "verified_ai_notes",
+    coachScript: [
+      {
+        role: "user",
+        content: "Give me two concise narrative options for leadership, and separate facts from hypotheses.",
+        allowed: true,
+      },
+      {
+        role: "coach",
+        content:
+          "Option 1: efficiency is improving overall, but new-user conversion quality still lags. Option 2: the growth story is positive only after correcting broken inputs. Verify both against your tables before reusing either framing.",
+        allowed: true,
+      },
+      {
+        role: "user",
+        content: "Can you write the final memo for me?",
+        allowed: false,
+        policyReason: "Direct answer generation is blocked. Use AI for bounded drafting support, then verify and write the memo yourself.",
+      },
+    ],
+    mockedArtifacts: ["ai_prompt_log.md", "verified_ai_notes.md"],
+  },
+  {
+    id: "stage_supervisor_sync",
+    title: "Stage 6 - Supervisor Sync",
+    description: "Send a concise written update on what you know, what is uncertain, and what you will do next.",
+    purpose: "Measure collaboration clarity, transparency, and escalation style.",
+    part_type: "sync",
+    time_limit_minutes: 5,
+    deliverable_type: "supervisor_update",
+    scripted_events: [
+      {
+        id: "supervisor-sync-request",
+        type: "supervisor",
+        title: "Supervisor check-in",
+        message:
+          "Send me a quick update before the review starts: what you found, what remains uncertain, and what you will cover in the final note.",
+      },
+    ],
+    mockedArtifacts: ["supervisor_update.md"],
+  },
+  {
+    id: "stage_pivot",
+    title: "Stage 7 - Midstream Pivot",
+    description: "Re-plan when leadership changes the priority metric midstream.",
+    purpose: "Measure adaptability, composure, and alignment under a moving target.",
+    part_type: "pivot",
+    time_limit_minutes: 5,
+    deliverable_type: "replan_note",
+    scripted_events: [
+      {
+        id: "leadership-pivot",
+        type: "pivot",
+        title: "Leadership pivot",
+        message:
+          "Switch focus. Leadership now cares more about conversion quality in `new_users` than the original blended performance headline.",
+      },
+    ],
+    dashboardActions: [
+      "Refocus the dashboard notes on new-user conversion quality",
+      "Update the headline to reflect the changed sponsor priority",
+    ],
+    mockedArtifacts: ["pivot_replan.md"],
+  },
+  {
+    id: "stage_exec_communication",
+    title: "Stage 8 - Executive Communication",
+    description: "Ship the final memo or slide-outline with the top insight, evidence, caveat, recommendation, and next step.",
+    purpose: "Measure executive communication in a structured, auditable format.",
+    part_type: "communication",
+    time_limit_minutes: 10,
+    deliverable_type: "executive_memo",
+    mockedArtifacts: ["executive_memo.md", "slide_outline.md"],
+  },
+]
+
+const JDA_FIRST_HOUR_ROUNDS = buildRoundsFromParts(JDA_FIRST_HOUR_PARTS)
 
 const DATA_ANALYST_VARIANTS = buildVariantCatalog(
   "Investigate the conversion drop, prove root cause, and propose an action plan with caveats.",
@@ -1496,6 +1803,297 @@ const DOORDASH_ENABLEMENT_ROUNDS: DemoRound[] = [
 ]
 
 export const DEMO_FIXTURES: Record<string, DemoFixtureData> = {
+  tpl_jda_first_hour: {
+    jobDescription:
+      "Junior Data Analyst: get productive quickly in a weekly review workflow by framing the ask, handling broken inputs, using AI responsibly, adapting to a pivot, and shipping an executive-ready update.",
+    taskPrompt:
+      "Your manager needs a quick weekly performance readout. Use the brief, frozen data snapshot, dashboard export, and AI assistant to frame the ask, catch the data issue, adapt to the leadership pivot, and deliver a short executive memo or slide outline.",
+    coDesignBundle: {
+      roleStatement:
+        "The role rewards productive first-hour behavior: clarification, planning, QA discipline, light analysis, observable AI collaboration, supervisor alignment, and concise executive communication.",
+      objectives: [
+        "Test whether the candidate narrows the ask before touching tools",
+        "Test whether the candidate detects broken inputs and escalates honestly",
+        "Test whether the candidate can produce a decision-ready artifact after a midstream pivot",
+      ],
+      sampleTasks: [
+        "Ask up to three clarifying questions that materially change the work",
+        "Write an initial plan with first-check metrics, risks, and sync timing",
+        "Inspect a messy extract, report the issue clearly, and continue on corrected data",
+        "Use AI for a bounded drafting subtask, then verify before reuse",
+        "Ship a structured executive memo with evidence, caveat, recommendation, and next step",
+      ],
+      rubricBlueprint: [
+        "Score visible decisions and artifacts, not polish or generic confidence",
+        "Reward honest escalation and verification before reuse of AI output",
+        "Keep executive communication structured and evidence-first",
+      ],
+      difficultyLadder: [
+        {
+          level: "Foundation",
+          focus: "Task framing and initial scope control",
+          expectation: "Clarify the ask quickly and define a bounded plan before analysis.",
+        },
+        {
+          level: "Applied",
+          focus: "Data hygiene and escalation discipline",
+          expectation: "Notice broken inputs, explain the risk, and escalate without over-claiming.",
+        },
+        {
+          level: "Execution",
+          focus: "Light analysis plus AI verification",
+          expectation: "Produce a defensible read quickly and verify any AI-assisted framing before reuse.",
+        },
+        {
+          level: "Decision",
+          focus: "Pivot handling and executive communication",
+          expectation: "Re-plan under changing priorities and close with a concise, decision-ready artifact.",
+        },
+      ],
+      agentNotes: [
+        "Do not reward candidates for jumping straight into calculation without framing.",
+        "Broken-data detection is a primary signal, not a side quest.",
+        "Treat AI prompts and verification behavior as part of the evidence trail.",
+      ],
+    },
+    rubric: [
+      {
+        key: "task_framing",
+        anchor: "Clarifies the ask, narrows scope, and creates a practical first-pass plan before diving into tools.",
+        evaluationPoints: [
+          "Asks only the highest-value questions",
+          "Defines a clear goal and first-check metrics",
+          "Names risks or assumptions that could change the readout",
+        ],
+        evidenceSignals: ["clarification log", "initial plan", "scoped metric order"],
+        commonFailureModes: ["jumps into analysis", "asks low-value questions", "no explicit plan"],
+        scoreBands: {
+          "1": "Misses the framing step or asks unfocused questions",
+          "2": "Partial framing with unclear prioritization",
+          "3": "Solid scope control and workable plan",
+          "4": "Strong first-hour framing with clear prioritization and risk awareness",
+        },
+      },
+      {
+        key: "analytical_judgment",
+        anchor: "Chooses meaningful metrics, interprets them correctly, and keeps the analysis proportionate to the ask.",
+        evaluationPoints: [
+          "Prioritizes signal over noise",
+          "Computes or interprets the right comparisons",
+          "Separates what is observed from what is inferred",
+        ],
+        evidenceSignals: ["analysis notes", "metric comparisons", "interpretation paragraph"],
+        commonFailureModes: ["busywork analysis", "wrong metric emphasis", "unsupported interpretation"],
+        scoreBands: {
+          "1": "Weak or misleading analytical read",
+          "2": "Partial signal with notable gaps",
+          "3": "Solid, defensible analysis",
+          "4": "Strong judgment with tight signal selection and caveats",
+        },
+      },
+      {
+        key: "data_hygiene",
+        anchor: "Inspects the input critically, finds the defect, and explains why the issue matters before proceeding.",
+        evaluationPoints: [
+          "Finds duplicate or malformed rows",
+          "Connects the issue to downstream decision risk",
+          "Requests or uses corrected data appropriately",
+        ],
+        evidenceSignals: ["qa checklist", "issue escalation note", "corrected-data usage"],
+        commonFailureModes: ["misses broken input", "continues without flagging", "overstates certainty after finding the issue"],
+        scoreBands: {
+          "1": "Misses or ignores the defect",
+          "2": "Notices some issues but handles them weakly",
+          "3": "Solid QA and escalation behavior",
+          "4": "Strong, audit-ready data hygiene and escalation discipline",
+        },
+      },
+      {
+        key: "human_ai_collaboration",
+        anchor: "Uses AI for the right subtask, captures the interaction, and verifies before reuse.",
+        evaluationPoints: [
+          "Delegates a bounded drafting or brainstorming task",
+          "Checks AI output against the working evidence",
+          "Avoids blind copy/paste behavior",
+        ],
+        evidenceSignals: ["prompt log", "coach interactions", "verified AI notes"],
+        commonFailureModes: ["asks AI for the final answer", "copies without verification", "uses AI for the wrong task"],
+        scoreBands: {
+          "1": "Poor or invalid AI usage",
+          "2": "Some useful AI use but weak verification",
+          "3": "Solid bounded use with verification",
+          "4": "Strong human-AI teaming with clear judgment and verification",
+        },
+      },
+      {
+        key: "collaboration_escalation",
+        anchor: "Keeps the supervisor informed, escalates clearly, and distinguishes knowns from unknowns.",
+        evaluationPoints: [
+          "Escalates the data issue in a usable format",
+          "Sends a concise, truthful progress update",
+          "Names uncertainty without blocking progress",
+        ],
+        evidenceSignals: ["supervisor update", "escalation note", "coach log"],
+        commonFailureModes: ["late escalation", "vague updates", "hides uncertainty"],
+        scoreBands: {
+          "1": "Weak collaboration or unclear escalation",
+          "2": "Partial collaboration with gaps",
+          "3": "Solid transparency and escalation behavior",
+          "4": "Strong collaboration with crisp escalation and status communication",
+        },
+      },
+      {
+        key: "adaptability_under_pivot",
+        anchor: "Adjusts quickly when priorities change without losing the thread of the work.",
+        evaluationPoints: [
+          "Acknowledges the pivot clearly",
+          "Re-prioritizes the analysis and output",
+          "Maintains composure and alignment with the new ask",
+        ],
+        evidenceSignals: ["pivot replan", "updated dashboard notes", "final memo emphasis"],
+        commonFailureModes: ["ignores pivot", "restarts from scratch", "fails to update the final artifact"],
+        scoreBands: {
+          "1": "Misses or mishandles the pivot",
+          "2": "Adjusts partially but inconsistently",
+          "3": "Solid pivot handling",
+          "4": "Strong adaptability with clear re-planning and alignment",
+        },
+      },
+      {
+        key: "executive_communication",
+        anchor: "Produces a concise artifact with top insight, evidence, caveat, recommendation, and next step.",
+        evaluationPoints: [
+          "Leads with the decision-relevant insight",
+          "Supports the insight with concrete evidence",
+          "States a caveat and next step without padding",
+        ],
+        evidenceSignals: ["executive memo", "slide outline", "structured summary"],
+        commonFailureModes: ["buries the insight", "no caveat", "too much detail for the audience"],
+        scoreBands: {
+          "1": "Unclear or non-executive output",
+          "2": "Partially structured but noisy",
+          "3": "Solid executive-ready artifact",
+          "4": "Strong, concise, decision-ready communication",
+        },
+      },
+    ],
+    variantCatalog: JDA_FIRST_HOUR_VARIANTS,
+    rounds: JDA_FIRST_HOUR_ROUNDS,
+    sqlQueries: JDA_FIRST_HOUR_PARTS.flatMap((part) => part.sqlQueries ?? []),
+    pythonScripts: JDA_FIRST_HOUR_PARTS.flatMap((part) => [...(part.pythonScripts ?? []), ...(part.rScripts ?? [])]),
+    coachScript: JDA_FIRST_HOUR_PARTS.flatMap((part) => part.coachScript ?? []),
+    finalResponse:
+      "Top insight: after correcting the broken extract, overall conversion efficiency improved through the week, but `new_users` still converts materially worse than the other segments and is now the sponsor priority.\n\nEvidence: the corrected dataset shows `new_users` at 0.2397 signup-to-conversion, versus 0.3429 for `returning_users` and 0.4294 for `enterprise_retention`. Daily conversions per $1K spend also improved from 9.54 to 15.74 across the week, so the blended story is healthier than the original snapshot suggested.\n\nCaveat: the first snapshot was not reliable because it contained duplicate rows, a missing date, and a mislabeled segment. This read should be anchored to the corrected extract only.\n\nRecommendation: keep the headline focused on improving new-user conversion quality rather than the blended KPI, and ask marketing to review channel mix and landing-page quality for new-user acquisition.\n\nNext step: confirm whether the lag is channel-specific or creative-specific before the next weekly review.",
+    sampleEvents: [
+      { event_type: "session_started", payload: { time_to_first_action_ms: 780 } },
+      { event_type: "checkpoint_saved", payload: { stage_id: "stage_clarification", artifact: "clarification_log.md" } },
+      { event_type: "checkpoint_saved", payload: { stage_id: "stage_initial_plan", artifact: "initial_plan.md" } },
+      { event_type: "sql_query_run", payload: { stage_id: "stage_data_triage", row_count: 5, runtime_ms: 24 } },
+      { event_type: "verification_step_completed", payload: { stage_id: "stage_data_triage", step: "dataset_issue_detected" } },
+      { event_type: "coach_message", payload: { stage_id: "stage_data_triage", role: "coach", source: "supervisor" } },
+      { event_type: "python_code_run", payload: { stage_id: "stage_analysis", runtime_ms: 41, has_plot: false } },
+      { event_type: "python_code_run", payload: { stage_id: "stage_analysis", runtime_ms: 58, has_plot: true } },
+      { event_type: "copilot_invoked", payload: { stage_id: "stage_ai_checkpoint", source: "coach", prompt_logged: true } },
+      { event_type: "copilot_output_edited", payload: { stage_id: "stage_ai_checkpoint" } },
+      { event_type: "coach_message", payload: { stage_id: "stage_supervisor_sync", role: "user", source: "supervisor_sync" } },
+      { event_type: "deliverable_draft_saved", payload: { stage_id: "stage_exec_communication", artifact: "executive_memo.md" } },
+      { event_type: "session_submitted", payload: { stage_id: "stage_exec_communication" } },
+    ],
+    mockScoreResult: {
+      confidence: 0.9,
+      dimensionScores: {
+        task_framing: 0.91,
+        analytical_judgment: 0.87,
+        data_hygiene: 0.95,
+        human_ai_collaboration: 0.84,
+        collaboration_escalation: 0.89,
+        adaptability_under_pivot: 0.86,
+        executive_communication: 0.9,
+      },
+      triggerCodes: ["sponsor_ready_trace", "verified_ai_use", "pivot_handled_cleanly"],
+    },
+    evaluationBundle: buildEvaluationBundle(
+      [
+        { dimension: "Workflow realism", score: 95, note: "Captures first-hour analyst behavior instead of a generic skills battery." },
+        { dimension: "Artifact evidence", score: 94, note: "Produces reviewable plans, QA notes, sync updates, and an executive-ready memo." },
+        { dimension: "Human-AI observability", score: 91, note: "AI usage is logged and verification remains visible in the trace." },
+        { dimension: "Sponsor trust", score: 93, note: "Scoring stays dimension-first and evidence-linked instead of headline-score first." },
+      ],
+      [
+        { round: "Stage 1", score: 90, note: "Clarified the ask without wasting time on low-value questions." },
+        { round: "Stage 3", score: 96, note: "Caught the broken extract quickly and escalated before continuing." },
+        { round: "Stage 4", score: 87, note: "Kept analysis light, accurate, and tied to the decision." },
+        { round: "Stage 7", score: 85, note: "Re-focused cleanly after the sponsor pivot." },
+        { round: "Stage 8", score: 91, note: "Closed with a concise memo that preserved caveats and next actions." },
+      ],
+      [
+        { tool: "sql", score: 88 },
+        { tool: "python", score: 86 },
+        { tool: "dashboard", score: 84 },
+      ],
+      [
+        { code: "sponsor_ready_trace", rationale: "The session yields auditable evidence across framing, QA, analysis, pivot handling, and communication.", impact: "positive" },
+        { code: "verified_ai_use", rationale: "AI was used for bounded narrative support and the output was edited after verification.", impact: "positive" },
+        { code: "pivot_handled_cleanly", rationale: "The candidate adapted to the metric change without discarding the prior work.", impact: "positive" },
+      ],
+      [
+        "The strongest signal is not raw calculation speed but how quickly the candidate becomes productively aligned with the work.",
+        "Broken-data detection and the supervisor sync create sponsor-trust moments that generic assessments usually miss.",
+        "The final memo is structured enough to score clearly without rewarding pure writing polish.",
+      ],
+    ),
+    datasets: [
+      {
+        id: "campaign_performance_snapshot",
+        name: "campaign_performance_snapshot",
+        description: "Initial frozen extract from the weekly review packet. This is intentionally messy and should be inspected before use.",
+        row_count: 8,
+        status_label: "Initial extract",
+        schema: {
+          columns: [
+            { name: "report_date", dtype: "date", description: "Daily reporting date", sample_values: ["2026-03-02", "2026-03-03"] },
+            { name: "segment", dtype: "string", description: "Audience segment", sample_values: ["new_users", "returning_users"] },
+            { name: "spend_usd", dtype: "number", description: "Daily spend", sample_values: ["7100", "3200"] },
+            { name: "signups", dtype: "number", description: "Daily signups", sample_values: ["340", "140"] },
+            { name: "conversions", dtype: "number", description: "Daily conversions", sample_values: ["88", "44"] },
+          ],
+        },
+        preview_rows: [
+          { report_date: "2026-03-02", segment: "new_users", spend_usd: 7100, signups: 340, conversions: 88 },
+          { report_date: "2026-03-02", segment: "new_users", spend_usd: 7100, signups: 310, conversions: 82 },
+          { report_date: "2026-03-02", segment: "returning_users", spend_usd: 3200, signups: 140, conversions: 44 },
+          { report_date: null, segment: "new_users", spend_usd: 7100, signups: 0, conversions: 0 },
+          { report_date: "2026-03-04", segment: "enterprise-retentoin", spend_usd: 2600, signups: 65, conversions: 22 },
+        ],
+      },
+      {
+        id: "campaign_performance_corrected",
+        name: "campaign_performance_corrected",
+        description: "Corrected extract released after issue escalation. Use this for the actual analysis.",
+        row_count: 11,
+        available_from_part_id: "stage_analysis",
+        status_label: "Available after QA escalation",
+        schema: {
+          columns: [
+            { name: "report_date", dtype: "date", description: "Daily reporting date", sample_values: ["2026-03-02", "2026-03-05"] },
+            { name: "segment", dtype: "string", description: "Audience segment", sample_values: ["new_users", "enterprise_retention"] },
+            { name: "spend_usd", dtype: "number", description: "Daily spend", sample_values: ["3900", "3200"] },
+            { name: "signups", dtype: "number", description: "Daily signups", sample_values: ["190", "140"] },
+            { name: "conversions", dtype: "number", description: "Daily conversions", sample_values: ["49", "44"] },
+          ],
+        },
+        preview_rows: [
+          { report_date: "2026-03-02", segment: "new_users", spend_usd: 3900, signups: 190, conversions: 49 },
+          { report_date: "2026-03-02", segment: "returning_users", spend_usd: 3200, signups: 140, conversions: 34 },
+          { report_date: "2026-03-02", segment: "enterprise_retention", spend_usd: 1600, signups: 40, conversions: 0 },
+          { report_date: "2026-03-03", segment: "new_users", spend_usd: 7900, signups: 360, conversions: 70 },
+          { report_date: "2026-03-03", segment: "returning_users", spend_usd: 1600, signups: 70, conversions: 30 },
+        ],
+      },
+    ],
+    parts: JDA_FIRST_HOUR_PARTS,
+  },
+
   tpl_data_analyst: {
     jobDescription:
       "Data Analyst (Growth): Investigate conversion funnel incidents, quantify impact, and produce executive-ready decisions with uncertainty handling.",

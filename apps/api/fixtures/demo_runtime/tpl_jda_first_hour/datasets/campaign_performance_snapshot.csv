@@ -1,0 +1,9 @@
+report_date,segment,spend_usd,signups,conversions
+2026-03-02,new_users,7100,340,88
+2026-03-02,new_users,7100,310,82
+2026-03-02,returning_users,3200,140,44
+2026-03-03,new_users,6900,310,70
+,new_users,7100,0,0
+2026-03-04,enterprise-retentoin,2600,65,22
+2026-03-05,new_users,8500,420,112
+2026-03-05,returning_users,3000,140,48
